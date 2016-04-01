@@ -1,0 +1,44 @@
+#!/usr/bin/python
+"""
+
+mixemt (Mix + EM + mitochondrial sequence)
+
+This script implements an approach for deconvoluting mixtures of mitochondrial
+sequences based on a known phylogeny from phylotree.org and an
+Expectation-Maximization approach to estimate the number and relative
+abundances of contributing haplotypes. Based on this information, reads are
+assigned to sub-assemblies to reconstruct the haplotypes.
+
+Outline of approach:
+
+1. Identify all non-reference SNP variant sites that are present in this
+sample.
+
+2. Contruct a matrix of known mtDNA variants from phylotree and associated
+haplotypes from phylotree.
+
+3. EM algorithm to estimate contributing haplotypes and abundances.
+
+4. Output fragments by contributing haplotype.
+
+"""
+
+import sys
+import argparse
+
+
+def main():
+    """ Reads input filenames from command line args and processes input
+        through the analysis steps """
+    parser = argparse.ArgumentParser("Examines aligned reads for variant sites "
+                                     "estimates the number and abudance of "
+                                     "contributing haplotypes and partitions "
+                                     "reads based on assigned haplotype of "
+                                     "origin.")
+    args = parser.parse_args()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
