@@ -16,6 +16,11 @@ Sun Apr  3 16:12:59 PDT 2016
 import pysam
 import numpy
 
+# TODO:
+# Figure out if how to store this table.
+# 1) Basic python list of Counters?
+# 2) numpy array?
+
 
 def init_obs_tab(ref_seq):
     """
