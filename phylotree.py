@@ -8,8 +8,6 @@ Mon Apr  4 12:00:54 PDT 2016
 """
 
 import sys
-import numpy
-import bisect
 import collections
 
 
@@ -21,13 +19,37 @@ def pos_from_var(var):
     return int(var[1:-1])
 
 
+def der_allele(var):
+    """ Returns the derived allele of this variant. """
+    var = var.rstrip(')!')
+    return var[-1]
+
+
+def anc_allele(var):
+    """ Returns the derived allele of this variant. """
+    var = var.lstrip('(')
+    return var[0] 
+
+
 def is_snp(var):
-    """ 
-    Returns true if var is a SNP or False if it is an indel
-    """
+    """ Returns true if var is a SNP or False if it is an indel """
     if '.' in var or 'd' in var:
         return False # Variant is an indel
     return True 
+
+
+def is_unstable(var):
+    """ Returns true if var is annotated as unstable. """
+    if var[0] == '(':
+        return True
+    return False
+
+
+def is_backmutation(var):
+    """ Returns true if var is annotated as a backmutation. """
+    if '!' in var:
+        return True
+    return False
 
 
 def rm_snp_annot(var):
@@ -59,7 +81,7 @@ def read_phy_line(line):
     return level, hap_id, variants
 
 
-def summarize_vars(var_stack):
+def _summarize_vars(var_stack):
     """
     Takes a list of variant lists and produces a flat list of variants that
     are associated with the lineage leading to and including this haplogroup.
@@ -78,23 +100,22 @@ def summarize_vars(var_stack):
     return [summed_vars[pos] for pos in sorted(summed_vars)]
 
 
-def anon_hap_name(parent):
+def _anon_hap_name(parent):
     """
-    Returns an id for a branch without a name
+    Returns an id for a haplogroup without a name
     """
-    anon_hap_name.counter[parent] += 1
-    return "%s[%d]" % (parent, anon_hap_name.counter[parent])
-anon_hap_name.counter = collections.defaultdict(int)
+    _anon_hap_name.counter[parent] += 1
+    return "%s[%d]" % (parent, _anon_hap_name.counter[parent])
+_anon_hap_name.counter = collections.defaultdict(int)
 
 
-def read_phylotree(phy_in, leaves_only=False):
+def read_phylotree_csv(phy_in, leaves_only=False):
     """
-    Reads input from phylotree table that has been converted into 
-    comma-separated values and produces: 
-    1) a list of SNP variant positions
-    2) a table of haplogroups with associated SNP variants.
+    Reads input from phylotree table that has been converted into
+    comma-separated values and produces a table of haplogroups with associated
+    SNP variants. The table is constructed so that variants defining a parent
+    haplogroup are also associated with all descendent haplogroups.
     """
-    var_pos = set()
     hap_tab = dict()
     cur = -1
     var_stack = list()
@@ -103,22 +124,56 @@ def read_phylotree(phy_in, leaves_only=False):
         variants = [var for var in raw_var if is_snp(var)]
         if (not leaves_only or level <= cur) and cur >= 0:
             # Store previous entry checking if it was a leaf.
-            hap_tab[var_stack[-1][0]] = summarize_vars(var_stack)
-            print var_stack[-1][0], ','.join(hap_tab[var_stack[-1][0]])
+            hap_tab[var_stack[-1][0]] = _summarize_vars(var_stack)
         while cur >= 0 and cur >= level:
             var_stack.pop()
             cur -= 1
         if hap_id == '':
-            hap_id = anon_hap_name(var_stack[-1][0])
+            hap_id = _anon_hap_name(var_stack[-1][0])
         var_stack.append((hap_id, variants))
         cur += 1
     else:
         if (not leaves_only or level <= cur) and cur > 0:
             # Store previous entry checking if it was a leaf.
-            hap_tab[var_stack[-1][0]] = summarize_vars(var_stack)
-            print var_stack[-1][0], ','.join(hap_tab[var_stack[-1][0]])
-        
+            hap_tab[var_stack[-1][0]] = _summarize_vars(var_stack)
     return hap_tab
+
+
+def flatten_var_pos(hap_tab, rm_unstable=False, rm_backmut=False):
+    """ 
+    Takes a dictionary of haplogroups and variants and produces a list of
+    variant positions. Removes variants and positions that do not pass filters.
+    """
+    blacklist = set()
+    var_pos = set()
+    for hap in hap_tab:
+        for var in hap_tab[hap]:
+            pos = pos_from_var(var)
+            if rm_unstable and is_unstable(var):
+                blacklist.add(pos)
+            elif rm_backmut and is_backmutation(var):
+                blacklist.add(pos)
+            else:
+                var_pos.add(pos)
+    if rm_unstable or rm_backmut:
+        var_pos -= blacklist
+        for hap in hap_tab:
+            hap_tab[hap] = [var for var in hap_tab[hap] 
+                            if pos_from_var(var) not in blacklist] 
+    return list(sorted(var_pos))             
+
+
+def read_phylotree(phy_in, 
+                   leaves_only=False, rm_unstable=False, rm_backmut=False):
+    """ 
+    Reads input from phylotree table that has been converted into
+    comma-separated values and produces a list of variant sites and table of
+    haplogroups with associated SNP variants. Optionally removes sites that
+    are annotated as unstable or contain backmutations.
+    """
+    hap_tab = read_phylotree_csv(phy_in, leaves_only=leaves_only)
+    var_pos = flatten_var_pos(hap_tab, rm_unstable, rm_backmut)
+    return var_pos, hap_tab
 
 
 def main():
@@ -126,9 +181,10 @@ def main():
     if len(sys.argv) > 1:
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
-            hap_var = read_phylotree(phy_in, leaves_only=False)
-#           for hap in hap_var:
-#               print hap, ','.join(hap_var[hap])
+            var_pos, hap_var = read_phylotree(phy_in, False, False, False)
+            for hap in hap_var:
+                print hap, ','.join(hap_var[hap])
+            print len(var_pos)
     return 0
 
 
