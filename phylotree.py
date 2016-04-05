@@ -20,17 +20,12 @@ def pos_from_var(var):
     return int(var[1:-1])
 
 
-def pass_snp_filter(var, no_unstable=True, no_backmut=False):
+def is_snp(var):
     """ 
-    Returns true if var is a SNP or False if it is an indel or carries
-    annotation that we are filtering against (unstable or backmutation).
+    Returns true if var is a SNP or False if it is an indel
     """
     if '.' in var or 'd' in var:
         return False # Variant is an indel
-    if no_unstable and var.startswith('('):
-        return False # Recurrent/Unstable and we're filtering against that.
-    if no_backmut and var.endswith('!'):
-        return False # Back-mutation and we're filtering against that.
     return True 
 
 
@@ -67,7 +62,7 @@ def summarize_vars(var_stack):
     farther down in the tree).
     """
     summed_vars = dict()
-    for variants in reversed(var_stack):
+    for hap_id, variants in reversed(var_stack):
         # Go through the stack backwards and only add a variant if we have
         # not seen a variant at the same position.
         for var in variants:
@@ -90,16 +85,28 @@ def read_phylotree(phy_in, leaves=False):
     var_stack = list()
     for line in phy_in:
         level, hap_id, raw_var = read_phy_line(line)
-        if level <= cur:
-            # pop variants off.
-        var_stack.append(variants)
-        
-    return var_pos, hap_tab
+        variants = [var for var in raw_var if is_snp(var)]
+        if (not leaves or level <= cur) and cur > 0:
+            # Store previous entry checking if it was a leaf.
+            hap_tab[var_stack[-1][0]] = summarize_vars(var_stack)
+        while cur > 0 and cur >= level:
+            var_stack.pop()
+            cur -= 1
+        var_stack.append((hap_id, variants))
+        cur += 1
+    return hap_tab
 
 
 def main():
     """ Simple test of phylotree functions. """
+    if len(sys.argv) > 1:
+        phy_fn = sys.argv[1]
+        with open(phy_fn, 'r') as phy_in:
+            hap_var = read_phylotree(phy_in)
+            for hap in hap_var:
+                print hap, ','.join(hap_var[hap])
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
