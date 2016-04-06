@@ -43,7 +43,7 @@ class HapVarBaseMatrix(object):
 
         if hap_var is not None:
             self.add_hap_markers(hap_var)
-        return self
+        return
 
     def add_hap_markers(self, hap_var):
         """
@@ -55,7 +55,7 @@ class HapVarBaseMatrix(object):
                 der = phylotree.der_allele(var)
                 if der != self.refseq[pos]:
                     self.markers.add((hap, pos, der))
-        return self
+        return
 
     def prob(self, hap, pos, base):
         """
@@ -92,6 +92,11 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                                 read_obs[aln.query_name][rpos] = "N"
                         else:
                             read_obs[aln.query_name][rpos] = obs
+    # Finished, do one pass to remove Ns
+    for aln_id in read_obs:
+        for pos in read_obs[aln_id]:
+            if read_obs[aln_id][pos] == "N":
+                del read_obs[aln_id][pos]
     return read_obs
 
 
@@ -125,9 +130,16 @@ def build_em_input(samfile, refseq, var_pos, hap_tab):
     """
     read_obs = process_reads(samfile, var_pos, 30, 30)
     read_sigs = reduce_reads(read_obs)
-    print len(read_obs), len(read_sigs)
-    for sig in read_sigs:
-        print sig, len(read_sigs[sig])
+
+    hvb_mat = HapVarBaseMatrix(refseq, hap_tab)
+
+    # This is now the order we will be using for the matrix.
+    haplogroups = sorted(hap_tab)
+    reads = sorted(read_sigs)
+    weights = numpy.array([len(read_sigs[r]) for r in reads])
+
+    read_hap_mat = numpy.zeros(
+        len(haplogroups) * len(reads)).reshape((haplogroups, reads))
     return
 
 
@@ -136,10 +148,13 @@ def main():
     if len(sys.argv) > 2:
         phy_fn = sys.argv[1]
         bam_fn = sys.argv[2]
+        ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
+        refseq = ref_in.fetch(ref_in.references[0])
         with open(phy_fn, 'r') as phy_in:
-            var_pos, hap_var = phylotree.read_phylotree(phy_in, False, False, False)
+            var_pos, hap_var = phylotree.read_phylotree(phy_in,
+                                                        False, False, False)
         with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
-            build_em_input(samfile, 'ACGT', var_pos, hap_var)
+            build_em_input(samfile, refseq, var_pos, hap_var)
     return 0
 
 
