@@ -14,6 +14,8 @@ Wed Apr  6 10:48:21 PDT 2016
 
 import numpy
 import pysam
+import collections
+import bisect
 
 import phylotree
 
@@ -35,8 +37,8 @@ class HapVarBaseMatrix(object):
     def __init__(self, refseq, hap_var=None, exp=0.991, unexp=0.003):
         """ Initialzes the HapVarBaseMatrix. """
         self.refseq = refseq
-        self.exp = 0.991
-        self.unexp = 0.003
+        self.exp = exp 
+        self.unexp = unexp
         self.markers = set()
         
         if hap_var is not None:
@@ -68,3 +70,28 @@ class HapVarBaseMatrix(object):
         return self.unexp 
 
 
+def process_reads(samfile, var_pos, min_mq, min_bq):
+    """
+    Reads in a set of reads from a SAM/BAM file and makes observations for
+    known variant positions. Each read is simplified into a signature of
+    observed base per variant site.
+    """
+    read_sigs = collections.defaultdict(list)
+    for aln in samfile:
+        if aln.mapping_quality >= min_mq:
+            for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
+                qpos = int(qpos)
+                rpos = int(rpos)
+                if qpos in var_pos:
+                    if aln.query_qualities[qpos] >= min_bq:
+                        # Add this to the list
+                        aln.query_sequence[qpos].upper()
+    return read_sigs
+
+
+def build_em_input(refseq, var_pos, hap_tab, aln_fn):
+    """
+    Builds the matrix that describes the "probability" that a read originated
+    from a specific haplogroup.
+    """
+    return

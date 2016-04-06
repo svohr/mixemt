@@ -37,7 +37,7 @@ def count_read_matches(pos_obs, read, min_bq):
     for qpos, rpos in read.get_aligned_pairs(matches_only=True):
         qpos = int(qpos)
         rpos = int(rpos)
-        if aln.query_qualities[qpos] >= min_bq:
+        if read.query_qualities[qpos] >= min_bq:
             pos_obs[qpos][read.query_sequence[qpos]] += 1
         else:
             pos_obs[qpos]['N'] += 1
