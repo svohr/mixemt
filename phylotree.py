@@ -22,13 +22,13 @@ def pos_from_var(var):
 def der_allele(var):
     """ Returns the derived allele of this variant. """
     var = var.rstrip(')!')
-    return var[-1]
+    return var[-1].upper()
 
 
 def anc_allele(var):
     """ Returns the derived allele of this variant. """
     var = var.lstrip('(')
-    return var[0] 
+    return var[0].upper()
 
 
 def is_snp(var):
@@ -184,7 +184,7 @@ def main():
             var_pos, hap_var = read_phylotree(phy_in, False, False, False)
             for hap in hap_var:
                 print hap, ','.join(hap_var[hap])
-            print len(var_pos)
+            #print len(var_pos)
     return 0
 
 
