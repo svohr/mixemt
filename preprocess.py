@@ -12,10 +12,10 @@ Wed Apr  6 10:48:21 PDT 2016
 
 """
 
+import sys
 import numpy
 import pysam
 import collections
-import bisect
 
 import phylotree
 
@@ -37,16 +37,16 @@ class HapVarBaseMatrix(object):
     def __init__(self, refseq, hap_var=None, exp=0.991, unexp=0.003):
         """ Initialzes the HapVarBaseMatrix. """
         self.refseq = refseq
-        self.exp = exp 
+        self.exp = exp
         self.unexp = unexp
         self.markers = set()
-        
-        if hap_var is not None:
-            add_hap_markers(hap_var)
-        return
 
-    def add_hap_markers(hap_var):
-        """ 
+        if hap_var is not None:
+            self.add_hap_markers(hap_var)
+        return self
+
+    def add_hap_markers(self, hap_var):
+        """
         Populates the table with bases that are associated with haplogroups.
         """
         for hap in hap_var:
@@ -58,7 +58,7 @@ class HapVarBaseMatrix(object):
         return self
 
     def prob(self, hap, pos, base):
-        """ 
+        """
         Returns the "probability" of observing this base, at this position
         in this haplogroup.
         """
@@ -67,7 +67,7 @@ class HapVarBaseMatrix(object):
         else:
             if self.refseq[pos] == base:
                 return self.exp
-        return self.unexp 
+        return self.unexp
 
 
 def process_reads(samfile, var_pos, min_mq, min_bq):
@@ -76,7 +76,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
     known variant positions. Each read is simplified into a signature of
     observed base per variant site.
     """
-    read_sigs = collections.defaultdict(list)
+    read_obs = collections.defaultdict(dict)
     for aln in samfile:
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
@@ -85,13 +85,63 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                 if qpos in var_pos:
                     if aln.query_qualities[qpos] >= min_bq:
                         # Add this to the list
-                        aln.query_sequence[qpos].upper()
+                        obs = aln.query_sequence[qpos].upper()
+                        if rpos in read_obs[aln.query_name]:
+                            # check if this position has been observed before.
+                            if read_obs[aln.query_name][rpos] != obs:
+                                read_obs[aln.query_name][rpos] = "N"
+                        else:
+                            read_obs[aln.query_name][rpos] = obs
+    return read_obs
+
+
+def read_signature(obs_by_pos):
+    """
+    Returns a string made from the positions where bases were able to be
+    observed from the read.
+    """
+    return ','.join(["%d:%s" % (pos, obs_by_pos[pos])
+                    for pos in sorted(obs_by_pos)])
+
+
+def reduce_reads(read_obs):
+    """
+    Takes a dictionary of read IDs and base observations at variable positions
+    and returns a dictionary observation signatures (a string describing the
+    base observations made at variant sites) that maps to a list of read IDs
+    that carry that signature.
+    """
+    read_sigs = collections.defaultdict(list)
+    for read_id in read_obs:
+        sig = read_signature(read_obs[read_id])
+        read_sigs[sig].append(read_id)
     return read_sigs
 
 
-def build_em_input(refseq, var_pos, hap_tab, aln_fn):
+def build_em_input(samfile, refseq, var_pos, hap_tab):
     """
     Builds the matrix that describes the "probability" that a read originated
     from a specific haplogroup.
     """
+    read_obs = process_reads(samfile, var_pos, 30, 30)
+    read_sigs = reduce_reads(read_obs)
+    print len(read_obs), len(read_sigs)
+    for sig in read_sigs:
+        print sig, len(read_sigs[sig])
     return
+
+
+def main():
+    """ Main function for simple testing. """
+    if len(sys.argv) > 2:
+        phy_fn = sys.argv[1]
+        bam_fn = sys.argv[2]
+        with open(phy_fn, 'r') as phy_in:
+            var_pos, hap_var = phylotree.read_phylotree(phy_in, False, False, False)
+        with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
+            build_em_input(samfile, 'ACGT', var_pos, hap_var)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

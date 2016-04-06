@@ -182,8 +182,8 @@ def main():
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
             var_pos, hap_var = read_phylotree(phy_in, False, False, False)
-            for hap in hap_var:
-                print hap, ','.join(hap_var[hap])
+        for hap in hap_var:
+            print hap, ','.join(hap_var[hap])
             #print len(var_pos)
     return 0
 
