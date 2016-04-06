@@ -62,7 +62,7 @@ def rm_snp_annot(var):
     return var.upper()
 
 
-def read_phy_line(line):
+def _read_phy_line(line):
     """
     Reads a single comma-separated line from phylotree and returns the
     indentation level, the haplogroup id, and variants. Importantly, some nodes
@@ -120,7 +120,7 @@ def read_phylotree_csv(phy_in, leaves_only=False):
     cur = -1
     var_stack = list()
     for line in phy_in:
-        level, hap_id, raw_var = read_phy_line(line)
+        level, hap_id, raw_var = _read_phy_line(line)
         variants = [var for var in raw_var if is_snp(var)]
         if (not leaves_only or level <= cur) and cur >= 0:
             # Store previous entry checking if it was a leaf.
