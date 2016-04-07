@@ -138,8 +138,11 @@ def build_em_input(samfile, refseq, var_pos, hap_tab):
     reads = sorted(read_sigs)
     weights = numpy.array([len(read_sigs[r]) for r in reads])
 
-    read_hap_mat = numpy.zeros(
-        len(haplogroups) * len(reads)).reshape((haplogroups, reads))
+    read_hap_mat = numpy.zeros((len(reads), len(haplogroups)))
+
+    for i in xrange(len(reads)):
+        for j in xrange(len(haplogroups)):
+            read_hap_mat[i,j] = 1 # summarize observations per haplogroup.
     return
 
 
