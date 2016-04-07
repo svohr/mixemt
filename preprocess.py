@@ -39,7 +39,7 @@ class HapVarBaseMatrix(object):
         self.refseq = refseq
         self.exp = exp
         self.unexp = unexp
-        self.markers = set()
+        self.markers = dict()
 
         if hap_var is not None:
             self.add_hap_markers(hap_var)
@@ -54,7 +54,7 @@ class HapVarBaseMatrix(object):
                 pos = phylotree.pos_from_var(var)
                 der = phylotree.der_allele(var)
                 if der != self.refseq[pos]:
-                    self.markers.add((hap, pos, der))
+                    self.markers[(hap, pos)] = der
         return
 
     def prob(self, hap, pos, base):
@@ -62,12 +62,27 @@ class HapVarBaseMatrix(object):
         Returns the "probability" of observing this base, at this position
         in this haplogroup.
         """
-        if (hap, pos, base) in self.markers:
-            return self.exp
+        if (hap, pos) in self.markers:
+            # Does this haplogroup carry a derived base?
+            if self.markers[hap, pos] == base:
+                # Is it the one we observed?
+                return self.exp
         else:
+            # No derived base at this position, does our observed match ref.
             if self.refseq[pos] == base:
                 return self.exp
         return self.unexp
+
+    def prob_for_vars(self, hap, pos_obs):
+        """
+        Finds the probability of observing the read signature from the given
+        haplotype by calculating the product of the probability of all 
+        hap, pos, base tuples it represents.
+        """
+        total = 1
+        for pos, obs in pos_obs: 
+            total *= self.prob(hap, pos, obs)
+        return total
 
 
 def process_reads(samfile, var_pos, min_mq, min_bq):
@@ -109,6 +124,17 @@ def read_signature(obs_by_pos):
                     for pos in sorted(obs_by_pos)])
 
 
+def pos_obs_from_sig(read_sig):
+    """
+    Returns a list of position, observation pairs described in the read
+    signature string.
+    """
+    def pos_obs(var):
+        pos, obs = var.split(':')
+        return int(pos), obs
+    return [pos_obs(var) for var in read_sig.split(',')]
+
+
 def reduce_reads(read_obs):
     """
     Takes a dictionary of read IDs and base observations at variable positions
@@ -123,6 +149,23 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
+def build_em_matrix(refseq, hap_tab, reads, haplogroups):
+    """ 
+    Returns the matrix that describes the probabiliy of each read 
+    originating in each haplotype. 
+    """
+    hvb_mat = HapVarBaseMatrix(refseq, hap_tab)
+    read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
+
+    for i in xrange(len(reads)):
+        pos_obs = pos_obs_from_sig(reads[i]) 
+        for j in xrange(len(haplogroups)):
+            read_hap_mat[i,j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
+        if i % 1000 == 0:
+            print i, read_hap_mat[i,0]
+    return read_hap_mat
+
+
 def build_em_input(samfile, refseq, var_pos, hap_tab):
     """
     Builds the matrix that describes the "probability" that a read originated
@@ -131,19 +174,13 @@ def build_em_input(samfile, refseq, var_pos, hap_tab):
     read_obs = process_reads(samfile, var_pos, 30, 30)
     read_sigs = reduce_reads(read_obs)
 
-    hvb_mat = HapVarBaseMatrix(refseq, hap_tab)
-
     # This is now the order we will be using for the matrix.
     haplogroups = sorted(hap_tab)
     reads = sorted(read_sigs)
     weights = numpy.array([len(read_sigs[r]) for r in reads])
-
-    read_hap_mat = numpy.zeros((len(reads), len(haplogroups)))
-
-    for i in xrange(len(reads)):
-        for j in xrange(len(haplogroups)):
-            read_hap_mat[i,j] = 1 # summarize observations per haplogroup.
-    return
+    
+    em_matrix = build_em_matrix(refseq, hap_tab, reads, haplogroups)
+    return em_matrix, weights, haplogroups, reads, read_sigs
 
 
 def main():
@@ -158,6 +195,20 @@ def main():
                                                         False, False, False)
         with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
             build_em_input(samfile, refseq, var_pos, hap_var)
+    else:
+        # Entirely fake data.
+        ref = "GAAAAAAAA"
+        var_pos = range(1,9)
+        hap_var = dict({'A':['A1T','A3T'],
+                        'B':['A2T','A4T','A5T','A7T'],
+                        'C':['A2T','A5T'],
+                        'D':['A2T','A4T','A6T','A8T'],
+                        'E':['A2T','A3T','A4T','A6T']})
+        reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
+                      "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
+                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
+        haps = list('ABCDE')
+        print build_em_matrix(ref, hap_var, reads, haps)
     return 0
 
 
