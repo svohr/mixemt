@@ -130,6 +130,7 @@ def pos_obs_from_sig(read_sig):
     signature string.
     """
     def pos_obs(var):
+        """ Splits var into a int position and a string base. """
         pos, obs = var.split(':')
         return int(pos), obs
     return [pos_obs(var) for var in read_sig.split(',')]
@@ -160,9 +161,9 @@ def build_em_matrix(refseq, hap_tab, reads, haplogroups):
     for i in xrange(len(reads)):
         pos_obs = pos_obs_from_sig(reads[i]) 
         for j in xrange(len(haplogroups)):
-            read_hap_mat[i,j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
+            read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
         if i % 1000 == 0:
-            print i, read_hap_mat[i,0]
+            print i, read_hap_mat[i, 0]
     return read_hap_mat
 
 
@@ -198,12 +199,12 @@ def main():
     else:
         # Entirely fake data.
         ref = "GAAAAAAAA"
-        var_pos = range(1,9)
-        hap_var = dict({'A':['A1T','A3T'],
-                        'B':['A2T','A4T','A5T','A7T'],
-                        'C':['A2T','A5T'],
-                        'D':['A2T','A4T','A6T','A8T'],
-                        'E':['A2T','A3T','A4T','A6T']})
+        var_pos = range(1, 9)
+        hap_var = dict({'A':['A1T', 'A3T'],
+                        'B':['A2T', 'A4T', 'A5T', 'A7T'],
+                        'C':['A2T', 'A5T'],
+                        'D':['A2T', 'A4T', 'A6T', 'A8T'],
+                        'E':['A2T', 'A3T', 'A4T', 'A6T']})
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])

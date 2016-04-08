@@ -13,7 +13,9 @@ Mon Apr  4 09:38:08 PDT 2016
 
 import sys
 import numpy
+import pysam
 
+import phylotree
 import preprocess
 
 
@@ -45,20 +47,19 @@ def run_em(read_hap_mat, weights, max_iter=1000):
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty_like(props)
    
-    print props 
     for iter_round in xrange(max_iter):
+        print "EM: %d" % (iter_round)
         # Set z_j,g - probablilty that read j originates from haplogroup g 
         # given this proportion in the mixture..
         for i in xrange(read_hap_mat.shape[0]):
-            prop_read = props * read_hap_mat[i,]
-            read_mix_mat[i,] = prop_read / numpy.sum(prop_read)
+            prop_read = props * read_hap_mat[i, ]
+            read_mix_mat[i, ] = prop_read / numpy.sum(prop_read)
         
         # Set theta_g - contribution of g to the mixture
         for i in xrange(read_hap_mat.shape[1]):
-            new_props[i] = numpy.sum(read_mix_mat[:,i] * weights)
+            new_props[i] = numpy.sum(read_mix_mat[:, i] * weights)
         new_props /= numpy.sum(new_props)
 
-        print iter_round, new_props 
         # check for convergence.
         if converged(props, new_props):
             print "Converged!"
@@ -81,10 +82,13 @@ def main():
             var_pos, hap_var = phylotree.read_phylotree(phy_in,
                                                         False, False, False)
         with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
-            build_em_input(samfile, refseq, var_pos, hap_var)
+            input_mat, weights, haps, reads, read_sigs = \
+                preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
+        print run_em(input_mat, weights, max_iter=10000)
+
     else:
         ref = "GAAAAAAAA"
-        var_pos = range(1,9)
+        var_pos = range(1, 9)
         hap_var = dict({'A':['A1T','A3T'],
                         'B':['A2T','A4T','A5T','A7T'],
                         'C':['A2T','A5T'],
