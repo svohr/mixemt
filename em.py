@@ -68,7 +68,7 @@ def run_em(read_hap_mat, weights, max_iter=1000):
             # Use new_prop as prop for the next iteration, use the old one
             # for empty space.
             new_props, props = props, new_props
-    return new_props
+    return new_props, read_mix_mat
 
 
 def main():
@@ -85,7 +85,6 @@ def main():
             input_mat, weights, haps, reads, read_sigs = \
                 preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
         print run_em(input_mat, weights, max_iter=10000)
-
     else:
         ref = "GAAAAAAAA"
         var_pos = range(1, 9)
@@ -94,13 +93,15 @@ def main():
                         'C':['A2T','A5T'],
                         'D':['A2T','A4T','A6T','A8T'],
                         'E':['A2T','A3T','A4T','A6T']})
-        reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:A", "5:T,6:A",
+        reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
-                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
+                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A", "3:T"])
         haps = list('ABCDE')
         input_mat = preprocess.build_em_matrix(ref, hap_var, reads, haps)
         weights = numpy.ones(len(reads))
-        run_em(input_mat, weights, max_iter=100)
+        props, read_mix = run_em(input_mat, weights, max_iter=100)
+        print props
+        print read_mix
     return 0
 
 

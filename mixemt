@@ -78,6 +78,32 @@ def open_refseq(fa_fn):
     return
 
 
+def run_em_and_report(args):
+    """
+    This function takes all of the input from args and runs through the steps
+    of preprocessing EM and interpretation.
+    """
+
+    # Load up the data.
+    refseq  = open_refseq(args.ref_fn)
+    samfile = open_aln_file(args.sam_fn)
+    var_pos, hap_var = open_phylotree(args.phy_fn, args)
+
+    # Build input for EM step
+    em_mat, wts, haplogroups, read_sigs, sig_qids = \
+        preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
+
+    # Run EM
+    est_mix, read_props = em.run_em(em_mat, wts, max_iter=1000)
+
+    # Report the results
+    order = numpy.argsort(est_mix)
+    for i in xrange(10):
+        print i, est_mix[order[i]], haplogroups[order[i]]
+
+    return 0
+
+
 def main():
     """ Reads input filenames from command line args and processes input
         through the analysis steps """
@@ -94,12 +120,7 @@ def main():
                         help="Aligned reads in SAM/BAM format.")
     args = parser.parse_args()
 
-    # Load up the data.
-    refseq  = open_refseq(args.ref_fn)
-    samfile = open_aln_file(args.sam_fn)
-    var_pos, hap_var = open_phylotree(args.phy_fn, args)
-
-    return 0
+    return run_em_and_report(args)
 
 
 if __name__ == "__main__":
