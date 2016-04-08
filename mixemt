@@ -25,6 +25,57 @@ haplotypes from phylotree.
 
 import sys
 import argparse
+import pysam
+import numpy
+
+import phylotree
+import preprocess
+import em
+
+
+def open_aln_file(sam_fn):
+    """
+    Opens the file specifed by the filename parameter and returns the
+    AlignmentFile object. If the file cannot be opened, and error is printed
+    and the program exits.
+    """
+    try:
+        samfile = pysam.AlignmentFile(sam_fn, 'r')
+        return samfile
+    except Exception as inst:
+        sys.stderr.write("Error: %s\n" % (inst))
+        sys.exit(1)
+    return
+
+
+def open_phylotree(phy_fn, args):
+    """
+    Opens the phylotree CSV file and uses the module "phylotree" to read in
+    a list of variant positions and a table of haplogroups and associated
+    variants.
+    """
+    try:
+        with open(phy_fn, 'r') as phy_in:
+            return phylotree.read_phylotree(phy_in, False, False, False)
+    except Exception as inst:
+        sys.stderr.write("Error: %s\n" % (inst))
+        sys.exit(1)
+    return
+
+
+def open_refseq(fa_fn):
+    """
+    Opens the FASTA formatted file specified by the fa_fn parameter and returns
+    the sequence of the first entry as a string. If an error occurs an error is
+    printed and the program exits.
+    """
+    try:
+        fafile = pysam.FastaFile(fa_fn)
+        return fafile.fetch(fafile.references[0])
+    except Exception as inst:
+        sys.stderr.write("Error: %s\n" % (inst))
+        sys.exit(1)
+    return
 
 
 def main():
@@ -35,7 +86,18 @@ def main():
                                      "contributing haplotypes and partitions "
                                      "reads based on assigned haplotype of "
                                      "origin.")
+    parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
+                        help="FASTA file contain the reference sequence.")
+    parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
+                        help="Phylotree CSV file")
+    parser.add_argument("sam_fn", metavar="reads.[sb]am", type=str,
+                        help="Aligned reads in SAM/BAM format.")
     args = parser.parse_args()
+
+    # Load up the data.
+    refseq  = open_refseq(args.ref_fn)
+    samfile = open_aln_file(args.sam_fn)
+    var_pos, hap_var = open_phylotree(args.phy_fn, args)
 
     return 0
 

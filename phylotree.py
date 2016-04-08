@@ -109,7 +109,7 @@ def _anon_hap_name(parent):
 _anon_hap_name.counter = collections.defaultdict(int)
 
 
-def read_phylotree_csv(phy_in, leaves_only=False):
+def _read_phylotree_csv(phy_in, leaves_only=False):
     """
     Reads input from phylotree table that has been converted into
     comma-separated values and produces a table of haplogroups with associated
@@ -139,7 +139,7 @@ def read_phylotree_csv(phy_in, leaves_only=False):
     return hap_tab
 
 
-def flatten_var_pos(hap_tab, rm_unstable=False, rm_backmut=False):
+def _flatten_var_pos(hap_tab, rm_unstable=False, rm_backmut=False):
     """ 
     Takes a dictionary of haplogroups and variants and produces a list of
     variant positions. Removes variants and positions that do not pass filters.
@@ -171,8 +171,8 @@ def read_phylotree(phy_in,
     haplogroups with associated SNP variants. Optionally removes sites that
     are annotated as unstable or contain backmutations.
     """
-    hap_tab = read_phylotree_csv(phy_in, leaves_only=leaves_only)
-    var_pos = flatten_var_pos(hap_tab, rm_unstable, rm_backmut)
+    hap_tab = _read_phylotree_csv(phy_in, leaves_only=leaves_only)
+    var_pos = _flatten_var_pos(hap_tab, rm_unstable, rm_backmut)
     return var_pos, hap_tab
 
 
