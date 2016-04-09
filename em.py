@@ -41,14 +41,15 @@ def run_em(read_hap_mat, weights, max_iter=1000):
     Runs the EM algorithm to estimate haplotype contributions.
     """
     # initialize haplogroup proportions
-    props = init_props(read_hap_mat.shape[1])
+    props = init_props(read_hap_mat.shape[1], alpha=1)
     
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty_like(props)
    
     for iter_round in xrange(max_iter):
-        print "EM: %d" % (iter_round)
+        if (iter_round + 1) % 10 == 0:
+            sys.stderr.write('.')
         # Set z_j,g - probablilty that read j originates from haplogroup g 
         # given this proportion in the mixture..
         for i in xrange(read_hap_mat.shape[0]):
@@ -62,7 +63,7 @@ def run_em(read_hap_mat, weights, max_iter=1000):
 
         # check for convergence.
         if converged(props, new_props):
-            print "Converged!"
+            print "\nConverged!"
             break
         else:
             # Use new_prop as prop for the next iteration, use the old one
@@ -95,7 +96,7 @@ def main():
                         'E':['A2T','A3T','A4T','A6T']})
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
-                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A", "3:T"])
+                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
         haps = list('ABCDE')
         input_mat = preprocess.build_em_matrix(ref, hap_var, reads, haps)
         weights = numpy.ones(len(reads))

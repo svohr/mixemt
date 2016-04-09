@@ -85,7 +85,14 @@ class HapVarBaseMatrix(object):
         return total
 
 
-def process_reads(samfile, var_pos, min_mq, min_bq):
+def build_hap_var_base_mat(refseq, hav_var, exp=0.991, unexp=0.003):
+    """
+    Build a big matrix of haplogroups, variant sites and bases. 
+    """
+    return
+
+
+def process_reads(refseq, samfile, var_pos, min_mq, min_bq):
     """
     Reads in a set of reads from a SAM/BAM file and makes observations for
     known variant positions. Each read is simplified into a signature of
@@ -98,7 +105,8 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                 qpos = int(qpos)
                 rpos = int(rpos)
                 if qpos in var_pos:
-                    if aln.query_qualities[qpos] >= min_bq:
+                    if (aln.query_qualities is None or 
+                        aln.query_qualities[qpos] >= min_bq):
                         # Add this to the list
                         obs = aln.query_sequence[qpos].upper()
                         if rpos in read_obs[aln.query_name]:
@@ -107,11 +115,12 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                                 read_obs[aln.query_name][rpos] = "N"
                         else:
                             read_obs[aln.query_name][rpos] = obs
+    print len(read_obs)
     # Finished, do one pass to remove Ns
     for aln_id in read_obs:
-        for pos in read_obs[aln_id]:
-            if read_obs[aln_id][pos] == "N":
-                del read_obs[aln_id][pos]
+        read_obs[aln_id] = {pos:base for pos, base in 
+                            read_obs[aln_id].items() if base != 'N'}
+    print len(read_obs)
     return read_obs
 
 
@@ -172,7 +181,7 @@ def build_em_input(samfile, refseq, var_pos, hap_tab):
     Builds the matrix that describes the "probability" that a read originated
     from a specific haplogroup.
     """
-    read_obs = process_reads(samfile, var_pos, 30, 30)
+    read_obs = process_reads(refseq, samfile, var_pos, 30, 30)
     read_sigs = reduce_reads(read_obs)
 
     # This is now the order we will be using for the matrix.

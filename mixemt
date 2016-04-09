@@ -93,13 +93,15 @@ def run_em_and_report(args):
     em_mat, wts, haplogroups, read_sigs, sig_qids = \
         preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
 
-    # Run EM
-    est_mix, read_props = em.run_em(em_mat, wts, max_iter=1000)
+    for j in xrange(10):
+        # Run EM
+        est_mix, read_props = em.run_em(em_mat, wts, max_iter=1000)
 
-    # Report the results
-    order = numpy.argsort(est_mix)
-    for i in xrange(10):
-        print i, est_mix[order[i]], haplogroups[order[i]]
+        # Report the results
+        order = numpy.argsort(est_mix)[::-1]
+        for i in xrange(10):
+            print i, est_mix[order[i]], haplogroups[order[i]]
+        print
 
     return 0
 
@@ -107,11 +109,8 @@ def run_em_and_report(args):
 def main():
     """ Reads input filenames from command line args and processes input
         through the analysis steps """
-    parser = argparse.ArgumentParser("Examines aligned reads for variant sites "
-                                     "estimates the number and abudance of "
-                                     "contributing haplotypes and partitions "
-                                     "reads based on assigned haplotype of "
-                                     "origin.")
+    parser = argparse.ArgumentParser("Estimates the number and proportions of "
+                                     "contributing haplotypes.")
     parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
                         help="FASTA file contain the reference sequence.")
     parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
