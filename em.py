@@ -89,15 +89,19 @@ def main():
     else:
         ref = "GAAAAAAAA"
         var_pos = range(1, 9)
-        hap_var = dict({'A':['A1T','A3T'],
-                        'B':['A2T','A4T','A5T','A7T'],
-                        'C':['A2T','A5T'],
-                        'D':['A2T','A4T','A6T','A8T'],
-                        'E':['A2T','A3T','A4T','A6T']})
+        hap_var = dict({'A':['A2T','A4T'],
+                        'B':['A3T','A5T','A6T','A8T'],
+                        'C':['A3T','A6T'],
+                        'D':['A3T','A5T','A7T','A9T'],
+                        'E':['A3T','A4T','A5T','A7T'],
+                        'F':['A3T','A5T','A6T'],
+                        'G':['A3T','A5T','A7T'],
+                        'H':['A3T','A5T'],
+                        'I':[]})
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
-        haps = list('ABCDE')
+        haps = list('ABCDEFGHI')
         input_mat = preprocess.build_em_matrix(ref, hap_var, reads, haps)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, max_iter=100)

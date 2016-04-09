@@ -50,21 +50,23 @@ class HapVarBaseMatrix(object):
         Populates the table with bases that are associated with haplogroups.
         """
         for hap in hap_var:
+            self.markers[hap] = dict()
             for var in hap_var[hap]:
                 pos = phylotree.pos_from_var(var)
                 der = phylotree.der_allele(var)
                 if der != self.refseq[pos]:
-                    self.markers[(hap, pos)] = der
+                    self.markers[hap][pos] = der
         return
 
-    def prob(self, hap, pos, base):
+    def _prob(self, hap_pos, pos, base):
         """
-        Returns the "probability" of observing this base, at this position
-        in this haplogroup.
+        Returns the "probability" of observing this base, at this position in
+        this haplogroup, given the dictionary that describes the derived
+        alleles of this haplogroup.
         """
-        if (hap, pos) in self.markers:
+        if pos in hap_pos:
             # Does this haplogroup carry a derived base?
-            if self.markers[hap, pos] == base:
+            if hap_pos[pos] == base:
                 # Is it the one we observed?
                 return self.exp
         else:
@@ -80,16 +82,10 @@ class HapVarBaseMatrix(object):
         hap, pos, base tuples it represents.
         """
         total = 1
+        hap_pos = self.markers[hap]
         for pos, obs in pos_obs: 
-            total *= self.prob(hap, pos, obs)
+            total *= self._prob(hap_pos, pos, obs)
         return total
-
-
-def build_hap_var_base_mat(refseq, hav_var, exp=0.991, unexp=0.003):
-    """
-    Build a big matrix of haplogroups, variant sites and bases. 
-    """
-    return
 
 
 def process_reads(refseq, samfile, var_pos, min_mq, min_bq):

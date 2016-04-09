@@ -71,7 +71,7 @@ def open_refseq(fa_fn):
     """
     try:
         fafile = pysam.FastaFile(fa_fn)
-        return fafile.fetch(fafile.references[0])
+        return fafile.fetch(fafile.references[0]).upper()
     except Exception as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
@@ -95,7 +95,7 @@ def run_em_and_report(args):
 
     for j in xrange(10):
         # Run EM
-        est_mix, read_props = em.run_em(em_mat, wts, max_iter=1000)
+        est_mix, read_props = em.run_em(em_mat, wts, max_iter=100000)
 
         # Report the results
         order = numpy.argsort(est_mix)[::-1]

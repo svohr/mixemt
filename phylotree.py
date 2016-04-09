@@ -16,7 +16,7 @@ def pos_from_var(var):
     if var.startswith('('):
         var = var[1:-1]
     var = var.rstrip('!')
-    return int(var[1:-1])
+    return int(var[1:-1]) - 1 # 1-based to 0-based
 
 
 def der_allele(var):
