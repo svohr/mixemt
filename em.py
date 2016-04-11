@@ -13,9 +13,7 @@ Mon Apr  4 09:38:08 PDT 2016
 
 import sys
 import numpy
-import pysam
 
-import phylotree
 import preprocess
 
 
@@ -74,19 +72,7 @@ def run_em(read_hap_mat, weights, max_iter=1000):
 
 def main():
     """ Simple example for testing """
-    if len(sys.argv) > 2:
-        phy_fn = sys.argv[1]
-        bam_fn = sys.argv[2]
-        ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
-        refseq = ref_in.fetch(ref_in.references[0])
-        with open(phy_fn, 'r') as phy_in:
-            var_pos, hap_var = phylotree.read_phylotree(phy_in,
-                                                        False, False, False)
-        with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
-            input_mat, weights, haps, reads, read_sigs = \
-                preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
-        print run_em(input_mat, weights, max_iter=10000)
-    else:
+    if len(sys.argv) > 0:
         ref = "GAAAAAAAA"
         var_pos = range(1, 9)
         hap_var = dict({'A':['A2T','A4T'],

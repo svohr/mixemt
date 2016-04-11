@@ -88,7 +88,7 @@ class HapVarBaseMatrix(object):
         return total
 
 
-def process_reads(refseq, samfile, var_pos, min_mq, min_bq):
+def process_reads(samfile, var_pos, min_mq, min_bq):
     """
     Reads in a set of reads from a SAM/BAM file and makes observations for
     known variant positions. Each read is simplified into a signature of
@@ -172,12 +172,12 @@ def build_em_matrix(refseq, hap_tab, reads, haplogroups):
     return read_hap_mat
 
 
-def build_em_input(samfile, refseq, var_pos, hap_tab):
+def build_em_input(samfile, refseq, var_pos, hap_tab, args):
     """
     Builds the matrix that describes the "probability" that a read originated
     from a specific haplogroup.
     """
-    read_obs = process_reads(refseq, samfile, var_pos, 30, 30)
+    read_obs = process_reads(samfile, var_pos, args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
 
     # This is now the order we will be using for the matrix.
@@ -195,12 +195,13 @@ def main():
         phy_fn = sys.argv[1]
         bam_fn = sys.argv[2]
         ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
+        args = {'min_mq':30, 'min_bq':30}
         refseq = ref_in.fetch(ref_in.references[0])
         with open(phy_fn, 'r') as phy_in:
             var_pos, hap_var = phylotree.read_phylotree(phy_in,
                                                         False, False, False)
         with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
-            build_em_input(samfile, refseq, var_pos, hap_var)
+            build_em_input(samfile, refseq, var_pos, hap_var, args)
     else:
         # Entirely fake data.
         ref = "GAAAAAAAA"

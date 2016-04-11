@@ -42,7 +42,7 @@ def open_aln_file(sam_fn):
     try:
         samfile = pysam.AlignmentFile(sam_fn, 'r')
         return samfile
-    except Exception as inst:
+    except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
     return
@@ -57,7 +57,7 @@ def open_phylotree(phy_fn, args):
     try:
         with open(phy_fn, 'r') as phy_in:
             return phylotree.read_phylotree(phy_in, False, False, False)
-    except Exception as inst:
+    except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
     return
@@ -72,7 +72,7 @@ def open_refseq(fa_fn):
     try:
         fafile = pysam.FastaFile(fa_fn)
         return fafile.fetch(fafile.references[0]).upper()
-    except Exception as inst:
+    except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
     return
@@ -91,7 +91,7 @@ def run_em_and_report(args):
 
     # Build input for EM step
     em_mat, wts, haplogroups, read_sigs, sig_qids = \
-        preprocess.build_em_input(samfile, refseq, var_pos, hap_var)
+        preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
     for j in xrange(10):
         # Run EM
@@ -117,6 +117,14 @@ def main():
                         help="Phylotree CSV file")
     parser.add_argument("sam_fn", metavar="reads.[sb]am", type=str,
                         help="Aligned reads in SAM/BAM format.")
+    parser.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
+                        metavar="INT", default=30,
+                        help="Skip alignments with mapQ < INT")
+    parser.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
+                        metavar="INT", default=30,
+                        help="Skip bases with baseQ < INT")
+    parser.add_argument('-v', '--verbose', action="store_true",
+                        help="Print detailed status while running.")
     args = parser.parse_args()
 
     return run_em_and_report(args)
