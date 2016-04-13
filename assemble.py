@@ -15,6 +15,7 @@ Wed Apr 13 10:57:39 PDT 2016
 """
 
 import numpy
+import pysam
 
 
 def get_contributors(haplogroups, props, read_hap_mat):
@@ -27,7 +28,23 @@ def get_contributors(haplogroups, props, read_hap_mat):
     according to the matrix of reads/haplogroup probabilities given mixture
     proportions.
     """
-    contributors = numpy.unique(numpy.argmax(read_hap_mat))
+    contributors = numpy.unique(numpy.argmax(read_hap_mat, 1))
     return [(haplogroups[con], props[con]) for con in contributors]
 
+
+def assign_reads(contribs, haps, read_hap_mat, min_prob):
+    """
+    Takes the list of identified contributors, the list of haplotype ids and
+    the read-haplogroup probability under mixture proportions matrix, and
+    returns a table mapping the identified contributors to the indexes of all
+    reads (rows in the matrix) that have been assigned to that haplotype. A
+    read is assigned to a haplogroup with the probability it originated from
+    that haplogroup is greater or equal to the minimum cutoff provided.
+    """
+    contrib_reads = dict()
+    for hap, pc in contribs:
+        hap_col = haps.index(hap)
+        contrib_reads[hap] = numpy.nonzero(read_hap_mat[:, hap_col] 
+                                             >= min_prob)
+    return contrib_reads
 

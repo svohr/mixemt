@@ -31,6 +31,7 @@ import numpy
 import phylotree
 import preprocess
 import em
+import assemble
 
 
 def open_aln_file(sam_fn):
@@ -93,15 +94,13 @@ def run_em_and_report(args):
     em_mat, wts, haplogroups, read_sigs, sig_qids = \
         preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
-    for j in xrange(10):
-        # Run EM
-        est_mix, read_props = em.run_em(em_mat, wts, max_iter=100000)
+    # Run EM
+    est_mix, read_props = em.run_em(em_mat, wts, max_iter=10000)
 
-        # Report the results
-        order = numpy.argsort(est_mix)[::-1]
-        for i in xrange(10):
-            print i, est_mix[order[i]], haplogroups[order[i]]
-        print
+    # Report the results
+    for hap, pc in assemble.get_contributors(haplogroups, 
+                                             est_mix, read_props):
+        print hap, pc
 
     return 0
 
