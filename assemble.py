@@ -18,7 +18,45 @@ import numpy
 import pysam
 
 
-def get_contributors(haplogroups, props, read_hap_mat):
+def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
+    """
+    Writes the results of the EM step to a series of files that can be loaded
+    later on. Used to skip the matrix building and convergence steps when
+    debugging.
+    """
+    with open("%s.haps" % (prefix), 'w') as hap_out:
+        for hap in haps:
+            hap_out.write('%s\n' $ (hap))
+    with open("%s.reads" % (prefix), 'w') as read_out:
+        for read in reads:
+            hap_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
+    numpy.save("%.mat" % (prefix), read_hap_mat)
+    numpy.save("%.prop" % (prefix), props)
+    return
+
+
+def load_prev(prefix):
+    """
+    Loads a previously state from a series of files, with the same prefix
+    name.
+    """
+    haps = list()
+    reads = list()
+    read_sigs = dict()
+    with open("%s.haps" % (prefix), 'r') as hap_in:
+        for line in hap_in:
+            haps.append(line.rstrip())
+    with open("%s.reads" % (prefix), 'r') as read_in:
+        for line in read_in:
+            items = line.split('\t')
+            reads.append(items[0])
+            read_sigs[items[0]] = items[1].split(',')
+    read_hap_mat = numpy.load("%.mat.npy" % (prefix))
+    props = numpy.load("%.prop.npy" % (prefix))
+    return haps, reads, read_sigs, props, read_hap_mat
+
+
+def get_contributors(haplogroups, props, read_hap_mat, min_prob):
     """ 
     Takes a list of haplogroup IDs, a vector of their relative contributions to
     the sample and a matrix of read haplogroup probability assignments and
