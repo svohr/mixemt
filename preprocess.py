@@ -111,12 +111,10 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                                 read_obs[aln.query_name][rpos] = "N"
                         else:
                             read_obs[aln.query_name][rpos] = obs
-    print len(read_obs)
     # Finished, do one pass to remove Ns
     for aln_id in read_obs:
         read_obs[aln_id] = {pos:base for pos, base in 
                             read_obs[aln_id].items() if base != 'N'}
-    print len(read_obs)
     return read_obs
 
 
@@ -126,7 +124,7 @@ def read_signature(obs_by_pos):
     observed from the read.
     """
     return ','.join(["%d:%s" % (pos, obs_by_pos[pos])
-                    for pos in sorted(obs_by_pos)])
+                     for pos in sorted(obs_by_pos)])
 
 
 def pos_obs_from_sig(read_sig):
@@ -155,20 +153,27 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
-def build_em_matrix(refseq, hap_tab, reads, haplogroups):
+def build_em_matrix(refseq, hap_tab, reads, haplogroups, verbose=True):
     """ 
     Returns the matrix that describes the probabiliy of each read 
     originating in each haplotype. 
     """
     hvb_mat = HapVarBaseMatrix(refseq, hap_tab)
     read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
+ 
+    if verbose:
+        sys.stderr.write('Building EM input matrix...\n')
 
     for i in xrange(len(reads)):
         pos_obs = pos_obs_from_sig(reads[i]) 
         for j in xrange(len(haplogroups)):
             read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
-        if i % 1000 == 0:
-            print i, read_hap_mat[i, 0]
+        if verbose and (i + 1) % 500 == 0:
+            sys.stderr.write('  processed %d fragments...' % (i + 1))
+ 
+    if verbose:
+        sys.stderr.write('Done.\n\n')
+ 
     return read_hap_mat
 
 
@@ -179,23 +184,29 @@ def build_em_input(samfile, refseq, var_pos, hap_tab, args):
     """
     read_obs = process_reads(samfile, var_pos, args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
-
+    
+    if args.verbose:
+        sys.stderr.write('Using %d aligned fragments (MQ>=%d) '
+                         '(%d distinct sub-haplotypes)\n\n' 
+                           % (len(read_obs), args.min_mq, len(read_sigs)))
+    
     # This is now the order we will be using for the matrix.
     haplogroups = sorted(hap_tab)
     reads = sorted(read_sigs)
     weights = numpy.array([len(read_sigs[r]) for r in reads])
-    
-    em_matrix = build_em_matrix(refseq, hap_tab, reads, haplogroups)
+   
+    em_matrix = build_em_matrix(refseq, hap_tab, reads, 
+                                haplogroups, args.verbose)
     return em_matrix, weights, haplogroups, reads, read_sigs
 
 
 def main():
     """ Main function for simple testing. """
+    args = {'min_mq':30, 'min_bq':30, 'verbose':True}
     if len(sys.argv) > 2:
         phy_fn = sys.argv[1]
         bam_fn = sys.argv[2]
         ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
-        args = {'min_mq':30, 'min_bq':30}
         refseq = ref_in.fetch(ref_in.references[0])
         with open(phy_fn, 'r') as phy_in:
             var_pos, hap_var = phylotree.read_phylotree(phy_in,

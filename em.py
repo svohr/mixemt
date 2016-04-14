@@ -34,7 +34,7 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
-def run_em(read_hap_mat, weights, max_iter=1000):
+def run_em(read_hap_mat, weights, max_iter=1000, verbose=True):
     """ 
     Runs the EM algorithm to estimate haplotype contributions.
     """
@@ -46,7 +46,7 @@ def run_em(read_hap_mat, weights, max_iter=1000):
     new_props = numpy.empty_like(props)
    
     for iter_round in xrange(max_iter):
-        if (iter_round + 1) % 10 == 0:
+        if verbose and (iter_round + 1) % 10 == 0:
             sys.stderr.write('.')
         # Set z_j,g - probablilty that read j originates from haplogroup g 
         # given this proportion in the mixture..
@@ -61,7 +61,8 @@ def run_em(read_hap_mat, weights, max_iter=1000):
 
         # check for convergence.
         if converged(props, new_props):
-            print "\nConverged!"
+            if verbose:
+                sys.stderr.write("\nConverged! (%d)\n" % (iter_round + 1))
             break
         else:
             # Use new_prop as prop for the next iteration, use the old one

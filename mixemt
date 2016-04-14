@@ -34,7 +34,7 @@ import em
 import assemble
 
 
-def open_aln_file(sam_fn):
+def open_aln_file(sam_fn, args):
     """
     Opens the file specifed by the filename parameter and returns the
     AlignmentFile object. If the file cannot be opened, and error is printed
@@ -42,6 +42,9 @@ def open_aln_file(sam_fn):
     """
     try:
         samfile = pysam.AlignmentFile(sam_fn, 'r')
+        if args.verbose:
+            sys.stderr.write('Read %d alignments from "%s".\n' 
+                             % (samfile.count(), sam_fn))
         return samfile
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
@@ -57,14 +60,19 @@ def open_phylotree(phy_fn, args):
     """
     try:
         with open(phy_fn, 'r') as phy_in:
-            return phylotree.read_phylotree(phy_in, False, False, False)
+            var_pos, hap_var = phylotree.read_phylotree(phy_in, False, 
+                                                        False, False)
+            if args.verbose:
+                sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
+                                 % (len(var_pos), len(hap_var)))
+            return var_pos, hap_var 
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
     return
 
 
-def open_refseq(fa_fn):
+def open_refseq(fa_fn, args):
     """
     Opens the FASTA formatted file specified by the fa_fn parameter and returns
     the sequence of the first entry as a string. If an error occurs an error is
@@ -72,9 +80,15 @@ def open_refseq(fa_fn):
     """
     try:
         fafile = pysam.FastaFile(fa_fn)
+        if args.verbose:
+            sys.stderr.write('Read reference sequence "%s" from "%s".\n' 
+                             % (fafile.references[0], fa_fn))
         return fafile.fetch(fafile.references[0]).upper()
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
+        sys.exit(1)
+    except IndexError as inst:
+        sys.stderr.write('Error: no records in "%s"\n' % (fa_fn))
         sys.exit(1)
     return
 
@@ -104,7 +118,7 @@ def load_prev(prefix):
         wts = numpy.array(read_wts)
         return haps, reads, read_sigs, wts, props, read_hap_mat
     except (ValueError, IOError) as inst:
-        sys.stderr.write("Error loading previous results: %s\n" % (inst))
+        sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
     return
 
@@ -125,7 +139,7 @@ def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
     except (ValueError, IOError) as inst:
-        sys.stderr.write("Error: %s\n" % (inst))
+        sys.stderr.write("Error:\n %s\n" % (inst))
     return
 
 
@@ -136,12 +150,15 @@ def run_em_and_report(args):
     """
 
     # Load up the data.
-    refseq  = open_refseq(args.ref_fn)
-    samfile = open_aln_file(args.sam_fn)
+    refseq  = open_refseq(args.ref_fn, args)
+    samfile = open_aln_file(args.sam_fn, args)
     var_pos, hap_var = open_phylotree(args.phy_fn, args)
 
     if args.load is not None:
         # Just load the saved results instead of running everything again.
+        if args.verbose:
+            sys.stderr.write('\nLoading previous results from %s.*\n\n'
+                             % (args.load))
         haplogroups, reads, read_sigs, wts, props, read_hap_mat = \
             load_prev(args.load)
     else:
@@ -150,18 +167,24 @@ def run_em_and_report(args):
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts, max_iter=10000)
+        props, read_hap_mat = em.run_em(em_mat, wts, max_iter=10000, 
+                                        verbose=args.verbose)
 
         # Save the results if requested.
         if args.save is not None:
+            sys.stderr.write('\nSaving results to %s.*\n\n'
+                             % (args.load))
             dump_all(args.save, haplogroups, reads,
                      read_sigs, props, read_hap_mat)
 
     # Report the results
-    for hap, prop in assemble.get_contributors(haplogroups,
-                                               props, read_hap_mat, 0.99):
+    contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 0.99)
+    for hap, prop in contribs: 
         print hap, prop
 
+    assigned = assemble.assign_reads(contribs, haplogroups, read_hap_mat, 0.55)
+    for hap in assigned:
+        print hap, len(assigned[hap][0])
     return 0
 
 
@@ -192,6 +215,9 @@ def main():
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
     args = parser.parse_args()
+    
+    if args.verbose:
+        sys.stderr.write('%s\n\n' % (' '.join(sys.argv)))
 
     return run_em_and_report(args)
 
