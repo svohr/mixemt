@@ -95,8 +95,7 @@ def open_refseq(fa_fn, args):
 
 def load_prev(prefix):
     """
-    Loads a previously state from a series of files, with the same prefix
-    name.
+    Loads a previously state from a series of files with the same prefix name.
     """
     try:
         haps  = list()
@@ -148,7 +147,6 @@ def run_em_and_report(args):
     This function takes all of the input from args and runs through the steps
     of preprocessing EM and interpretation.
     """
-
     # Load up the data.
     refseq  = open_refseq(args.ref_fn, args)
     samfile = open_aln_file(args.sam_fn, args)
@@ -157,10 +155,15 @@ def run_em_and_report(args):
     if args.load is not None:
         # Just load the saved results instead of running everything again.
         if args.verbose:
-            sys.stderr.write('\nLoading previous results from %s.*\n\n'
+            sys.stderr.write('\nLoading previous results from %s.*\n'
                              % (args.load))
         haplogroups, reads, read_sigs, wts, props, read_hap_mat = \
             load_prev(args.load)
+
+        if args.verbose:
+            sys.stderr.write('Considering %d fragments '
+                             '(%d distinct sub-haplotypes)\n\n'
+                             % (numpy.sum(wts), len(reads)))
     else:
         # Build input for EM step
         em_mat, wts, haplogroups, reads, read_sigs = \
@@ -178,11 +181,13 @@ def run_em_and_report(args):
                      read_sigs, props, read_hap_mat)
 
     # Report the results
-    contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 0.99)
+    contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 
+                                         args.min_prob, args.min_reads)
     for hap, prop in contribs: 
         print hap, prop
 
-    assigned = assemble.assign_reads(contribs, haplogroups, read_hap_mat, 0.55)
+    assigned = assemble.assign_reads(contribs, haplogroups, 
+                                     read_hap_mat, args.min_prob)
     for hap in assigned:
         print hap, len(assigned[hap][0])
     return 0
@@ -208,10 +213,18 @@ def main():
     parser.add_argument('-l', '--load', dest='load', type=str,
                         default=None, metavar='PREFIX',
                         help="Skip EM step and load from a previous result "
-                             "(over rides -s).")
+                             "(overrides -s).")
     parser.add_argument('-s', '--save', dest='save', type=str,
                         default=None, metavar='PREFIX',
                         help="Save the EM results using this file prefix.")
+    parser.add_argument('-p', '--prob', dest='min_prob', type=float,
+                        default=0.95,
+                        help='Minimum probability required to assign read to '
+                             'a contributing haplogroup.')
+    parser.add_argument('-r', '--min-reads', dest='min_reads', type=int,
+                        default=1, metavar='N',
+                        help="Haplogroup must have N reads to be considered "
+                             "a contributor.")
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
     args = parser.parse_args()

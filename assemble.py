@@ -17,17 +17,20 @@ Wed Apr 13 10:57:39 PDT 2016
 import numpy
 
 
-def get_contributors(haplogroups, props, read_hap_mat, min_prob):
+def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
     """ 
     Takes a list of haplogroup IDs, a vector of their relative contributions to
     the sample and a matrix of read haplogroup probability assignments and
     returns a list of haplogroup, proportion pairs for our putative haplogroup
-    contributors. For a haplogroup to be considered as a contributor, there
-    must be at least 1 read that identifies it as the most likely contributor
-    according to the matrix of reads/haplogroup probabilities given mixture
-    proportions.
+    contributors. For a haplogroup to be considered as a contributor, we
+    require that there must be minimum number of reads that have a minimum
+    probability of originating from haplogroup.
     """
-    contributors = numpy.unique(numpy.argmax(read_hap_mat, 1))
+    contributors = list()
+    for hap in xrange(len(haplogroups)):
+        total_reads = numpy.sum(read_hap_mat[:, hap] >= min_prob)
+        if total_reads >= min_reads:
+            contributors.append(hap)
     return [(haplogroups[con], props[con]) for con in contributors]
 
 
