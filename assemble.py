@@ -26,12 +26,12 @@ def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
     """
     with open("%s.haps" % (prefix), 'w') as hap_out:
         for hap in haps:
-            hap_out.write('%s\n' $ (hap))
+            hap_out.write('%s\n' % (hap))
     with open("%s.reads" % (prefix), 'w') as read_out:
         for read in reads:
-            hap_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
-    numpy.save("%.mat" % (prefix), read_hap_mat)
-    numpy.save("%.prop" % (prefix), props)
+            read_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
+    numpy.save("%s.mat" % (prefix), read_hap_mat)
+    numpy.save("%s.prop" % (prefix), props)
     return
 
 
@@ -51,8 +51,8 @@ def load_prev(prefix):
             items = line.split('\t')
             reads.append(items[0])
             read_sigs[items[0]] = items[1].split(',')
-    read_hap_mat = numpy.load("%.mat.npy" % (prefix))
-    props = numpy.load("%.prop.npy" % (prefix))
+    read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
+    props = numpy.load("%s.prop.npy" % (prefix))
     return haps, reads, read_sigs, props, read_hap_mat
 
 
@@ -80,7 +80,7 @@ def assign_reads(contribs, haps, read_hap_mat, min_prob):
     that haplogroup is greater or equal to the minimum cutoff provided.
     """
     contrib_reads = dict()
-    for hap, pc in contribs:
+    for hap, prop in contribs:
         hap_col = haps.index(hap)
         contrib_reads[hap] = numpy.nonzero(read_hap_mat[:, hap_col] 
                                              >= min_prob)
