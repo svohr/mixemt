@@ -103,7 +103,7 @@ def run_em_and_report(args):
         print hap, prop
 
     # Dump out the results 
-    assembly.dump_all("test_B009", haplogroups, read_sigs, 
+    assemble.dump_all("test_B009", haplogroups, read_sigs, 
                       sig_qids, est_mix, read_props)
     return 0
 
