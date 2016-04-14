@@ -15,45 +15,6 @@ Wed Apr 13 10:57:39 PDT 2016
 """
 
 import numpy
-import pysam
-
-
-def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
-    """
-    Writes the results of the EM step to a series of files that can be loaded
-    later on. Used to skip the matrix building and convergence steps when
-    debugging.
-    """
-    with open("%s.haps" % (prefix), 'w') as hap_out:
-        for hap in haps:
-            hap_out.write('%s\n' % (hap))
-    with open("%s.reads" % (prefix), 'w') as read_out:
-        for read in reads:
-            read_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
-    numpy.save("%s.mat" % (prefix), read_hap_mat)
-    numpy.save("%s.prop" % (prefix), props)
-    return
-
-
-def load_prev(prefix):
-    """
-    Loads a previously state from a series of files, with the same prefix
-    name.
-    """
-    haps = list()
-    reads = list()
-    read_sigs = dict()
-    with open("%s.haps" % (prefix), 'r') as hap_in:
-        for line in hap_in:
-            haps.append(line.rstrip())
-    with open("%s.reads" % (prefix), 'r') as read_in:
-        for line in read_in:
-            items = line.split('\t')
-            reads.append(items[0])
-            read_sigs[items[0]] = items[1].split(',')
-    read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
-    props = numpy.load("%s.prop.npy" % (prefix))
-    return haps, reads, read_sigs, props, read_hap_mat
 
 
 def get_contributors(haplogroups, props, read_hap_mat, min_prob):
