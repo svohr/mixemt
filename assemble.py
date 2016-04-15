@@ -15,6 +15,7 @@ Wed Apr 13 10:57:39 PDT 2016
 """
 
 import numpy
+import operator
 
 
 def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
@@ -31,7 +32,9 @@ def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
         total_reads = numpy.sum(read_hap_mat[:, hap] >= min_prob)
         if total_reads >= min_reads:
             contributors.append(hap)
-    return [(haplogroups[con], props[con]) for con in contributors]
+    contrib_prop = [(haplogroups[con], props[con]) for con in contributors]
+    contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
+    return contrib_prop
 
 
 def assign_reads(contribs, haps, read_hap_mat, min_prob):
