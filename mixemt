@@ -183,14 +183,11 @@ def run_em_and_report(args):
     # Report the results
     contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 
                                          args.min_prob, args.min_reads)
-    for hap, group, prop in contribs: 
-        print hap, group, prop
 
-    assigned, unassigned = assemble.assign_reads(contribs, haplogroups, reads, 
-                                                 read_hap_mat, args.min_prob)
-    for hap in assigned:
-        print hap, len(assigned[hap])
-    print len(unassigned)
+    contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
+                                      read_hap_mat, args.min_prob)
+    assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
+    
     return 0
 
 
