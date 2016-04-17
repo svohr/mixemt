@@ -90,7 +90,7 @@ def get_contrib_read_ids(indexes, reads, read_sigs):
     """
     hap_read_ids = set()
     for read_idx in indexes:
-        for read_id in read_sigs[read_idx]:
+        for read_id in read_sigs[reads[read_idx]]:
             hap_read_ids.add(read_id)
     return hap_read_ids
 

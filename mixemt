@@ -145,7 +145,7 @@ def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
     return
 
 
-def run_em_and_report(args):
+def process_and_report(args):
     """
     This function takes all of the input from args and runs through the steps
     of preprocessing EM and interpretation.
@@ -183,14 +183,17 @@ def run_em_and_report(args):
             dump_all(args.save, haplogroups, reads,
                      read_sigs, props, read_hap_mat)
 
-    # Report the results
     contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 
                                          args.min_prob, args.min_reads)
-
     contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
                                       read_hap_mat, args.min_prob)
-    assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
     
+    # Report the results
+    assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
+   
+    if args.out_prefix is not None:
+        assemble.write_haplotypes(samfile, contrib_reads, 
+                                  reads, read_sigs, args.out_prefix)
     return 0
 
 
@@ -226,6 +229,11 @@ def main():
                         default=1, metavar='N',
                         help="Haplogroup must have N reads to be considered "
                              "a contributor.")
+    parser.add_argument('-o', '--out', dest='out_prefix', type=str,
+                        default=None, metavar='PREFIX',
+                        help="If set, write assigned reads to contributor-"
+                             "specific SAM/BAM files using this "
+                             "filename prefix")
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
     args = parser.parse_args()
@@ -233,7 +241,7 @@ def main():
     if args.verbose:
         sys.stderr.write('%s\n\n' % (' '.join(sys.argv)))
 
-    return run_em_and_report(args)
+    return process_and_report(args)
 
 
 if __name__ == "__main__":
