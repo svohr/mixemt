@@ -74,12 +74,24 @@ def report_contributors(out, contribs, contrib_reads, wts):
     Prints a table that summarizes the contributors, their proportions and 
     number of reads assigned to each.
     """
+    if out.isatty():
+        out.write("hap#   Haplogroup      Contribution   Reads\n")
+        out.write("-------------------------------------------\n")
     for hap_id, haplogroup, prop in contribs:
         total_reads = 0
         for read_index in contrib_reads[hap_id]:
             total_reads += wts[read_index]
-        out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup, 
-                                          prop, total_reads))
+        if out.isatty():
+            prop_str = '%.4f' % (prop)
+            read_str = '%d' % (total_reads)
+            out.write('%s %s %s %s\n' % (hap_id.ljust(6),
+                                         haplogroup.ljust(15),
+                                         prop_str.rjust(12),
+                                         read_str.rjust(7))) 
+        else:
+            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup, 
+                                              prop, total_reads))
+
     return
 
 
@@ -107,7 +119,8 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
     mode = 'wb'
     if ext != 'bam':
         mode = 'w'
-
+    if verbose:
+        sys.stderr.write('\n')
     for contrib in contrib_reads:
         hap_read_ids = get_contrib_read_ids(contrib_reads[contrib], 
                                             reads, read_sigs)
