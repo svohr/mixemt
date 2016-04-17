@@ -41,7 +41,10 @@ def open_aln_file(sam_fn, args):
     and the program exits.
     """
     try:
-        samfile = pysam.AlignmentFile(sam_fn, 'r')
+        if sam_fn.endswith('.bam'):
+            samfile = pysam.AlignmentFile(sam_fn, 'rb')
+        else: # assume sam_fn.endswith('.sam'):
+            samfile = pysam.AlignmentFile(sam_fn, 'r')
         if args.verbose:
             sys.stderr.write('Read %d alignments from "%s".\n' 
                              % (samfile.count(), sam_fn))

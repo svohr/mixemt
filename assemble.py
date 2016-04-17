@@ -68,7 +68,7 @@ def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
     return contrib_reads
 
 
-def report_contributors(out, contribs, contrib_reads, wts, header=True):
+def report_contributors(out, contribs, contrib_reads, wts):
     """
     Prints a table that summarizes the contributors, their proportions and 
     number of reads assigned to each.
@@ -77,12 +77,12 @@ def report_contributors(out, contribs, contrib_reads, wts, header=True):
         total_reads = 0
         for read_index in contrib_reads[hap_id]:
             total_reads += wts[read_index]
-        out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
+        out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup, 
                                           prop, total_reads))
     return
 
 
-def get_contrib_read_ids(indexes, reads, reads_sigs):
+def get_contrib_read_ids(indexes, reads, read_sigs):
     """
     Takes a set of indexes from assign_reads and the list of read signatures
     plus the dictionary mapping signatures to aligned read IDs and returns
@@ -90,18 +90,32 @@ def get_contrib_read_ids(indexes, reads, reads_sigs):
     """
     hap_read_ids = set()
     for read_idx in indexes:
-        for read_id in read_sigs[reads]:
+        for read_id in read_sigs[read_idx]:
             hap_read_ids.add(read_id)
     return hap_read_ids
 
 
-def write_haplotype_sam(samfile, hap_sam, hap_reads):
+def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix):
     """
-    Takes in a SAM/BAM AlignmentFile and read haplotype assignments and
-    makes new SAM/BAM files containing the subset of reads assigned to each
-    haplogroup.
+    For each contributing haplotype in contrib_reads, creates a new SAM/BAM
+    file based on the one provided and the prefix string and writes the reads
+    from the original SAM/BAM input that have been assigned to the contributor.
+    A separate file is also written for unassigned reads.
     """
-    for aln in samfile:
-        if aln in hap_reads:
-            hap_sam.write(aln)
+    ext = samfile.filename[-3:]
+    mode = 'wb'
+    if ext != 'bam':
+        mode = 'w'
+
+    for contrib in contrib_reads:
+        hap_read_ids = get_contrib_read_ids(contrib_reads[contrib], 
+                                            reads, read_sigs)
+        hap_samfile = pysam.AlignmentFile("%s.%s.%s" % 
+                                          (prefix, contrib, ext), mode)
+        for aln in samfile.fetch():
+            if aln in hap_read_ids:
+                hap_samfile.write(aln)
+        hap_samfile.close()
     return
+
+
