@@ -17,6 +17,7 @@ Wed Apr 13 10:57:39 PDT 2016
 import numpy
 import operator
 import pysam
+import sys
 
 
 def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
@@ -95,7 +96,7 @@ def get_contrib_read_ids(indexes, reads, read_sigs):
     return hap_read_ids
 
 
-def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix):
+def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
     """
     For each contributing haplotype in contrib_reads, creates a new SAM/BAM
     file based on the one provided and the prefix string and writes the reads
@@ -110,12 +111,19 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix):
     for contrib in contrib_reads:
         hap_read_ids = get_contrib_read_ids(contrib_reads[contrib], 
                                             reads, read_sigs)
-        hap_samfile = pysam.AlignmentFile("%s.%s.%s" % 
-                                          (prefix, contrib, ext), mode)
-        for aln in samfile.fetch():
-            if aln in hap_read_ids:
-                hap_samfile.write(aln)
-        hap_samfile.close()
-    return
-
-
+        hap_fn = "%s.%s.%s" % (prefix, contrib, ext)
+        try:
+            hap_samfile = pysam.AlignmentFile(hap_fn, mode, template=samfile)
+            written = 0
+            for aln in samfile.fetch():
+                if aln.query_name in hap_read_ids:
+                    hap_samfile.write(aln)
+                    written += 1
+            if verbose:
+                sys.stderr.write('Wrote %d aligned segments to %s\n' 
+                                 % (written, hap_fn))
+            hap_samfile.close()
+        except (ValueError, IOError) as inst:
+            sys.stderr.write("Error writing '%s': %s\n" % (hap_fn, inst))
+            return 1
+    return 0

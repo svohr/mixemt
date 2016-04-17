@@ -113,7 +113,7 @@ def load_prev(prefix):
                 items = line.split('\t')
                 sig = items[0]
                 reads.append(sig)
-                read_sigs[sig] = items[1].split(',')
+                read_sigs[sig] = items[1].rstrip().split(',')
                 read_wts.append(len(read_sigs[sig]))
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
@@ -192,8 +192,9 @@ def process_and_report(args):
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
    
     if args.out_prefix is not None:
-        assemble.write_haplotypes(samfile, contrib_reads, 
-                                  reads, read_sigs, args.out_prefix)
+        return assemble.write_haplotypes(samfile, contrib_reads, reads, 
+                                         read_sigs, args.out_prefix, 
+                                         args.verbose)
     return 0
 
 
