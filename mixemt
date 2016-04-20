@@ -173,7 +173,9 @@ def process_and_report(args):
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts, max_iter=10000, 
+        props, read_hap_mat = em.run_em(em_mat, wts, 
+                                        max_iter=10000, 
+                                        tolerance=args.tolerance,
                                         verbose=args.verbose)
 
         # Save the results if requested.
@@ -215,6 +217,11 @@ def main():
     parser.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
                         metavar="INT", default=30,
                         help="Skip bases with baseQ < INT")
+    parser.add_argument('-c', '--converge', dest='converge', type=float, 
+                        default=0.0001, metavar="TOLERANCE",
+                        help="Stop EM iteration when abs. difference between "
+                             "current and previous contribution estimates is "
+                             "< TOLERANCE.")
     parser.add_argument('-l', '--load', dest='load', type=str,
                         default=None, metavar='PREFIX',
                         help="Skip EM step and load from a previous result "

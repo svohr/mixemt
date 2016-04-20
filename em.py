@@ -34,7 +34,8 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
-def run_em(read_hap_mat, weights, max_iter=1000, verbose=True):
+def run_em(read_hap_mat, weights, 
+           max_iter=1000, tolerance=0.0001, verbose=True):
     """ 
     Runs the EM algorithm to estimate haplotype contributions.
     """
@@ -60,7 +61,7 @@ def run_em(read_hap_mat, weights, max_iter=1000, verbose=True):
         new_props /= numpy.sum(new_props)
 
         # check for convergence.
-        if converged(props, new_props):
+        if converged(props, new_props, tolerance):
             if verbose:
                 sys.stderr.write("\nConverged! (%d)\n" % (iter_round + 1))
             break
