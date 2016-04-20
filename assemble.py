@@ -56,6 +56,9 @@ def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
     set of read indexes that were not assigned to a contributor. A read is
     assigned to a haplogroup with the probability it originated from that
     haplogroup is greater or equal to the minimum cutoff provided.
+    
+    Note: when min_prob is low (<0.50) reads can be assigned to more than
+          one contributor.
     """
     contrib_reads = dict()
     unassigned = set(range(len(reads)))
@@ -72,7 +75,8 @@ def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
 def report_contributors(out, contribs, contrib_reads, wts):
     """
     Prints a table that summarizes the contributors, their proportions and 
-    number of reads assigned to each.
+    number of reads assigned to each. Formats the output nicely if out is
+    a TTY, otherwise prints a tab-delimited table.
     """
     if out.isatty():
         out.write("hap#   Haplogroup      Contribution   Reads\n")
@@ -91,7 +95,6 @@ def report_contributors(out, contribs, contrib_reads, wts):
         else:
             out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup, 
                                               prop, total_reads))
-
     return
 
 

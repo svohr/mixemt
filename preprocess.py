@@ -95,7 +95,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
     observed base per variant site.
     """
     read_obs = collections.defaultdict(dict)
-    for aln in samfile:
+    for aln in samfile.fetch():
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
@@ -169,7 +169,7 @@ def build_em_matrix(refseq, hap_tab, reads, haplogroups, verbose=True):
         for j in xrange(len(haplogroups)):
             read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
         if verbose and (i + 1) % 500 == 0:
-            sys.stderr.write('  processed %d fragments...' % (i + 1))
+            sys.stderr.write('  processed %d fragments...\n' % (i + 1))
  
     if verbose:
         sys.stderr.write('Done.\n\n')
