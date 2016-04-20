@@ -179,7 +179,7 @@ def process_and_report(args):
         # Save the results if requested.
         if args.save is not None:
             sys.stderr.write('\nSaving results to %s.*\n\n'
-                             % (args.load))
+                             % (args.save))
             dump_all(args.save, haplogroups, reads,
                      read_sigs, props, read_hap_mat)
 
