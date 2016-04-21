@@ -217,7 +217,7 @@ def main():
     parser.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
                         metavar="INT", default=30,
                         help="Skip bases with baseQ < INT")
-    parser.add_argument('-c', '--converge', dest='converge', type=float, 
+    parser.add_argument('-c', '--converge', dest='tolerance', type=float,
                         default=0.0001, metavar="TOLERANCE",
                         help="Stop EM iteration when abs. difference between "
                              "current and previous contribution estimates is "
