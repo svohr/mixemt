@@ -189,8 +189,11 @@ def process_and_report(args):
                                          args.min_prob, args.min_reads)
     contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
                                       read_hap_mat, args.min_prob)
-    
+ 
     # Report the results
+    if args.verbose:
+        assemble.report_top_props(haplogroups, props, 10)
+
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
    
     if args.out_prefix is not None:

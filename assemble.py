@@ -72,6 +72,20 @@ def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
     return contrib_reads
 
 
+def report_top_props(haplogroups, props, top_n=10):
+    """
+    Prints to stderr the names and fractions of the n haplogroups with the
+    highest estimated proportions.
+    """
+    order = numpy.argsort(props)[::-1]
+    sys.stderr.write('\nTop %d haplogroups by proportion...\n' % (top_n))
+    for i in xrange(top_n):
+        sys.stderr.write("%d\t%0.6f\t%s\n" % (i, props[order[i]], 
+                                              haplogroups[order[i]]))
+    sys.stderr.write('\n')
+    return
+
+
 def report_contributors(out, contribs, contrib_reads, wts):
     """
     Prints a table that summarizes the contributors, their proportions and 
