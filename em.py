@@ -72,6 +72,28 @@ def run_em(read_hap_mat, weights, init_alpha=1.0,
     return new_props, read_mix_mat
 
 
+def multi_em(n_runs, read_hap_mat, weights, init_alpha=1.0, 
+             max_iter=1000, tolerance=0.0001, verbose=True):
+    """
+    Runs EM until convergence several times (n_runs) and returns proportions
+    and read/haplogroup probabilities averages over the EM runs.
+    """
+    avg_props = numpy.zeros(read_hap_mat[1])
+    avg_read_mix = numpy.zeros_like(read_hap_mat)
+
+    for i in xrange(n_runs):
+        if verbose:
+            sys.stderr.write("EM iteration %d\n" % (i + 1))
+        props, read_mix_mat = run_em(read_hap_mat, weights, 
+                                     init_alpha=init_alpha,
+                                     max_iter=max_iter,
+                                     tolerance=tolerance,
+                                     verbose=verbose)
+        avg_props += props
+        avg_read_mix += read_mix_mat
+    return avg_props / n_runs, avg_read_mix / n_runs
+ 
+
 def main():
     """ Simple example for testing """
     if len(sys.argv) > 0:
