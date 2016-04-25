@@ -34,13 +34,13 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
-def run_em(read_hap_mat, weights, 
+def run_em(read_hap_mat, weights, init_alpha=1.0, 
            max_iter=1000, tolerance=0.0001, verbose=True):
     """ 
     Runs the EM algorithm to estimate haplotype contributions.
     """
     # initialize haplogroup proportions
-    props = init_props(read_hap_mat.shape[1], alpha=1)
+    props = init_props(read_hap_mat.shape[1], alpha=init_alpha)
     
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)

@@ -173,7 +173,8 @@ def process_and_report(args):
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts, 
+        props, read_hap_mat = em.run_em(em_mat, wts,
+                                        init_alpha=args.init_alpha,
                                         max_iter=10000, 
                                         tolerance=args.tolerance,
                                         verbose=args.verbose)
@@ -220,6 +221,10 @@ def main():
     parser.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
                         metavar="INT", default=30,
                         help="Skip bases with baseQ < INT")
+    parser.add_argument('-i', '--init', dest='init_alpha', type=float,
+                        default=1.0, metavar="ALPHA",
+                        help="Use parameter ALPHA to initialize haplogroup "
+                             "contributions from Dirichlet distribution.")
     parser.add_argument('-c', '--converge', dest='tolerance', type=float,
                         default=0.0001, metavar="TOLERANCE",
                         help="Stop EM iteration when abs. difference between "
