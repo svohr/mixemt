@@ -172,6 +172,12 @@ def process_and_report(args):
         em_mat, wts, haplogroups, reads, read_sigs = \
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
+        if args.verbose:
+            sys.stderr.write("\nTop %d haplogroups "
+                             "by read probabilities before EM...\n" % (top_n))
+            assemble.report_read_votes(haplogroups, em_mat, 10)
+            sys.stderr.write("\n")
+
         # Run EM
         props, read_hap_mat = em.run_em(em_mat, wts, args.n_multi,
                                         init_alpha=args.init_alpha,
