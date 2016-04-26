@@ -194,6 +194,7 @@ def process_and_report(args):
     # Report the results
     if args.verbose:
         assemble.report_top_props(haplogroups, props, 10)
+        assemble.report_read_votes(haplogroups, read_hap_mat, 10)
 
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
    
