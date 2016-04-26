@@ -230,7 +230,7 @@ def main():
                         help="Stop EM iteration when abs. difference between "
                              "current and previous contribution estimates is "
                              "< TOLERANCE.")
-    parser.add_argument('-m', '--multi-em', dest='n_multi', type=float,
+    parser.add_argument('-m', '--multi-em', dest='n_multi', type=int,
                         default=1, metavar="N",
                         help="Runs EM until convergence multiple times and "
                              "reports the results average over all runs.")
