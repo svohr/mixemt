@@ -11,6 +11,31 @@ import sys
 import collections
 
 
+class Phylotree:
+    """
+    Class for representing haplogroups and the variants that define them in
+    an explicit tree data structure. The general workflow of this is to load
+    in the tree from a file based on the Phylotree mtDNA tree (phylotree.org),
+    perform any filtering steps and produce a table of haplogroup IDs and
+    the variants that define them.
+    """
+    class PhyloNode:
+        """
+        Class that represents a single node in the phylotree.
+        """
+        def __init__(self, hap='', parent=None):
+            """ Initialize new PhyloNode """
+            self.hap_id = hap
+            self.parent = parent
+            self.children = list()
+            self.variants = list()
+
+    def __init__(self):
+        """ Initialize a blank Phylotree before reading from a file. """
+        self.root = None
+        self.var_pos = dict()
+
+
 def pos_from_var(var):
     """ Returns the position of the variant """
     if var.startswith('('):
