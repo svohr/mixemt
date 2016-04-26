@@ -87,27 +87,15 @@ def report_top_props(haplogroups, props, top_n=10):
     return
 
 
-def report_read_votes(haplogroups, props, read_hap_mat, top_n=10):
+def report_read_votes(haplogroups, read_hap_mat, top_n=10):
     """
     Each read "votes" for a haplogroup; the haplogroup with the highest
-    post. probability. Report the vote counts for the top N.
+    probability. Report the vote counts for the top N.
     """
     votes = numpy.argmax(read_hap_mat, 1)
     vote_count = collections.Counter(votes)
-    sys.stderr.write("\nTop %d haplogroups by read probabilities...\n"
-                      % (top_n))
     for hap_i, count in vote_count.most_common(top_n):
         sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
-    sys.stderr.write('\n')
-    
-    votes = numpy.argmax(read_hap_mat / props, 1)
-    vote_count = collections.Counter(votes)
-    sys.stderr.write(
-        "\nTop %d haplogroups by read probabilities (unweighted)...\n" 
-        % (top_n))
-    for hap_i, count in vote_count.most_common(top_n):
-        sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
-    sys.stderr.write('\n')
     return
 
 

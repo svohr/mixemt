@@ -194,10 +194,13 @@ def process_and_report(args):
     # Report the results
     if args.verbose:
         assemble.report_top_props(haplogroups, props, 10)
-        assemble.report_read_votes(haplogroups, props, read_hap_mat, 10)
+        sys.stderr.write("\nTop %d haplogroups "
+                         "by read probabilities...\n" % (top_n))
+        assemble.report_read_votes(haplogroups, read_hap_mat, 10)
+        sys.stderr.write("\n")
 
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
-   
+
     if args.out_prefix is not None:
         return assemble.write_haplotypes(samfile, contrib_reads, reads, 
                                          read_sigs, args.out_prefix, 
