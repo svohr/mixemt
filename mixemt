@@ -173,8 +173,8 @@ def process_and_report(args):
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
         if args.verbose:
-            sys.stderr.write("\nTop %d haplogroups "
-                             "by read probabilities before EM...\n" % (top_n))
+            sys.stderr.write("\nTop 10 haplogroups "
+                             "by read probabilities before EM...\n")
             assemble.report_read_votes(haplogroups, em_mat, 10)
             sys.stderr.write("\n")
 
@@ -200,8 +200,7 @@ def process_and_report(args):
     # Report the results
     if args.verbose:
         assemble.report_top_props(haplogroups, props, 10)
-        sys.stderr.write("\nTop %d haplogroups "
-                         "by read probabilities...\n" % (top_n))
+        sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
         assemble.report_read_votes(haplogroups, read_hap_mat, 10)
         sys.stderr.write("\n")
 
