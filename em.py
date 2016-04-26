@@ -34,14 +34,14 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
-def run_em(read_hap_mat, weights, init_alpha=1.0, 
-           max_iter=1000, tolerance=0.0001, verbose=True):
+def _run_em_once(read_hap_mat, weights, init_alpha=1.0, 
+                 max_iter=1000, tolerance=0.0001, verbose=True):
     """ 
     Runs the EM algorithm to estimate haplotype contributions.
     """
     # initialize haplogroup proportions
     props = init_props(read_hap_mat.shape[1], alpha=init_alpha)
-    
+
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty_like(props)
@@ -72,23 +72,31 @@ def run_em(read_hap_mat, weights, init_alpha=1.0,
     return new_props, read_mix_mat
 
 
-def multi_em(n_runs, read_hap_mat, weights, init_alpha=1.0, 
+def run_em(read_hap_mat, weights, n_runs=1, init_alpha=1.0, 
              max_iter=1000, tolerance=0.0001, verbose=True):
     """
     Runs EM until convergence several times (n_runs) and returns proportions
     and read/haplogroup probabilities averages over the EM runs.
     """
+    if n_runs == 1:
+        return _run_em_once(read_hap_mat, weights, 
+                            init_alpha=init_alpha,
+                            max_iter=max_iter,
+                            tolerance=tolerance,
+                            verbose=verbose)
+
+    # create empty proportion vector, read matrix to keep track of average.
     avg_props = numpy.zeros(read_hap_mat[1])
     avg_read_mix = numpy.zeros_like(read_hap_mat)
 
     for i in xrange(n_runs):
         if verbose:
             sys.stderr.write("EM iteration %d\n" % (i + 1))
-        props, read_mix_mat = run_em(read_hap_mat, weights, 
-                                     init_alpha=init_alpha,
-                                     max_iter=max_iter,
-                                     tolerance=tolerance,
-                                     verbose=verbose)
+        props, read_mix_mat = _run_em_once(read_hap_mat, weights, 
+                                           init_alpha=init_alpha,
+                                           max_iter=max_iter,
+                                           tolerance=tolerance,
+                                           verbose=verbose)
         avg_props += props
         avg_read_mix += read_mix_mat
     return avg_props / n_runs, avg_read_mix / n_runs

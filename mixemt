@@ -173,7 +173,7 @@ def process_and_report(args):
             preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts,
+        props, read_hap_mat = em.run_em(em_mat, wts, args.n_multi,
                                         init_alpha=args.init_alpha,
                                         max_iter=10000, 
                                         tolerance=args.tolerance,
