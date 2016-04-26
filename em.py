@@ -86,7 +86,7 @@ def run_em(read_hap_mat, weights, n_runs=1, init_alpha=1.0,
                             verbose=verbose)
 
     # create empty proportion vector, read matrix to keep track of average.
-    avg_props = numpy.zeros(read_hap_mat[1])
+    avg_props = numpy.zeros(read_hap_mat.shape[1])
     avg_read_mix = numpy.zeros_like(read_hap_mat)
 
     for i in xrange(n_runs):
