@@ -15,8 +15,9 @@ Wed Apr 13 10:57:39 PDT 2016
 """
 
 import numpy
-import operator
 import pysam
+import operator
+import collections
 import sys
 
 
@@ -82,6 +83,21 @@ def report_top_props(haplogroups, props, top_n=10):
     for i in xrange(top_n):
         sys.stderr.write("%d\t%0.6f\t%s\n" % (i + 1, props[order[i]],
                                               haplogroups[order[i]]))
+    sys.stderr.write('\n')
+    return
+
+
+def report_read_votes(haplogroups, read_hap_mat, top_n=10):
+    """
+    Each read "votes" for a haplogroup; the haplogroup with the highest
+    post. probability. Report the vote counts for the top N.
+    """
+    votes = numpy.argmax(read_hap_mat, 1)
+    vote_count = collections.Counter(votes)
+    sys.stderr.write("\nTop %d haplogroups by read probabilities...\n"
+                      % (top_n))
+    for hap_i, count in vote_count.most_common(top_n):
+        sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
     sys.stderr.write('\n')
     return
 
