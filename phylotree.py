@@ -40,6 +40,17 @@ class Phylotree:
             else:
                 self.variants = variants
 
+        def dump(self, out=sys.stderr, indent=0):
+            """
+            Dumps the contents of this node and its children recursively.
+            """
+            prefix = ' ' * indent
+            out.write('%sNode: %s\n' % (prefix, self.hap_id))
+            out.write('%sVariants: %s\n' % (prefix, ','.join(self.variants)))
+            out.write('%sChildren: %d\n' % (prefix, len(self.children)))
+            for child in self.children:
+                child.dump(out, indent + 2)
+
         def get_anon_name(self):
             """ 
             Returns a unique haplogroup name based on this one for a child with
@@ -244,10 +255,12 @@ def main():
     if len(sys.argv) > 1:
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
-            var_pos, hap_var = read_phylotree(phy_in, False, False, False)
-        for hap in hap_var:
-            print hap, ','.join(hap_var[hap])
-            #print len(var_pos)
+            phy = Phylotree(phy_in)
+            phy.root.dump(sys.stdout)
+#           var_pos, hap_var = read_phylotree(phy_in, False, False, False)
+#       for hap in hap_var:
+#           print hap, ','.join(hap_var[hap])
+#           #print len(var_pos)
     return 0
 
 
