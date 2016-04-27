@@ -23,17 +23,55 @@ class Phylotree:
         """
         Class that represents a single node in the phylotree.
         """
-        def __init__(self, hap='', parent=None):
+        def __init__(self, hap='', parent=None, variants=None):
             """ Initialize new PhyloNode """
             self.hap_id = hap
             self.parent = parent
             self.children = list()
-            self.variants = list()
+            self.ignore = list()
+            self.anon_child = 0
+            self.anon = (self.hap_id == '')
+            if self.parent is not None:
+                parent.children.append(self)
+                if self.anon:
+                    self.hap_id = parent.get_anon_name()
+            if variants is None:
+                self.variants = list()
+            else:
+                self.variants = variants
 
-    def __init__(self):
+        def get_anon_name(self):
+            """ 
+            Returns a unique haplogroup name based on this one for a child with
+            no specified name.
+            """
+            self.anon_child += 1
+            return "%s[%d]" % (self.hap_id, self.anon_child)
+
+    def __init__(self, phy_in=None):
         """ Initialize a blank Phylotree before reading from a file. """
         self.root = None
         self.var_pos = dict()
+        if phy_in is not None:
+            self.read_csv(phy_in)
+
+    def read_csv(self, phy_in):
+        """ Reads tree structure and variants from input stream. """
+        cur = -1
+        node_stack = list([None])
+        for line in phy_in:
+            level, hap_id, raw_var = _read_phy_line(line)
+            variants = [var for var in raw_var if is_snp(var)]
+            while cur >= 0 and cur >= level:
+                node_stack.pop()
+                cur -= 1
+            new_node = Phylotree.PhyloNode(hap_id, node_stack[-1], variants)
+            node_stack.append(new_node)
+            cur += 1
+        else:
+            # Set the root for the tree. First item on node_stack is None.
+            self.root = node_stack[1]
+        return
 
 
 def pos_from_var(var):
