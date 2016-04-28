@@ -11,7 +11,7 @@ import sys
 import collections
 
 
-class Phylotree:
+class Phylotree(object):
     """
     Class for representing haplogroups and the variants that define them in
     an explicit tree data structure. The general workflow of this is to load
@@ -19,7 +19,7 @@ class Phylotree:
     perform any filtering steps and produce a table of haplogroup IDs and
     the variants that define them.
     """
-    class PhyloNode:
+    class PhyloNode(object):
         """
         Class that represents a single node in the phylotree.
         """
@@ -80,8 +80,7 @@ class Phylotree:
         """ Initialize a blank Phylotree before reading from a file. """
         self.root  = None
         self.nodes = list()
-        self.variant_pos = list()
-        self.mutate_pos  = collections.defaultdict(collections.Counter)
+        self.variant_pos  = collections.defaultdict(collections.Counter)
         if phy_in is not None:
             self.read_csv(phy_in)
 
@@ -106,9 +105,9 @@ class Phylotree:
 
     def process_variants(self, rm_unstable, rm_backmut):
         """
-        Builds a list of variant sites stored in Phylotree.variant_pos after
-        filtering based on phylotree annotation. Also keep track of number of
-        mutations and derived alleles as they occur.
+        Builds a table of variant sites stored in Phylotree.variant_pos after
+        filtering based on phylotree annotation. This table keeps track of
+        number of mutations and derived alleles as they occur.
         """
         var_pos = set()
         ignore  = set()
@@ -121,16 +120,36 @@ class Phylotree:
                     ignore.add(pos)
                 else:
                     var_pos.add(pos)
-                der = der_allele(var)
-                self.mutate_pos[pos][der] += 1
+                    der = der_allele(var)
+                    self.variant_pos[pos][der] += 1
         if rm_unstable or rm_backmut:
             var_pos -= ignore
+            for pos in ignore:
+                if pos in self.variant_pos:
+                    del self.variant_pos[pos]
             for node in self.nodes:
                 node.variants = [var for var in node.variants
-                                 if pos_from_var(var) not in ignore] 
-        self.variant_pos = list(sorted(var_pos))
+                                 if pos_from_var(var) not in ignore]
         return
-            
+
+    def get_haplotypes(self):
+        """
+        Contructs a dictionary that maps haplogroup IDs to a list of
+        variants associated with that haplogroup, using the Phylotree
+        information and variants after any filtering. Merges haplogroups with
+        identical variants.
+        """
+        haplotypes = collections.defaultdict(list)
+        hap_tab = dict()
+        for node in self.nodes:
+            var_str = ','.join(node.all_variants())
+            haplotypes[var_str].append(node)
+        for var_str in haplotypes:
+            variants = var_str.split()
+            haplo_id = '/'.join([node.hap_id for node in haplotypes[var_str]])
+            hap_tab[haplo_id] = variants
+        return hap_tab
+
 
 def pos_from_var(var):
     """ Returns the position of the variant """
@@ -211,7 +230,7 @@ def _summarize_vars(var_stack):
     farther down in the tree).
     """
     summed_vars = dict()
-    for hap_id, variants in reversed(var_stack):
+    for _, variants in reversed(var_stack):
         # Go through the stack backwards and only add a variant if we have
         # not seen a variant at the same position.
         for var in variants:
@@ -303,7 +322,11 @@ def main():
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
             phy = Phylotree(phy_in)
-            phy.root.dump(sys.stdout)
+            #phy.root.dump(sys.stdout)
+            phy.process_variants(rm_unstable=False, rm_backmut=False)
+            hap_var = phy.get_haplotypes()
+            for hap in hap_var:
+                print hap, ','.join(hap_var[hap])
 #           var_pos, hap_var = read_phylotree(phy_in, False, False, False)
 #       for hap in hap_var:
 #           print hap, ','.join(hap_var[hap])
