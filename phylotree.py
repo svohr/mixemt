@@ -76,13 +76,16 @@ class Phylotree(object):
             self.anon_child += 1
             return "%s[%d]" % (self.hap_id, self.anon_child)
 
-    def __init__(self, phy_in=None):
+    def __init__(self, phy_in=None, rm_unstable=False, rm_backmut=False):
         """ Initialize a blank Phylotree before reading from a file. """
         self.root  = None
         self.nodes = list()
-        self.variant_pos  = collections.defaultdict(collections.Counter)
+        self.variants = collections.defaultdict(collections.Counter)
+        self.hap_var  = None
         if phy_in is not None:
             self.read_csv(phy_in)
+            self.process_variants(rm_unstable, rm_backmut)
+            self.process_haplotypes()
 
     def read_csv(self, phy_in):
         """ Reads tree structure and variants from input stream. """
@@ -105,7 +108,7 @@ class Phylotree(object):
 
     def process_variants(self, rm_unstable, rm_backmut):
         """
-        Builds a table of variant sites stored in Phylotree.variant_pos after
+        Builds a table of variant sites stored in Phylotree.variants after
         filtering based on phylotree annotation. This table keeps track of
         number of mutations and derived alleles as they occur.
         """
@@ -121,18 +124,18 @@ class Phylotree(object):
                 else:
                     var_pos.add(pos)
                     der = der_allele(var)
-                    self.variant_pos[pos][der] += 1
+                    self.variants[pos][der] += 1
         if rm_unstable or rm_backmut:
             var_pos -= ignore
             for pos in ignore:
-                if pos in self.variant_pos:
-                    del self.variant_pos[pos]
+                if pos in self.variants:
+                    del self.variants[pos]
             for node in self.nodes:
                 node.variants = [var for var in node.variants
                                  if pos_from_var(var) not in ignore]
         return
 
-    def get_haplotypes(self):
+    def process_haplotypes(self):
         """
         Contructs a dictionary that maps haplogroup IDs to a list of
         variants associated with that haplogroup, using the Phylotree
@@ -145,10 +148,17 @@ class Phylotree(object):
             var_str = ','.join(node.all_variants())
             haplotypes[var_str].append(node)
         for var_str in haplotypes:
-            variants = var_str.split()
+            variants = var_str.split(',')
             haplo_id = '/'.join([node.hap_id for node in haplotypes[var_str]])
             hap_tab[haplo_id] = variants
-        return hap_tab
+        self.hap_var = hap_tab
+        return
+
+    def get_variant_pos(self):
+        """
+        Returns a list of positions with variants after filtering.
+        """
+        return sorted(self.variants.keys())
 
 
 def pos_from_var(var):
@@ -324,9 +334,8 @@ def main():
             phy = Phylotree(phy_in)
             #phy.root.dump(sys.stdout)
             phy.process_variants(rm_unstable=False, rm_backmut=False)
-            hap_var = phy.get_haplotypes()
-            for hap in hap_var:
-                print hap, ','.join(hap_var[hap])
+            for hap in phy.hap_var:
+                print hap, ','.join(phy.hap_var[hap])
 #           var_pos, hap_var = read_phylotree(phy_in, False, False, False)
 #       for hap in hap_var:
 #           print hap, ','.join(hap_var[hap])

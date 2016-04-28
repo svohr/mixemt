@@ -34,15 +34,15 @@ class HapVarBaseMatrix(object):
     must be the case that the reference base is the "expected" base and all
     others are "unexpected".
     """
-    def __init__(self, refseq, hap_var=None, exp=0.991, unexp=0.003):
+    def __init__(self, refseq, phylo, exp=0.991, unexp=0.003):
         """ Initialzes the HapVarBaseMatrix. """
         self.refseq = refseq
+        self.phylo  = phylo
         self.exp = exp
         self.unexp = unexp
         self.markers = dict()
 
-        if hap_var is not None:
-            self.add_hap_markers(hap_var)
+        self.add_hap_markers(phylo.hap_var)
         return
 
     def add_hap_markers(self, hap_var):
@@ -153,12 +153,12 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
-def build_em_matrix(refseq, hap_tab, reads, haplogroups, verbose=True):
+def build_em_matrix(refseq, phylo, reads, haplogroups, verbose=True):
     """ 
     Returns the matrix that describes the probabiliy of each read 
     originating in each haplotype. 
     """
-    hvb_mat = HapVarBaseMatrix(refseq, hap_tab)
+    hvb_mat = HapVarBaseMatrix(refseq, phylo)
     read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
  
     if verbose:
@@ -177,56 +177,57 @@ def build_em_matrix(refseq, hap_tab, reads, haplogroups, verbose=True):
     return read_hap_mat
 
 
-def build_em_input(samfile, refseq, var_pos, hap_tab, args):
+def build_em_input(samfile, refseq, phylo, args):
     """
     Builds the matrix that describes the "probability" that a read originated
     from a specific haplogroup.
     """
+    var_pos = phylo.get_variant_pos()
     read_obs = process_reads(samfile, var_pos, args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
-    
+ 
     if args.verbose:
         sys.stderr.write('Using %d aligned fragments (MQ>=%d) '
                          '(%d distinct sub-haplotypes)\n\n' 
                            % (len(read_obs), args.min_mq, len(read_sigs)))
     
     # This is now the order we will be using for the matrix.
-    haplogroups = sorted(hap_tab)
+    haplogroups = sorted(phylo.hap_var)
     reads = sorted(read_sigs)
     weights = numpy.array([len(read_sigs[r]) for r in reads])
-   
-    em_matrix = build_em_matrix(refseq, hap_tab, reads, 
+ 
+    em_matrix = build_em_matrix(refseq, phylo, reads,
                                 haplogroups, args.verbose)
     return em_matrix, weights, haplogroups, reads, read_sigs
 
 
 def main():
     """ Main function for simple testing. """
-    args = {'min_mq':30, 'min_bq':30, 'verbose':True}
-    if len(sys.argv) > 2:
-        phy_fn = sys.argv[1]
-        bam_fn = sys.argv[2]
-        ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
-        refseq = ref_in.fetch(ref_in.references[0])
-        with open(phy_fn, 'r') as phy_in:
-            var_pos, hap_var = phylotree.read_phylotree(phy_in,
-                                                        False, False, False)
-        with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
-            build_em_input(samfile, refseq, var_pos, hap_var, args)
-    else:
+#   args = {'min_mq':30, 'min_bq':30, 'verbose':True}
+#   if len(sys.argv) > 2:
+#       phy_fn = sys.argv[1]
+#       bam_fn = sys.argv[2]
+#       ref_in = pysam.FastaFile('../ref/RSRS.mtDNA.fa')
+#       refseq = ref_in.fetch(ref_in.references[0])
+#       with open(phy_fn, 'r') as phy_in:
+#           var_pos, hap_var = phylotree.read_phylotree(phy_in,
+#                                                       False, False, False)
+#       with pysam.AlignmentFile(bam_fn, 'rb') as samfile:
+#           build_em_input(samfile, refseq, var_pos, hap_var, args)
+#   else:
         # Entirely fake data.
-        ref = "GAAAAAAAA"
-        var_pos = range(1, 9)
-        hap_var = dict({'A':['A1T', 'A3T'],
-                        'B':['A2T', 'A4T', 'A5T', 'A7T'],
-                        'C':['A2T', 'A5T'],
-                        'D':['A2T', 'A4T', 'A6T', 'A8T'],
-                        'E':['A2T', 'A3T', 'A4T', 'A6T']})
-        reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
-                      "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
-                      "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
-        haps = list('ABCDE')
-        print build_em_matrix(ref, hap_var, reads, haps)
+#       ref = "GAAAAAAAA"
+#       var_pos = range(1, 9)
+#       hap_var = dict({'A':['A1T', 'A3T'],
+#                       'B':['A2T', 'A4T', 'A5T', 'A7T'],
+#                       'C':['A2T', 'A5T'],
+#                       'D':['A2T', 'A4T', 'A6T', 'A8T'],
+#                       'E':['A2T', 'A3T', 'A4T', 'A6T']})
+#       reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
+#                     "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
+#                     "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
+#       haps = list('ABCDE')
+#       print build_em_matrix(ref, hap_var, reads, haps)
     return 0
 
 

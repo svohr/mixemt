@@ -63,12 +63,11 @@ def open_phylotree(phy_fn, args):
     """
     try:
         with open(phy_fn, 'r') as phy_in:
-            var_pos, hap_var = phylotree.read_phylotree(phy_in, False, 
-                                                        False, False)
+            phy = phylotree.Phylotree(phy_in)
             if args.verbose:
                 sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
-                                 % (len(var_pos), len(hap_var)))
-            return var_pos, hap_var 
+                                 % (len(phy.variants), len(phy.hap_var)))
+            return phy 
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
@@ -153,7 +152,7 @@ def process_and_report(args):
     # Load up the data.
     refseq  = open_refseq(args.ref_fn, args)
     samfile = open_aln_file(args.sam_fn, args)
-    var_pos, hap_var = open_phylotree(args.phy_fn, args)
+    phylo   = open_phylotree(args.phy_fn, args)
 
     if args.load is not None:
         # Just load the saved results instead of running everything again.
@@ -170,7 +169,7 @@ def process_and_report(args):
     else:
         # Build input for EM step
         em_mat, wts, haplogroups, reads, read_sigs = \
-            preprocess.build_em_input(samfile, refseq, var_pos, hap_var, args)
+            preprocess.build_em_input(samfile, refseq, phylo, args)
 
         if args.verbose:
             sys.stderr.write("\nTop 10 haplogroups "

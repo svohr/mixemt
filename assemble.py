@@ -64,7 +64,7 @@ def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
     contrib_reads = dict()
     unassigned = set(range(len(reads)))
 
-    for hap, group, prop in contribs:
+    for hap, group, _ in contribs:
         hap_col = haps.index(group)
         contrib_reads[hap] = set(numpy.nonzero(read_hap_mat[:, hap_col]
                                                 >= min_prob)[0])
