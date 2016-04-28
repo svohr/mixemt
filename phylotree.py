@@ -28,7 +28,6 @@ class Phylotree:
             self.hap_id = hap
             self.parent = parent
             self.children = list()
-            self.ignore = list()
             self.anon_child = 0
             self.anon = (self.hap_id == '')
             if self.parent is not None:
@@ -39,6 +38,24 @@ class Phylotree:
                 self.variants = list()
             else:
                 self.variants = variants
+
+        def all_variants(self):
+            """
+            Produces a list of variants that define this haplogroup including
+            variants inherited from the node's parent. Importantly, mutations
+            that occur to the same position are masked by the most recent
+            mutation (i.e. C152T will not be included if T152C occurs farther
+            down in the tree).
+            """
+            summed_vars = dict()
+            node = self
+            while node is not None:
+                for var in node.variants:
+                    pos = pos_from_var(var)
+                    if pos not in summed_vars:
+                        summed_vars[pos] = var
+                node = node.parent
+            return [summed_vars[pos] for pos in sorted(summed_vars)]
 
         def dump(self, out=sys.stderr, indent=0):
             """
@@ -61,8 +78,10 @@ class Phylotree:
 
     def __init__(self, phy_in=None):
         """ Initialize a blank Phylotree before reading from a file. """
-        self.root = None
-        self.var_pos = dict()
+        self.root  = None
+        self.nodes = list()
+        self.variant_pos = list()
+        self.mutate_pos  = collections.defaultdict(collections.Counter)
         if phy_in is not None:
             self.read_csv(phy_in)
 
@@ -77,6 +96,7 @@ class Phylotree:
                 node_stack.pop()
                 cur -= 1
             new_node = Phylotree.PhyloNode(hap_id, node_stack[-1], variants)
+            self.nodes.append(new_node)
             node_stack.append(new_node)
             cur += 1
         else:
@@ -84,6 +104,33 @@ class Phylotree:
             self.root = node_stack[1]
         return
 
+    def process_variants(self, rm_unstable, rm_backmut):
+        """
+        Builds a list of variant sites stored in Phylotree.variant_pos after
+        filtering based on phylotree annotation. Also keep track of number of
+        mutations and derived alleles as they occur.
+        """
+        var_pos = set()
+        ignore  = set()
+        for node in self.nodes:
+            for var in node.variants:
+                pos = pos_from_var(var)
+                if rm_unstable and is_unstable(var):
+                    ignore.add(pos)
+                elif rm_backmut and is_backmutation(var):
+                    ignore.add(pos)
+                else:
+                    var_pos.add(pos)
+                der = der_allele(var)
+                self.mutate_pos[pos][der] += 1
+        if rm_unstable or rm_backmut:
+            var_pos -= ignore
+            for node in self.nodes:
+                node.variants = [var for var in node.variants
+                                 if pos_from_var(var) not in ignore] 
+        self.variant_pos = list(sorted(var_pos))
+        return
+            
 
 def pos_from_var(var):
     """ Returns the position of the variant """
@@ -260,7 +307,7 @@ def main():
 #           var_pos, hap_var = read_phylotree(phy_in, False, False, False)
 #       for hap in hap_var:
 #           print hap, ','.join(hap_var[hap])
-#           #print len(var_pos)
+            #print len(var_pos)
     return 0
 
 
