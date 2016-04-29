@@ -240,7 +240,7 @@ def main():
             #phy.root.dump(sys.stdout)
             #phy.process_variants(rm_unstable=False, rm_backmut=False)
             for pos in sorted(phy.variants):
-                print phy.variants[pos], (sum(phy.variants[pos].values()))
+                print pos, phy.variants[pos], (sum(phy.variants[pos].values()))
 #           for hap in phy.hap_var:
 #               print hap, ','.join(phy.hap_var[hap])
     return 0

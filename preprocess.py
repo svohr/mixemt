@@ -104,7 +104,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
                 rpos = int(rpos)
-                if qpos in var_pos:
+                if rpos in var_pos:
                     if (aln.query_qualities is None or 
                         aln.query_qualities[qpos] >= min_bq):
                         # Add this to the list
@@ -189,7 +189,7 @@ def build_em_input(samfile, refseq, phylo, args):
     var_pos = phylo.get_variant_pos()
     read_obs = process_reads(samfile, var_pos, args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
- 
+
     if args.verbose:
         sys.stderr.write('Using %d aligned fragments (MQ>=%d) '
                          '(%d distinct sub-haplotypes)\n\n' 
