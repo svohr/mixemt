@@ -106,7 +106,6 @@ def main():
     """ Simple example for testing """
     if len(sys.argv) > 0:
         ref = "GAAAAAAAA"
-        var_pos = range(1, 9)
         hap_var = dict({'A':['A2T','A4T'],
                         'B':['A3T','A5T','A6T','A8T'],
                         'C':['A3T','A6T'],

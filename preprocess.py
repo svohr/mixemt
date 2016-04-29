@@ -32,14 +32,16 @@ class HapVarBaseMatrix(object):
     dictionary of haplogroup, variant site, base tuples that mark where a
     non-reference base occurs. If an entry is not present in the dictionary, it
     must be the case that the reference base is the "expected" base and all
-    others are "unexpected".
+    others are "unexpected". Finally, we will now make use of mutation counts
+    available from Phylotree to adjust the probabilities based on how "mutable"
+    a site appears to be. 
     """
-    def __init__(self, refseq, phylo, exp=0.991, unexp=0.003):
+    def __init__(self, refseq, phylo, mut_wt=0.01, mut_max=0.5):
         """ Initialzes the HapVarBaseMatrix. """
         self.refseq = refseq
         self.phylo  = phylo
-        self.exp = exp
-        self.unexp = unexp
+        self.mut_wt = mut_wt
+        self.mut_max = mut_max
         self.markers = dict()
 
         self.add_hap_markers(phylo.hap_var)
@@ -64,16 +66,18 @@ class HapVarBaseMatrix(object):
         this haplogroup, given the dictionary that describes the derived
         alleles of this haplogroup.
         """
+        mut_prob = min(self.mut_wt * sum(self.phylo.variants[pos].values()),
+                       self.mut_max)
         if pos in hap_pos:
             # Does this haplogroup carry a derived base?
             if hap_pos[pos] == base:
                 # Is it the one we observed?
-                return self.exp
+                return 1.0 - mut_prob 
         else:
             # No derived base at this position, does our observed match ref.
             if self.refseq[pos] == base:
-                return self.exp
-        return self.unexp
+                return 1.0 - mut_prob
+        return mut_prob / 3.0
 
     def prob_for_vars(self, hap, pos_obs):
         """
