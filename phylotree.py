@@ -81,6 +81,7 @@ class Phylotree(object):
         self.root  = None
         self.nodes = list()
         self.variants = collections.defaultdict(collections.Counter)
+        self.ignore = None
         self.hap_var  = None
         if phy_in is not None:
             self.read_csv(phy_in)
@@ -113,26 +114,26 @@ class Phylotree(object):
         number of mutations and derived alleles as they occur.
         """
         var_pos = set()
-        ignore  = set()
+        self.ignore = set()
         for node in self.nodes:
             for var in node.variants:
                 pos = pos_from_var(var)
                 if rm_unstable and is_unstable(var):
-                    ignore.add(pos)
+                    self.ignore.add(pos)
                 elif rm_backmut and is_backmutation(var):
-                    ignore.add(pos)
+                    self.ignore.add(pos)
                 else:
                     var_pos.add(pos)
                     der = der_allele(var)
                     self.variants[pos][der] += 1
         if rm_unstable or rm_backmut:
-            var_pos -= ignore
-            for pos in ignore:
+            var_pos -= self.ignore
+            for pos in self.ignore:
                 if pos in self.variants:
                     del self.variants[pos]
             for node in self.nodes:
                 node.variants = [var for var in node.variants
-                                 if pos_from_var(var) not in ignore]
+                                 if pos_from_var(var) not in self.ignore]
         return
 
     def process_haplotypes(self):
@@ -159,6 +160,20 @@ class Phylotree(object):
         Returns a list of positions with variants after filtering.
         """
         return sorted(self.variants.keys())
+
+    def add_custom_hap(self, hap_id, variants):
+        """
+        Adds a custom haplotype to the haplotype variant table. Does not add a
+        node in the tree for this haplotype. Ignores positions that have been
+        removed from consideration by process_variants().
+        """
+        if hap_id in self.hap_var:
+            raise ValueError("Custom haplogroup name '%d' already in use."
+                             % (hap_id))
+        ok_vars = [var for var in variants 
+                   if pos_from_var(var) not in self.ignore]
+        self.hap_var[hap_id] = ok_vars
+        return
 
 
 def pos_from_var(var):
