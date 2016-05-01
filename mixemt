@@ -254,7 +254,7 @@ def main():
                         help='Minimum probability required to assign read to '
                              'a contributing haplogroup.')
     parser.add_argument('-r', '--min-reads', dest='min_reads', type=int,
-                        default=1, metavar='N',
+                        default=2, metavar='N',
                         help="Haplogroup must have N reads to be considered "
                              "a contributor.")
     parser.add_argument('-o', '--out', dest='out_prefix', type=str,
