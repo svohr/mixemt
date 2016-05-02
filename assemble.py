@@ -181,6 +181,8 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
     if verbose:
         sys.stderr.write('\n')
     for contrib in contrib_reads:
+        if len(contrib_reads[contrib]) == 0:
+            continue
         hap_read_ids = get_contrib_read_ids(contrib_reads[contrib], 
                                             reads, read_sigs)
         hap_fn = "%s.%s.%s" % (prefix, contrib, ext)
