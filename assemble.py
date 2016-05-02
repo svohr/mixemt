@@ -21,7 +21,7 @@ import collections
 import sys
 
 
-def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
+def get_contributors(haplogroups, props, read_hap_mat, min_reads):
     """ 
     Takes a list of haplogroup IDs, a vector of their relative contributions to
     the sample and a matrix of read haplogroup probability assignments and
@@ -47,28 +47,58 @@ def get_contributors(haplogroups, props, read_hap_mat, min_prob, min_reads):
     return contrib_prop
 
 
-def assign_reads(contribs, haps, reads, read_hap_mat, min_prob):
+def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
+    """
+    Takes a vector of haplogroup probabilities for a single read (read_prob)
+    and a list of indexes of identified contributors and returns a list of
+    N (top_n) indexes in con_indexes that have the highest probabilities.
+    """
+    order = numpy.argsort(read_prob)[::-1]
+    results = list()
+    i = 0
+
+    while len(results) < top_n:
+        if order[i] in con_indexes:
+            results.append(order[i])
+        i += 1
+    return results
+    
+
+def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
     """
     Takes the list of identified contributors, the list of haplotype ids and
     the read-haplogroup probability under mixture proportions matrix, and
     returns a table mapping the identified contributors to the indexes of all
     reads (rows in the matrix) that have been assigned to that haplotype and a
     set of read indexes that were not assigned to a contributor. A read is
-    assigned to a haplogroup with the probability it originated from that
-    haplogroup is greater or equal to the minimum cutoff provided.
-    
-    Note: when min_prob is low (<0.50) reads can be assigned to more than
-          one contributor.
+    assigned to a haplogroup if its highest probability out of all identified
+    contributors is at least min_fold times greater than the probability of
+    the next contributor _after_ normalizing out the contribution proportion
+    of each. This way, reads that could be assigned to more than 1 
+    contributor are not simply assigned to the contributor that represents
+    the larger proportion of the mixture.
     """
-    contrib_reads = dict()
-    unassigned = set(range(len(reads)))
-
-    for hap, group, _ in contribs:
-        hap_col = haps.index(group)
-        contrib_reads[hap] = set(numpy.nonzero(read_hap_mat[:, hap_col]
-                                                >= min_prob)[0])
-        unassigned -= contrib_reads[hap]
-    contrib_reads['unassigned'] = unassigned
+    contrib_reads = collections.defaultdict(set)
+    
+    index_to_hap = dict([(haps.index(group), hap_n)
+                        for hap_n, group, _ in contribs])
+    con_indexes = set(index_to_hap.keys()) 
+    for read_i in xrange(len(reads)):
+        if len(contribs) > 1:
+            read_probs = read_hap_mat[read_i, ]
+            best_hap, next_hap = _find_best_n_for_read(read_probs,
+                                                       con_indexes,
+                                                       top_n=2)
+            rel_prob = ((read_probs[best_hap] / props[best_hap]) / 
+                        (read_probs[next_hap] / props[next_hap]))
+            if rel_prob >= min_fold:
+                contrib_reads[index_to_hap[best_hap]].add(read_i)
+            else:
+                contrib_reads['unassigned'].add(read_i)
+        else:
+            # Only 1 identified contributor, use the first field of the first
+            # entry in the contributors table.
+            contrib_reads[contribs[0][0]].add(read_i)
     return contrib_reads
 
 

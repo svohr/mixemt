@@ -186,15 +186,15 @@ def process_and_report(args):
 
         # Save the results if requested.
         if args.save is not None:
-            sys.stderr.write('\nSaving results to %s.*\n\n'
-                             % (args.save))
+            if args.verbose:
+                sys.stderr.write('\nSaving results to %s.*\n\n' % (args.save))
             dump_all(args.save, haplogroups, reads,
                      read_sigs, props, read_hap_mat)
 
-    contribs = assemble.get_contributors(haplogroups, props, read_hap_mat, 
-                                         args.min_prob, args.min_reads)
+    contribs = assemble.get_contributors(haplogroups, props,
+                                         read_hap_mat, args.min_reads)
     contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
-                                      read_hap_mat, args.min_prob)
+                                          read_hap_mat, props, args.min_fold)
  
     # Report the results
     if args.verbose:
@@ -249,10 +249,11 @@ def main():
     parser.add_argument('-s', '--save', dest='save', type=str,
                         default=None, metavar='PREFIX',
                         help="Save the EM results using this file prefix.")
-    parser.add_argument('-p', '--prob', dest='min_prob', type=float,
-                        default=0.95,
-                        help='Minimum probability required to assign read to '
-                             'a contributing haplogroup.')
+    parser.add_argument('-f', '--fold', dest='min_fold', type=float,
+                        default=2.0,
+                        help='Minimum fold difference in probability between '
+                             'best and next haplogroup required to assign '
+                             'read to a contributor.')
     parser.add_argument('-r', '--min-reads', dest='min_reads', type=int,
                         default=2, metavar='N',
                         help="Haplogroup must have N reads to be considered "
