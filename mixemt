@@ -67,12 +67,44 @@ def open_phylotree(phy_fn, args):
             if args.verbose:
                 sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
                                  % (len(phy.variants), len(phy.hap_var)))
+
+            if args.cust_hap_fn is not None:
+                open_custom_haplotypes(args.cust_hap_fn, phy, args) 
             return phy 
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
     return
 
+
+def open_custom_haplotypes(hap_fn, phylo, args):
+    """
+    Reads in a file describing custom haplotypes to be considered along with the    haplogroups from Phylotree. Each haplotype is described by a single line
+    made up of an identifier and list of SNP variants. The identifier and the
+    variant list are separated by a tab character. Variants should be described
+    in terms of the Reconstructed Sapiens Reference Sequence and each variants
+    in the list are separated by ','s. Custom haplotypes are read in from
+    the filename "hap_fn" and added to the provided Phylotree object.
+
+    i.e.
+    "custom_hap1\tC152T,A2758G,C2885T,G7146A,T8468C\n"
+    """
+    try:
+        with open(hap_fn, 'r') as hap_in:
+            n_haps = 0
+            for line in hap_in:
+                items = line.rstrip().split('\t')
+                hap_id = items[0]
+                variants = items[1].split(',')
+                phylo.add_custom_hap(hap_id, variants)
+                n_haps += 1
+            if args.verbose:
+                sys.stderr.write('%d custom haplotypes added from "%s"\n'
+                                  % (n_haps, hap_fn))
+    except (ValueError, IOError) as inst:
+        sys.stderr.write("Error: %s\n" % (inst))
+        sys.exit(1)
+    return
 
 def open_refseq(fa_fn, args):
     """
@@ -223,6 +255,10 @@ def main():
                         help="Phylotree CSV file")
     parser.add_argument("sam_fn", metavar="reads.[sb]am", type=str,
                         help="Aligned reads in SAM/BAM format.")
+    parser.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
+                        metavar='custom.tab', default=None,
+                        help="Custom haplotypes to be considered in addition "
+                             "haplogroups from Phylotree.")
     parser.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
                         metavar="INT", default=30,
                         help="Skip alignments with mapQ < INT")

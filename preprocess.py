@@ -14,7 +14,6 @@ Wed Apr  6 10:48:21 PDT 2016
 
 import sys
 import numpy
-import pysam
 import collections
 
 import phylotree
