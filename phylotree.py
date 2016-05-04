@@ -175,6 +175,15 @@ class Phylotree(object):
         self.hap_var[hap_id] = ok_vars
         return
 
+    def ignore_sites(self, sites_str):
+        """
+        Adds the sites described by the argument into the ignore list and
+        rebuilds the variant and haplotype tables.
+        """
+        # TODO: Add sites to ignore set.
+        self.process_variants(self.rm_unstable, self.rm_backmut)
+        self.process_haplotypes()
+        return
 
 def pos_from_var(var):
     """ Returns the position of the variant """
