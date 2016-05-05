@@ -64,6 +64,8 @@ def open_phylotree(phy_fn, args):
     try:
         with open(phy_fn, 'r') as phy_in:
             phy = phylotree.Phylotree(phy_in)
+            if args.exclude_pos is not None:
+                phy.ignore_sites(args.exclude_pos)
             if args.verbose:
                 sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
                                  % (len(phy.variants), len(phy.hap_var)))
@@ -259,6 +261,11 @@ def main():
                         metavar='custom.tab', default=None,
                         help="Custom haplotypes to be considered in addition "
                              "haplogroups from Phylotree.")
+    parser.add_argument('-e', '--exclude_pos', dest='exclude_pos', type=str,
+                        metavar='SITES', default=None,
+                        help="A comma-separated list of 1-based positions or "
+                             "'start-end' ranges to be excluded from "
+                             "consideration.")
     parser.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
                         metavar="INT", default=30,
                         help="Skip alignments with mapQ < INT")

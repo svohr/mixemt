@@ -81,11 +81,13 @@ class Phylotree(object):
         self.root  = None
         self.nodes = list()
         self.variants = collections.defaultdict(collections.Counter)
-        self.ignore = None
+        self.ignore = set()
         self.hap_var  = None
+        self.rm_unstable = rm_unstable
+        self.rm_backmut = rm_backmut
         if phy_in is not None:
             self.read_csv(phy_in)
-            self.process_variants(rm_unstable, rm_backmut)
+            self.process_variants()
             self.process_haplotypes()
 
     def read_csv(self, phy_in):
@@ -107,26 +109,25 @@ class Phylotree(object):
             self.root = node_stack[1]
         return
 
-    def process_variants(self, rm_unstable, rm_backmut):
+    def process_variants(self):
         """
         Builds a table of variant sites stored in Phylotree.variants after
         filtering based on phylotree annotation. This table keeps track of
         number of mutations and derived alleles as they occur.
         """
         var_pos = set()
-        self.ignore = set()
         for node in self.nodes:
             for var in node.variants:
                 pos = pos_from_var(var)
-                if rm_unstable and is_unstable(var):
+                if self.rm_unstable and is_unstable(var):
                     self.ignore.add(pos)
-                elif rm_backmut and is_backmutation(var):
+                elif self.rm_backmut and is_backmutation(var):
                     self.ignore.add(pos)
                 else:
                     var_pos.add(pos)
                     der = der_allele(var)
                     self.variants[pos][der] += 1
-        if rm_unstable or rm_backmut:
+        if self.rm_unstable or self.rm_backmut:
             var_pos -= self.ignore
             for pos in self.ignore:
                 if pos in self.variants:
@@ -178,12 +179,21 @@ class Phylotree(object):
     def ignore_sites(self, sites_str):
         """
         Adds the sites described by the argument into the ignore list and
-        rebuilds the variant and haplotype tables.
+        rebuilds the variant and haplotype tables. site_str is a string that
+        represents a comma-separated list of 1-based positions or 'start-end'
+        ranges (inclusive).
         """
-        # TODO: Add sites to ignore set.
-        self.process_variants(self.rm_unstable, self.rm_backmut)
+        sites = sites_str.split(',')
+        for site in sites:
+            if '-' in site:
+                start, end = site.split('-')
+                self.ignore.update(range(int(start) - 1, int(end)))
+            else:
+                self.ignore.update(int(site) - 1)
+        self.process_variants()
         self.process_haplotypes()
         return
+
 
 def pos_from_var(var):
     """ Returns the position of the variant """
