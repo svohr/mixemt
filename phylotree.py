@@ -273,10 +273,10 @@ def main():
             phy = Phylotree(phy_in)
             #phy.root.dump(sys.stdout)
             #phy.process_variants(rm_unstable=False, rm_backmut=False)
-            for pos in sorted(phy.variants):
-                print pos, phy.variants[pos], (sum(phy.variants[pos].values()))
-#           for hap in phy.hap_var:
-#               print hap, ','.join(phy.hap_var[hap])
+#           for pos in sorted(phy.variants):
+#               print pos, phy.variants[pos], (sum(phy.variants[pos].values()))
+            for hap in phy.hap_var:
+                print hap, ','.join(phy.hap_var[hap])
     return 0
 
 
