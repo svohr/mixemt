@@ -81,12 +81,13 @@ def open_phylotree(phy_fn, args):
 
 def open_custom_haplotypes(hap_fn, phylo, args):
     """
-    Reads in a file describing custom haplotypes to be considered along with the    haplogroups from Phylotree. Each haplotype is described by a single line
-    made up of an identifier and list of SNP variants. The identifier and the
-    variant list are separated by a tab character. Variants should be described
-    in terms of the Reconstructed Sapiens Reference Sequence and each variants
-    in the list are separated by ','s. Custom haplotypes are read in from
-    the filename "hap_fn" and added to the provided Phylotree object.
+    Reads in a file describing custom haplotypes to be considered along with
+    the haplogroups from Phylotree. Each haplotype is described by a single
+    line made up of an identifier and list of SNP variants. The identifier and
+    the variant list are separated by a tab character. Variants should be
+    described in terms of the Reconstructed Sapiens Reference Sequence and each
+    variants in the list are separated by ','s. Custom haplotypes are read in
+    from the filename "hap_fn" and added to the provided Phylotree object.
 
     i.e.
     "custom_hap1\tC152T,A2758G,C2885T,G7146A,T8468C\n"
