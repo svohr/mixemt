@@ -16,6 +16,7 @@ import argparse
 import numpy
 
 import preprocess
+import phylotree
 
 
 def init_props(nhaps, alpha=1.0):
@@ -69,7 +70,7 @@ def run_em(read_hap_mat, weights, args):
     """
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
-    new_props    = numpy.empty_like(read_hap_mat.shape[1])
+    new_props    = numpy.empty(read_hap_mat.shape[1])
 
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
@@ -133,7 +134,7 @@ def main():
         args.n_multi    = 1
         args.verbose    = True
 
-        ref = "GAAAAAAAA"
+        ref = "AAAAAAAAA"
         hap_var = dict({'A':['A2T','A4T'],
                         'B':['A3T','A5T','A6T','A8T'],
                         'C':['A3T','A6T'],
@@ -146,8 +147,9 @@ def main():
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
+        phy = phylotree.example()
         haps = list('ABCDEFGHI')
-        input_mat = preprocess.build_em_matrix(ref, hap_var, reads, haps)
+        input_mat = preprocess.build_em_matrix(ref, phy, reads, haps)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
         print props
