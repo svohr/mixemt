@@ -82,7 +82,7 @@ class Phylotree(object):
         self.nodes = list()
         self.variants = collections.defaultdict(collections.Counter)
         self.ignore = set()
-        self.hap_var  = None
+        self.hap_var = None
         self.rm_unstable = rm_unstable
         self.rm_backmut = rm_backmut
         if phy_in is not None:
@@ -246,6 +246,30 @@ def rm_snp_annot(var):
     return var.upper()
 
 
+def example():
+    """
+    Returns an example tree we can use for testing.
+    """
+    #            I
+    #           / \
+    #          /   H
+    #         /   / \
+    #        /   /   \
+    #       /   F     G
+    #      /   / \   / \
+    #     A   B   C D   E
+    phy_in = ['I, A1G ,,',
+              ',H, A3T A5T ,,',
+              ',,F, A6T ,,',
+              ',,,B, A8T ,,',
+              ',,,C, T5A ,,',
+              ',,G, A7T ,,',
+              ',,,D, A9T ,,',
+              ',,,E, A4T ,,',
+              ',A, A2T A4T ,,']
+    return Phylotree(phy_in)
+
+
 def _read_phy_line(line):
     """
     Reads a single comma-separated line from phylotree and returns the
@@ -271,12 +295,23 @@ def main():
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
             phy = Phylotree(phy_in)
-            #phy.root.dump(sys.stdout)
-            #phy.process_variants(rm_unstable=False, rm_backmut=False)
-#           for pos in sorted(phy.variants):
-#               print pos, phy.variants[pos], (sum(phy.variants[pos].values()))
             for hap in phy.hap_var:
                 print hap, ','.join(phy.hap_var[hap])
+    else:
+        phy = example()
+        hap_var = dict({'A':['A1G', 'A2T', 'A4T'],
+                        'B':['A1G', 'A3T', 'A5T', 'A6T', 'A8T'],
+                        'C':['A1G', 'A3T', 'T5A', 'A6T'],
+                        'D':['A1G', 'A3T', 'A5T', 'A7T', 'A9T'],
+                        'E':['A1G', 'A3T', 'A4T', 'A5T', 'A7T'],
+                        'F':['A1G', 'A3T', 'A5T', 'A6T'],
+                        'G':['A1G', 'A3T', 'A5T', 'A7T'],
+                        'H':['A1G', 'A3T', 'A5T'],
+                        'I':['A1G']})
+        for hap in sorted(phy.hap_var):
+            print hap, phy.hap_var[hap], hap_var[hap]
+        print phy.variants
+        phy.root.dump()
     return 0
 
 
