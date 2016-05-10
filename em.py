@@ -34,6 +34,46 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
+def em_step(read_hap_mat, weights, props, read_mix_mat, new_props):
+    """
+    Runs a single iteration of the EM algorithm given:
+    1. The original input read-hap probability matrix (read_hap_mat)
+    2. The weights, i.e. the number times we observe each sub-haplotype.
+    3. Current haplogroup proportion estimates (props)
+    4. A matrix of the same size as 'read_hap_mat' that will be written over
+       with the conditional probabililies (read_mix_mat)
+    5. A vector of the same size as 'props' that will be filled by the new
+       haplogroup proportion estimates.
+    """
+    # E-Step: 
+    # Set z_j,g - probablilty that read j originates from haplogroup g 
+    # given this proportion in the mixture..
+    for i in xrange(read_hap_mat.shape[0]):
+        prop_read = props * read_hap_mat[i, ]
+        read_mix_mat[i, ] = prop_read / numpy.sum(prop_read)
+    
+    # M-Step:
+    # Set theta_g - contribution of g to the mixture
+    for i in xrange(read_hap_mat.shape[1]):
+        new_props[i] = numpy.sum(read_mix_mat[:, i] * weights)
+    new_props /= numpy.sum(new_props)
+
+    return read_mix_mat, new_props
+
+
+def run_em(read_hap_mat, weights, args):
+    """
+    Runs the EM algorithm on the input read-haplogroup probability matrix and
+    weights, using the arguments read from the command line.
+    """
+
+    read_mix_mat = numpy.empty_like(read_hap_mat)
+
+    for i in xrange(args.n_multi):
+        for j in xrange(args.max_iter):
+    return
+
+
 def _run_em_once(read_hap_mat, weights, init_alpha=1.0, 
                  max_iter=1000, tolerance=0.0001, verbose=True):
     """ 

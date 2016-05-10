@@ -109,6 +109,7 @@ def open_custom_haplotypes(hap_fn, phylo, args):
         sys.exit(1)
     return
 
+
 def open_refseq(fa_fn, args):
     """
     Opens the FASTA formatted file specified by the fa_fn parameter and returns
@@ -159,12 +160,13 @@ def load_prev(prefix):
     return
 
 
-def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
+def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat): 
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
     debugging.
     """
+    # Suppress too many args (6/5) warning... pylint: disable=R0913 
     try:
         with open("%s.haps" % (prefix), 'w') as hap_out:
             for hap in haps:
@@ -282,7 +284,10 @@ def main():
                         help="Stop EM iteration when abs. difference between "
                              "current and previous contribution estimates is "
                              "< TOLERANCE.")
-    parser.add_argument('-m', '--multi-em', dest='n_multi', type=int,
+    parser.add_argument('-m', '--max-em-iter', dest='max_iter', type=int,
+                        default=1000, metavar="N",
+                        help="Maximum of number of EM iterations to run.")
+    parser.add_argument('-M', '--multi-em', dest='n_multi', type=int,
                         default=1, metavar="N",
                         help="Runs EM until convergence multiple times and "
                              "reports the results average over all runs.")
