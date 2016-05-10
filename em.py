@@ -12,6 +12,7 @@ Mon Apr  4 09:38:08 PDT 2016
 """
 
 import sys
+import argparse
 import numpy
 
 import preprocess
@@ -28,8 +29,8 @@ def init_props(nhaps, alpha=1.0):
 def converged(prop, last_prop, tolerance=0.0001):
     """
     Check if our proportion parameters has converged, i.e. the absolute
-    difference between the this and the previous iteration is within a 
-    fixed tolerance value. 
+    difference between the this and the previous iteration is within a
+    fixed tolerance value.
     """
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
@@ -45,13 +46,13 @@ def em_step(read_hap_mat, weights, props, read_mix_mat, new_props):
     5. A vector of the same size as 'props' that will be filled by the new
        haplogroup proportion estimates.
     """
-    # E-Step: 
-    # Set z_j,g - probablilty that read j originates from haplogroup g 
+    # E-Step:
+    # Set z_j,g - probablilty that read j originates from haplogroup g
     # given this proportion in the mixture..
     for i in xrange(read_hap_mat.shape[0]):
         prop_read = props * read_hap_mat[i, ]
         read_mix_mat[i, ] = prop_read / numpy.sum(prop_read)
-    
+
     # M-Step:
     # Set theta_g - contribution of g to the mixture
     for i in xrange(read_hap_mat.shape[1]):
@@ -66,85 +67,72 @@ def run_em(read_hap_mat, weights, args):
     Runs the EM algorithm on the input read-haplogroup probability matrix and
     weights, using the arguments read from the command line.
     """
-
-    read_mix_mat = numpy.empty_like(read_hap_mat)
-
-    for i in xrange(args.n_multi):
-        for j in xrange(args.max_iter):
-    return
-
-
-def _run_em_once(read_hap_mat, weights, init_alpha=1.0, 
-                 max_iter=1000, tolerance=0.0001, verbose=True):
-    """ 
-    Runs the EM algorithm to estimate haplotype contributions.
-    """
-    # initialize haplogroup proportions
-    props = init_props(read_hap_mat.shape[1], alpha=init_alpha)
-
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
-    new_props = numpy.empty_like(props)
-   
-    for iter_round in xrange(max_iter):
-        if verbose and (iter_round + 1) % 10 == 0:
-            sys.stderr.write('.')
-        # Set z_j,g - probablilty that read j originates from haplogroup g 
-        # given this proportion in the mixture..
-        for i in xrange(read_hap_mat.shape[0]):
-            prop_read = props * read_hap_mat[i, ]
-            read_mix_mat[i, ] = prop_read / numpy.sum(prop_read)
-        
-        # Set theta_g - contribution of g to the mixture
-        for i in xrange(read_hap_mat.shape[1]):
-            new_props[i] = numpy.sum(read_mix_mat[:, i] * weights)
-        new_props /= numpy.sum(new_props)
+    new_props    = numpy.empty_like(read_hap_mat.shape[1])
 
-        # check for convergence.
-        if converged(props, new_props, tolerance):
-            if verbose:
-                sys.stderr.write("\nConverged! (%d)\n" % (iter_round + 1))
-            break
+    # results for multiple runs if necessary.
+    res_props, res_read_mix = None, None
+
+    for i in xrange(args.n_multi):
+
+        if args.verbose:
+            sys.stderr.write("Starting EM run %d...\n" % (i + 1))
+
+        # initialize haplogroup proportions
+        props = init_props(read_hap_mat.shape[1], alpha=args.init_alpha)
+
+        for iter_round in xrange(args.max_iter):
+            if args.verbose and (iter_round + 1) % 10 == 0:
+                sys.stderr.write('.')
+            # Run a single step of EM
+            read_mix_mat, new_props = em_step(read_hap_mat, weights, props,
+                                              read_mix_mat, new_props)
+            # Check for convergence.
+            if converged(props, new_props, args.tolerance):
+                if args.verbose:
+                    sys.stderr.write("\nConverged! (%d)\n" % (iter_round + 1))
+                break
+            else:
+                # Use new_prop as prop for the next iteration, use the old one
+                # for empty space.
+                new_props, props = props, new_props
         else:
-            # Use new_prop as prop for the next iteration, use the old one
-            # for empty space.
+            # Never converged, flip props and new_props back
             new_props, props = props, new_props
-    return new_props, read_mix_mat
 
+        if res_props is None and res_read_mix is None:
+            # First iteration, store the results
+            res_props = new_props
+            res_read_mix = read_mix_mat
+            if args.n_multi > 1:
+                # If we are doing more than 1 iteration, make a new matrix
+                read_mix_mat = numpy.empty_like(read_hap_mat)
+                new_props = props
+        else:
+            # Nth iteration, add the new results to the running total.
+            res_props += new_props
+            res_read_mix += read_mix_mat
 
-def run_em(read_hap_mat, weights, n_runs=1, init_alpha=1.0, 
-             max_iter=1000, tolerance=0.0001, verbose=True):
-    """
-    Runs EM until convergence several times (n_runs) and returns proportions
-    and read/haplogroup probabilities averages over the EM runs.
-    """
-    if n_runs == 1:
-        return _run_em_once(read_hap_mat, weights, 
-                            init_alpha=init_alpha,
-                            max_iter=max_iter,
-                            tolerance=tolerance,
-                            verbose=verbose)
+    if args.n_multi > 1:
+        # Take the average if this is a multi-run.
+        res_props /= args.n_multi
+        res_read_mix /= args.n_multi
 
-    # create empty proportion vector, read matrix to keep track of average.
-    avg_props = numpy.zeros(read_hap_mat.shape[1])
-    avg_read_mix = numpy.zeros_like(read_hap_mat)
+    return res_props, res_read_mix
 
-    for i in xrange(n_runs):
-        if verbose:
-            sys.stderr.write("EM iteration %d\n" % (i + 1))
-        props, read_mix_mat = _run_em_once(read_hap_mat, weights, 
-                                           init_alpha=init_alpha,
-                                           max_iter=max_iter,
-                                           tolerance=tolerance,
-                                           verbose=verbose)
-        avg_props += props
-        avg_read_mix += read_mix_mat
-    return avg_props / n_runs, avg_read_mix / n_runs
- 
 
 def main():
     """ Simple example for testing """
     if len(sys.argv) > 0:
+        parser = argparse.ArgumentParser()
+        args = parser.parse_args()
+        args.init_alpha = 1.0
+        args.tolerance  = 0.0001
+        args.max_iter   = 1000
+        args.n_multi    = 1
+        args.verbose    = True
+
         ref = "GAAAAAAAA"
         hap_var = dict({'A':['A2T','A4T'],
                         'B':['A3T','A5T','A6T','A8T'],
@@ -161,7 +149,7 @@ def main():
         haps = list('ABCDEFGHI')
         input_mat = preprocess.build_em_matrix(ref, hap_var, reads, haps)
         weights = numpy.ones(len(reads))
-        props, read_mix = run_em(input_mat, weights, max_iter=100)
+        props, read_mix = run_em(input_mat, weights, args)
         print props
         print read_mix
     return 0

@@ -215,11 +215,7 @@ def process_and_report(args):
             sys.stderr.write("\n")
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts, args.n_multi,
-                                        init_alpha=args.init_alpha,
-                                        max_iter=10000, 
-                                        tolerance=args.tolerance,
-                                        verbose=args.verbose)
+        props, read_hap_mat = em.run_em(em_mat, wts, args)
 
         # Save the results if requested.
         if args.save is not None:
