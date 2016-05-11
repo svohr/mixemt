@@ -134,20 +134,13 @@ def main():
         args.n_multi    = 1
         args.verbose    = True
 
+        phy = phylotree.example()
+
         ref = "AAAAAAAAA"
-        hap_var = dict({'A':['A2T','A4T'],
-                        'B':['A3T','A5T','A6T','A8T'],
-                        'C':['A3T','A6T'],
-                        'D':['A3T','A5T','A7T','A9T'],
-                        'E':['A3T','A4T','A5T','A7T'],
-                        'F':['A3T','A5T','A6T'],
-                        'G':['A3T','A5T','A7T'],
-                        'H':['A3T','A5T'],
-                        'I':[]})
+
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
-        phy = phylotree.example()
         haps = list('ABCDEFGHI')
         input_mat = preprocess.build_em_matrix(ref, phy, reads, haps)
         weights = numpy.ones(len(reads))
