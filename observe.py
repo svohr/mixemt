@@ -12,10 +12,23 @@ Wed May 11 10:47:05 PDT 2016
 
 """
 
-def build_obs_table(samfile):
+import collections
+
+def build_obs_table(samfile, min_mq=30, min_bq=30):
     """
     Returns a table of counts for every base observed at every reference
     position in the fragments contained in the provided samfile.
     """
-    return
+    obs_tab = collections.defaultdict(collections.Counter)
+
+    for aln in samfile.fetch():
+        if aln.mapping_quality >= min_mq:
+            for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
+                qpos = int(qpos)
+                rpos = int(rpos)
+                if (aln.query_qualities is None or 
+                    aln.query_qualities[qpos] >= min_bq):
+                    obs = aln.query_sequence[qpos].upper():
+                    obs_tab[rpos][obs] += 1
+    return obs_tab
 
