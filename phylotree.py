@@ -240,7 +240,7 @@ def rm_snp_annot(var):
     """ 
     Returns the SNP variant string, nicely formatted with annotation stripped.
     """
-    if var.startsiwth('('):
+    if var.startswith('('):
         var = var[1:-1]
     var.rstrip('!')
     return var.upper()

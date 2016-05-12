@@ -91,7 +91,7 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
             ignore_haps.add(hap)
         else:
             # Looks good, these variants can't be used again.
-            used_vars.add(uniq_vars)
+            used_vars.update(uniq_vars)
 
     pass_contribs = [con for con in contribs if con[0] not in ignore_haps]
 
