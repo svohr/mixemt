@@ -100,6 +100,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
     """
     read_obs = collections.defaultdict(dict)
     base_obs = collections.defaultdict(collections.Counter)
+    var_pos = set(var_pos)
     for aln in samfile.fetch():
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
