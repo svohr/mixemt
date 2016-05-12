@@ -28,7 +28,7 @@ def build_obs_table(samfile, min_mq=30, min_bq=30):
                 rpos = int(rpos)
                 if (aln.query_qualities is None or 
                     aln.query_qualities[qpos] >= min_bq):
-                    obs = aln.query_sequence[qpos].upper():
+                    obs = aln.query_sequence[qpos].upper()
                     obs_tab[rpos][obs] += 1
     return obs_tab
 

@@ -95,19 +95,24 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
     """
     Reads in a set of reads from a SAM/BAM file and makes observations for
     known variant positions. Each read is simplified into a signature of
-    observed base per variant site.
+    observed base per variant site. At the same time, build a table of
+    observed bases for every position in the reference.
     """
     read_obs = collections.defaultdict(dict)
+    base_obs = collections.defaultdict(collections.Counter)
     for aln in samfile.fetch():
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
                 rpos = int(rpos)
-                if rpos in var_pos:
-                    if (aln.query_qualities is None or 
-                        aln.query_qualities[qpos] >= min_bq):
-                        # Add this to the list
-                        obs = aln.query_sequence[qpos].upper()
+                if (aln.query_qualities is None 
+                  or aln.query_qualities[qpos] >= min_bq):
+                    # Store the observation for the ref position.
+                    obs = aln.query_sequence[qpos].upper()
+                    base_obs[rpos][obs] += 1
+
+                    if rpos in var_pos:
+                        # Add this to the list, if this is a known var site.
                         if rpos in read_obs[aln.query_name]:
                             # check if this position has been observed before.
                             if read_obs[aln.query_name][rpos] != obs:
@@ -118,7 +123,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
     for aln_id in read_obs:
         read_obs[aln_id] = {pos:base for pos, base in 
                             read_obs[aln_id].items() if base != 'N'}
-    return read_obs
+    return read_obs, base_obs
 
 
 def read_signature(obs_by_pos):
@@ -186,7 +191,8 @@ def build_em_input(samfile, refseq, phylo, args):
     from a specific haplogroup.
     """
     var_pos = phylo.get_variant_pos()
-    read_obs = process_reads(samfile, var_pos, args.min_mq, args.min_bq)
+    read_obs, base_obs = process_reads(samfile, var_pos,
+                                       args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
 
     if args.verbose:
@@ -201,7 +207,7 @@ def build_em_input(samfile, refseq, phylo, args):
  
     em_matrix = build_em_matrix(refseq, phylo, reads,
                                 haplogroups, args.verbose)
-    return em_matrix, weights, haplogroups, reads, read_sigs
+    return em_matrix, weights, haplogroups, reads, read_sigs, base_obs
 
 
 def main():

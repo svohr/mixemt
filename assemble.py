@@ -20,13 +20,15 @@ import operator
 import collections
 import sys
 
+import phylotree
+
 
 def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     """
     Takes the haplogroup tree, table of observed bases by reference position,
     a list of haplogroup IDs and a tuple representing the results from EM
     (haplogroup proportions and read/haplogroup probabilities) and identifies
-    contributors that pass our filtering steps. 
+    contributors that pass our filtering steps.
 
     For a haplogroups to be considered a contributor:
     1) There must exist k reads where that haplogroup represent the most
@@ -34,7 +36,7 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     2) A majority of the variant bases that are associated with the candidate
        contributor, but no other candidate contributor are observed in the
        sample.
-    
+
     This function returns a list of hap numbers, haplogroup IDs and estimated
     contributions.
     """
@@ -42,10 +44,13 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
 
     contributors = list()
     vote_count = collections.Counter(numpy.argmax(read_hap_mat, 1))
-    contributors = [con for con in vote_count 
-                    if vote_count[con] > args.min_reads]
+    contributors = [con for con in vote_count
+                    if vote_count[con] >= args.min_reads]
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
+
+    # Remove haplogroups with minimal variant support.
+    contrib_prop = check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args)
 
     # Add a friendly name, not associated with a haplogroup
     name_fmt = "hap%%0%dd" % (len(str(len(contrib_prop) + 1)))
@@ -59,14 +64,38 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
 
 def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
     """
-    Checks if each candidate contributor from contribs passes our variant base 
+    Checks if each candidate contributor from contribs passes our variant base
     check. The strategy for this is to start with the highest estimated
     contributors and an empty list of variant positions. For each contributor,
     we identify the variant bases that are unique from the previous candidates.
     We check the observation table to verify that those bases are observed in
     the sample.
     """
-    return
+    used_vars = set()
+    ignore_haps = set()
+
+    for hap, _ in contribs:
+        # get variant for this haplogroup
+        uniq_vars = set(phylo.hap_var[hap]) - used_vars
+        found = 0
+        for var in uniq_vars:
+            pos = phylotree.pos_from_var(var)
+            der = phylotree.der_allele(var)
+            if obs_tab[pos][der] >= args.min_reads:
+                found += 1
+        if float(found) / len(uniq_vars) < 0.5:
+            if args.verbose:
+                sys.stderr.write("Ignoring '%s': "
+                                 "only %d/%d unique variant bases observed.\n"
+                                 % (hap, found, len(uniq_vars)))
+            ignore_haps.add(hap)
+        else:
+            # Looks good, these variants can't be used again.
+            used_vars.add(uniq_vars)
+
+    pass_contribs = [con for con in contribs if con[0] not in ignore_haps]
+
+    return pass_contribs
 
 
 def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
@@ -84,7 +113,7 @@ def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
             results.append(order[i])
         i += 1
     return results
-    
+
 
 def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
     """
@@ -96,22 +125,22 @@ def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
     assigned to a haplogroup if its highest probability out of all identified
     contributors is at least min_fold times greater than the probability of
     the next contributor _after_ normalizing out the contribution proportion
-    of each. This way, reads that could be assigned to more than 1 
+    of each. This way, reads that could be assigned to more than 1
     contributor are not simply assigned to the contributor that represents
     the larger proportion of the mixture.
     """
     contrib_reads = collections.defaultdict(set)
-    
+
     index_to_hap = dict([(haps.index(group), hap_n)
                         for hap_n, group, _ in contribs])
-    con_indexes = set(index_to_hap.keys()) 
+    con_indexes = set(index_to_hap.keys())
     for read_i in xrange(len(reads)):
         if len(contribs) > 1:
             read_probs = read_hap_mat[read_i, ]
             best_hap, next_hap = _find_best_n_for_read(read_probs,
                                                        con_indexes,
                                                        top_n=2)
-            rel_prob = ((read_probs[best_hap] / props[best_hap]) / 
+            rel_prob = ((read_probs[best_hap] / props[best_hap]) /
                         (read_probs[next_hap] / props[next_hap]))
             if rel_prob >= min_fold:
                 contrib_reads[index_to_hap[best_hap]].add(read_i)
@@ -152,7 +181,7 @@ def report_read_votes(haplogroups, read_hap_mat, top_n=10):
 
 def report_contributors(out, contribs, contrib_reads, wts):
     """
-    Prints a table that summarizes the contributors, their proportions and 
+    Prints a table that summarizes the contributors, their proportions and
     number of reads assigned to each. Formats the output nicely if out is
     a TTY, otherwise prints a tab-delimited table.
     """
@@ -169,9 +198,9 @@ def report_contributors(out, contribs, contrib_reads, wts):
             out.write('%s %s %s %s\n' % (hap_id.ljust(6),
                                          haplogroup.ljust(15),
                                          prop_str.rjust(12),
-                                         read_str.rjust(7))) 
+                                         read_str.rjust(7)))
         else:
-            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup, 
+            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
                                               prop, total_reads))
     return
 
@@ -205,7 +234,7 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
     for contrib in contrib_reads:
         if len(contrib_reads[contrib]) == 0:
             continue
-        hap_read_ids = get_contrib_read_ids(contrib_reads[contrib], 
+        hap_read_ids = get_contrib_read_ids(contrib_reads[contrib],
                                             reads, read_sigs)
         hap_fn = "%s.%s.%s" % (prefix, contrib, ext)
         try:
@@ -216,7 +245,7 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
                     hap_samfile.write(aln)
                     written += 1
             if verbose:
-                sys.stderr.write('Wrote %d aligned segments to %s\n' 
+                sys.stderr.write('Wrote %d aligned segments to %s\n'
                                  % (written, hap_fn))
             hap_samfile.close()
         except (ValueError, IOError) as inst:

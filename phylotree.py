@@ -53,7 +53,7 @@ class Phylotree(object):
                 for var in node.variants:
                     pos = pos_from_var(var)
                     if pos not in summed_vars:
-                        summed_vars[pos] = var
+                        summed_vars[pos] = rm_snp_annot(var)
                 node = node.parent
             return [summed_vars[pos] for pos in sorted(summed_vars)]
 
