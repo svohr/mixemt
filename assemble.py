@@ -21,19 +21,29 @@ import collections
 import sys
 
 
-def get_contributors(haplogroups, props, read_hap_mat, min_reads):
-    """ 
-    Takes a list of haplogroup IDs, a vector of their relative contributions to
-    the sample and a matrix of read haplogroup probability assignments and
-    returns a list of haplogroup, proportion pairs for our putative haplogroup
-    contributors. For a haplogroup to be considered as a contributor, we
-    require that there must be minimum number of reads where that haplogroup
-    is the most likely originator.
+def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     """
+    Takes the haplogroup tree, table of observed bases by reference position,
+    a list of haplogroup IDs and a tuple representing the results from EM
+    (haplogroup proportions and read/haplogroup probabilities) and identifies
+    contributors that pass our filtering steps. 
+
+    For a haplogroups to be considered a contributor:
+    1) There must exist k reads where that haplogroup represent the most
+       probable source of that read. (Candidate contributor)
+    2) A majority of the variant bases that are associated with the candidate
+       contributor, but no other candidate contributor are observed in the
+       sample.
+    
+    This function returns a list of hap numbers, haplogroup IDs and estimated
+    contributions.
+    """
+    props, read_hap_mat = em_results
+
     contributors = list()
-    votes = numpy.argmax(read_hap_mat, 1)
-    vote_count = collections.Counter(votes)
-    contributors = [con for con in vote_count if vote_count[con] > min_reads]
+    vote_count = collections.Counter(numpy.argmax(read_hap_mat, 1))
+    contributors = [con for con in vote_count 
+                    if vote_count[con] > args.min_reads]
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
 
@@ -45,6 +55,18 @@ def get_contributors(haplogroups, props, read_hap_mat, min_reads):
         hap_num += 1
 
     return contrib_prop
+
+
+def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
+    """
+    Checks if each candidate contributor from contribs passes our variant base 
+    check. The strategy for this is to start with the highest estimated
+    contributors and an empty list of variant positions. For each contributor,
+    we identify the variant bases that are unique from the previous candidates.
+    We check the observation table to verify that those bases are observed in
+    the sample.
+    """
+    return
 
 
 def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
