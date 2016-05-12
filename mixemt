@@ -199,6 +199,10 @@ def process_and_report(args):
         haplogroups, reads, read_sigs, wts, props, read_hap_mat = \
             load_prev(args.load)
 
+        # Re-process the reads to get the reference base observation table.
+        _, base_obs = previous.process_reads(samfile, [], min_mq=args.min_mq,
+                                                          min_bq=args.min_bq)
+
         if args.verbose:
             sys.stderr.write('Considering %d fragments '
                              '(%d distinct sub-haplotypes)\n\n'
