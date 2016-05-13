@@ -83,7 +83,7 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
             der = phylotree.der_allele(var)
             if obs_tab[pos][der] >= args.min_reads:
                 found += 1
-        if len(uniq_vars) > 0 and float(found) / len(uniq_vars) < 0.5:
+        if uniq_vars and float(found) / len(uniq_vars) < 0.5:
             if args.verbose:
                 sys.stderr.write("Ignoring '%s': "
                                  "only %d/%d unique variant bases observed.\n"
@@ -232,7 +232,8 @@ def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
     if verbose:
         sys.stderr.write('\n')
     for contrib in contrib_reads:
-        if len(contrib_reads[contrib]) == 0:
+        if not contrib_reads[contrib]:
+            # No reads assigned to this contributor
             continue
         hap_read_ids = get_contrib_read_ids(contrib_reads[contrib],
                                             reads, read_sigs)
