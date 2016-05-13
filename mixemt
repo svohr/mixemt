@@ -153,20 +153,19 @@ def load_prev(prefix):
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
         wts = numpy.array(read_wts)
-        return haps, reads, read_sigs, wts, props, read_hap_mat
+        return haps, reads, read_sigs, wts, (props, read_hap_mat)
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
     return
 
 
-def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat): 
+def dump_all(prefix, haps, reads, read_sigs, em_results): 
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
     debugging.
     """
-    # Suppress too many args (6/5) warning... pylint: disable=R0913 
     try:
         with open("%s.haps" % (prefix), 'w') as hap_out:
             for hap in haps:
@@ -174,6 +173,7 @@ def dump_all(prefix, haps, reads, read_sigs, props, read_hap_mat):
         with open("%s.reads" % (prefix), 'w') as read_out:
             for read in reads:
                 read_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
+        props, read_hap_mat = em_results
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
     except (ValueError, IOError) as inst:
@@ -196,8 +196,7 @@ def process_and_report(args):
         if args.verbose:
             sys.stderr.write('\nLoading previous results from %s.*\n'
                              % (args.load))
-        haplogroups, reads, read_sigs, wts, props, read_hap_mat = \
-            load_prev(args.load)
+        haplogroups, reads, read_sigs, wts, em_results = load_prev(args.load)
 
         # Re-process the reads to get the reference base observation table.
         _, base_obs = preprocess.process_reads(samfile, [], min_mq=args.min_mq,
@@ -219,25 +218,26 @@ def process_and_report(args):
             sys.stderr.write("\n")
 
         # Run EM
-        props, read_hap_mat = em.run_em(em_mat, wts, args)
+        em_results = em.run_em(em_mat, wts, args)
 
         # Save the results if requested.
         if args.save is not None:
             if args.verbose:
                 sys.stderr.write('\nSaving results to %s.*\n\n' % (args.save))
             dump_all(args.save, haplogroups, reads,
-                     read_sigs, props, read_hap_mat)
+                     read_sigs, em_results)
 
     contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
-                                         (props, read_hap_mat), args)
+                                         em_results, args)
     contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
-                                          read_hap_mat, props, args.min_fold)
+                                          em_results[1], em_results[0], 
+                                          args.min_fold)
  
     # Report the results
     if args.verbose:
-        assemble.report_top_props(haplogroups, props, 10)
+        assemble.report_top_props(haplogroups, em_results[0], 10)
         sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
-        assemble.report_read_votes(haplogroups, read_hap_mat, 10)
+        assemble.report_read_votes(haplogroups, em_results[1], 10)
         sys.stderr.write("\n")
 
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
