@@ -130,6 +130,16 @@ class TestPhylotreeSimple(unittest.TestCase):
         self.assertEqual(self.phy.hap_var['H'], ['A1G', 'A3T', 'A5T'])
         self.assertEqual(self.phy.hap_var['I'], ['A1G'])
 
+    def test_variants(self):
+        for i in range(9):
+            self.assertIn(i, self.phy.variants)
+        self.assertNotIn(9, self.phy.variants, "Bad 1-based to 0-based conv.")
+        self.assertEqual(self.phy.variants[0], {'G':1})
+        self.assertEqual(self.phy.variants[3], {'T':2})
+        self.assertEqual(self.phy.variants[4], {'T':1, 'A':1})
+        for i in [1, 2, 5, 6, 7, 8]:
+            self.assertEqual(self.phy.variants[i], {'T':1})
+
     def test_ignore_sites(self):
         self.phy.ignore_sites("1")
         self.assertNotIn(0, self.phy.variants)
