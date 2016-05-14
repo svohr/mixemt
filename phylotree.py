@@ -127,14 +127,13 @@ class Phylotree(object):
                     var_pos.add(pos)
                     der = der_allele(var)
                     self.variants[pos][der] += 1
-        if self.rm_unstable or self.rm_backmut:
-            var_pos -= self.ignore
-            for pos in self.ignore:
-                if pos in self.variants:
-                    del self.variants[pos]
-            for node in self.nodes:
-                node.variants = [var for var in node.variants
-                                 if pos_from_var(var) not in self.ignore]
+        var_pos -= self.ignore
+        for pos in self.ignore:
+            if pos in self.variants:
+                del self.variants[pos]
+        for node in self.nodes:
+            node.variants = [var for var in node.variants
+                             if pos_from_var(var) not in self.ignore]
         return
 
     def process_haplotypes(self):
@@ -150,7 +149,7 @@ class Phylotree(object):
             var_str = ','.join(node.all_variants())
             haplotypes[var_str].append(node)
         for var_str in haplotypes:
-            variants = var_str.split(',')
+            variants = [var for var in var_str.split(',') if var != '']
             haplo_id = '/'.join([node.hap_id for node in haplotypes[var_str]])
             hap_tab[haplo_id] = variants
         self.hap_var = hap_tab
@@ -169,7 +168,7 @@ class Phylotree(object):
         removed from consideration by process_variants().
         """
         if hap_id in self.hap_var:
-            raise ValueError("Custom haplogroup name '%d' already in use."
+            raise ValueError("Custom haplogroup name '%s' already in use."
                              % (hap_id))
         ok_vars = [var for var in variants 
                    if pos_from_var(var) not in self.ignore]
@@ -189,7 +188,7 @@ class Phylotree(object):
                 start, end = site.split('-')
                 self.ignore.update(range(int(start) - 1, int(end)))
             else:
-                self.ignore.update(int(site) - 1)
+                self.ignore.add(int(site) - 1)
         self.process_variants()
         self.process_haplotypes()
         return
@@ -242,7 +241,7 @@ def rm_snp_annot(var):
     """
     if var.startswith('('):
         var = var[1:-1]
-    var.rstrip('!')
+    var = var.rstrip('!')
     return var.upper()
 
 
