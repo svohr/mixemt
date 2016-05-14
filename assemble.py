@@ -49,8 +49,10 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
 
-    # Remove haplogroups with minimal variant support.
-    contrib_prop = check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args)
+    if args.var_check:
+        # Remove haplogroups with minimal variant support.
+        contrib_prop = check_contrib_phy_vars(phylo, obs_tab,
+                                              contrib_prop, args)
 
     # Add a friendly name, not associated with a haplogroup
     name_fmt = "hap%%0%dd" % (len(str(len(contrib_prop) + 1)))
