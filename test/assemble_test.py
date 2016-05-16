@@ -13,14 +13,9 @@ import phylotree
 import preprocess
 
 # TODO: Write tests for the follwing functions.
-# get_contributors(phylo, obs_tab, haplogroups, em_results, args)
-# check_contrib_phy_vars(phylo, obs_tab, contribs, args)
 # _find_best_n_for_read(read_prob, con_indexes, top_n=2)
-# assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold)
-# report_top_props(haplogroups, props, top_n=10)
-# report_read_votes(haplogroups, read_hap_mat, top_n=10)
-# report_contributors(out, contribs, contrib_reads, wts)
 # get_contrib_read_ids(indexes, reads, read_sigs)
+# assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold)
 # write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose)
 
 
@@ -42,7 +37,7 @@ class TestContributors(unittest.TestCase):
                   ',,,E, A4T ,,',
                   ',A, A2T A4T ,,']
         self.phy = phylotree.Phylotree(phy_in)
-        
+
         self.cons = [['A', 0.4], ['E', 0.3]]
         self.obs_tab = collections.defaultdict(collections.Counter)
         self.obs_tab[1]['T'] = 1
@@ -132,7 +127,7 @@ class TestContributors(unittest.TestCase):
         res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
                                               self.cons, self.args)
         self.assertEqual([], res)
-    
+
     def test_check_contrib_phy_vars_high_min_reads(self):
         # required number of reads too high.
         self.args.min_reads = 10
@@ -143,8 +138,53 @@ class TestContributors(unittest.TestCase):
 
 class TestAssignReads(unittest.TestCase):
     def setUp(self):
-        pass
+        self.haps = list('ABCDEFGHI')
+        self.props = numpy.array([0.40, 0.01, 0.01, 0.01, 0.3,
+                                  0.01, 0.01, 0.01, 0.01])
+        self.mix_mat = numpy.array([
+            [0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
+            [0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
+            [0.30, 0.01, 0.01, 0.01, 0.40, 0.01, 0.01, 0.01, 0.01],
+            [0.01, 0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01]])
+        self.reads = ['read%d' % (i + 1) for i in xrange(4)]
+        self.em_results = (self.props, self.mix_mat)
+        self.cons = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
 
+    def test_find_best_n_for_read_n2(self):
+        prob = numpy.array([0.1, 0.2, 0.1, 0.3, 0.9, 0.1])
+        con_i = [1,3,5]
+        res = assemble._find_best_n_for_read(prob, con_i, 2)
+        self.assertEqual(res, [3,1])
+
+    def test_find_best_n_for_read_n3(self):
+        prob = numpy.array([0.1, 0.2, 0.1, 0.3, 0.9, 0.1])
+        con_i = [1,3,5]
+        res = assemble._find_best_n_for_read(prob, con_i, 3)
+        self.assertEqual(res, [3,1,5])
+
+    def test_assign_reads_simple(self):
+        res = assemble.assign_reads(self.cons, self.haps, self.reads,
+                                    self.mix_mat, self.props, 2.0)
+        exp = {"hap1":{0, 1}, "hap2":{3}, "unassigned":{2}}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_simple_low_min_fold(self):
+        res = assemble.assign_reads(self.cons, self.haps, self.reads,
+                                    self.mix_mat, self.props, 1.5)
+        exp = {"hap1":{0, 1}, "hap2":{2, 3}}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_simple_high_min_fold(self):
+        res = assemble.assign_reads(self.cons, self.haps, self.reads,
+                                    self.mix_mat, self.props, 200)
+        exp = {"unassigned":{0, 1, 2, 3}}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_simple_only_one_con(self):
+        res = assemble.assign_reads(self.cons[0:1], self.haps, self.reads,
+                                    self.mix_mat, self.props, 2)
+        exp = {"hap1":{0, 1, 2, 3}}
+        self.assertEqual(res, exp)
 
 
 if __name__ == '__main__':
