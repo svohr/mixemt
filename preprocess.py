@@ -33,7 +33,7 @@ class HapVarBaseMatrix(object):
     must be the case that the reference base is the "expected" base and all
     others are "unexpected". Finally, we will now make use of mutation counts
     available from Phylotree to adjust the probabilities based on how "mutable"
-    a site appears to be. 
+    a site appears to be.
     """
     def __init__(self, refseq, phylo, mut_wt=0.01, mut_max=0.5):
         """ Initialzes the HapVarBaseMatrix. """
@@ -71,7 +71,7 @@ class HapVarBaseMatrix(object):
             # Does this haplogroup carry a derived base?
             if hap_pos[pos] == base:
                 # Is it the one we observed?
-                return 1.0 - mut_prob 
+                return 1.0 - mut_prob
         else:
             # No derived base at this position, does our observed match ref.
             if self.refseq[pos] == base:
@@ -81,12 +81,12 @@ class HapVarBaseMatrix(object):
     def prob_for_vars(self, hap, pos_obs):
         """
         Finds the probability of observing the read signature from the given
-        haplotype by calculating the product of the probability of all 
+        haplotype by calculating the product of the probability of all
         hap, pos, base tuples it represents.
         """
         total = 1
         hap_pos = self.markers[hap]
-        for pos, obs in pos_obs: 
+        for pos, obs in pos_obs:
             total *= self._prob(hap_pos, pos, obs)
         return total
 
@@ -106,7 +106,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
                 rpos = int(rpos)
-                if (aln.query_qualities is None 
+                if (aln.query_qualities is None
                   or aln.query_qualities[qpos] >= min_bq):
                     # Store the observation for the ref position.
                     obs = aln.query_sequence[qpos].upper()
@@ -122,7 +122,7 @@ def process_reads(samfile, var_pos, min_mq, min_bq):
                             read_obs[aln.query_name][rpos] = obs
     # Finished, do one pass to remove Ns
     for aln_id in read_obs:
-        read_obs[aln_id] = {pos:base for pos, base in 
+        read_obs[aln_id] = {pos:base for pos, base in
                             read_obs[aln_id].items() if base != 'N'}
     return read_obs, base_obs
 
@@ -162,27 +162,27 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
-def build_em_matrix(refseq, phylo, reads, haplogroups, verbose=False):
-    """ 
-    Returns the matrix that describes the probabiliy of each read 
-    originating in each haplotype. 
+def build_em_matrix(refseq, phylo, reads, haplogroups, args):
+    """
+    Returns the matrix that describes the probabiliy of each read
+    originating in each haplotype.
     """
     hvb_mat = HapVarBaseMatrix(refseq, phylo)
     read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
- 
-    if verbose:
+
+    if args.verbose:
         sys.stderr.write('Building EM input matrix...\n')
 
     for i in xrange(len(reads)):
-        pos_obs = pos_obs_from_sig(reads[i]) 
+        pos_obs = pos_obs_from_sig(reads[i])
         for j in xrange(len(haplogroups)):
-            read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs) 
-        if verbose and (i + 1) % 500 == 0:
+            read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs)
+        if args.verbose and (i + 1) % 500 == 0:
             sys.stderr.write('  processed %d fragments...\n' % (i + 1))
- 
-    if verbose:
+
+    if args.verbose:
         sys.stderr.write('Done.\n\n')
- 
+
     return read_hap_mat
 
 
@@ -198,16 +198,16 @@ def build_em_input(samfile, refseq, phylo, args):
 
     if args.verbose:
         sys.stderr.write('Using %d aligned fragments (MQ>=%d) '
-                         '(%d distinct sub-haplotypes)\n\n' 
+                         '(%d distinct sub-haplotypes)\n\n'
                            % (len(read_obs), args.min_mq, len(read_sigs)))
-    
+
     # This is now the order we will be using for the matrix.
     haplogroups = sorted(phylo.hap_var)
     reads = sorted(read_sigs)
     weights = numpy.array([len(read_sigs[r]) for r in reads])
- 
-    em_matrix = build_em_matrix(refseq, phylo, reads,
-                                haplogroups, args.verbose)
+
+    em_matrix = build_em_matrix(refseq, phylo, reads, haplogroups, args)
+
     return em_matrix, weights, haplogroups, reads, read_sigs, base_obs
 
 
