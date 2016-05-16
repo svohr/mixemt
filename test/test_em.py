@@ -9,7 +9,7 @@ import argparse
 
 import phylotree
 import preprocess
-import em 
+import em
 
 
 class TestEMHelpers(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestEMHelpers(unittest.TestCase):
         props = em.init_props(10)
         self.assertEqual(len(props), 10)
         self.assertTrue(numpy.abs(numpy.sum(props) - 1.0) < 0.000000001)
-    
+
     def test_converged(self):
         prev = numpy.array([1.0] * 10)
         cur  = numpy.array([2.0] * 10)
@@ -41,11 +41,11 @@ class TestEMHelpers(unittest.TestCase):
         res_mat, res_props = em.em_step(in_mat, wts, props, mix_mat, new_props)
         self.assertTrue(numpy.all(res_mat == mix_mat))
         self.assertTrue(numpy.all(res_props == new_props))
-        
+
         self.assertTrue(numpy.all(in_mat == mix_mat))
         self.assertTrue(
             numpy.all(new_props == numpy.array([1.0,1.0,1.0]) / 3.0))
-    
+
     def test_em_step_weights(self):
         in_mat = numpy.array([[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]])
         wts = numpy.array([2,1,1])
@@ -79,21 +79,22 @@ class TestAllEM(unittest.TestCase):
                   ',,,D, A9T ,,',
                   ',,,E, A4T ,,',
                   ',A, A2T A4T ,,']
-        phy = phylotree.Phylotree(phy_in) 
+        phy = phylotree.Phylotree(phy_in)
         ref = "AAAAAAAAA"
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
         haps = list('ABCDEFGHI')
-        self.input_mat = preprocess.build_em_matrix(ref, phy, reads, haps)
+        self.input_mat = preprocess.build_em_matrix(ref, phy,
+                                                    reads, haps, self.args)
         self.wts = numpy.ones(len(reads))
-        
+
         self.true_props = numpy.array(
                             [0.0, 0.8, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.0])
         self.true_haps = numpy.zeros_like(self.input_mat)
         self.true_haps[0:8,1] = 1.0
         self.true_haps[8:10,4] = 1.0
-    
+
     def test_em_1_run(self):
         props, read_mix = em.run_em(self.input_mat, self.wts, self.args)
         self.assertTrue(numpy.all(numpy.abs(props - self.true_props) < 0.02))
@@ -106,7 +107,6 @@ class TestAllEM(unittest.TestCase):
         self.assertTrue(numpy.all(numpy.abs(props - self.true_props) < 0.02))
         self.assertTrue(numpy.all(numpy.abs(read_mix - self.true_haps) < 0.05))
 
-    
 
 if __name__ == '__main__':
     unittest.main()

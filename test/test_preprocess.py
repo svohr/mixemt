@@ -4,17 +4,14 @@ Unit Tests for preprocess module.
 
 import unittest
 import sys
+import numpy
+import argparse
 
 import phylotree
 import preprocess
 
 # Stuff to test:
-# class HapVarBaseMatrix(object):
-#     def __init__(self, refseq, phylo, mut_wt=0.01, mut_max=0.5):
-#     def add_hap_markers(self, hap_var):
-#     def _prob(self, hap_pos, pos, base):
-#     def prob_for_vars(self, hap, pos_obs):
-# def build_em_matrix(refseq, phylo, reads, haplogroups, verbose=False):
+# def process_reads(samfile, var_pos, min_mq, min_bq):
 # def build_em_input(samfile, refseq, phylo, args):
 
 
@@ -50,7 +47,7 @@ class TestHapVarBaseMatrix(unittest.TestCase):
                    'I':{0:'G'}}
         self.assertEqual(hvb.markers, markers)
 
-    def test_probs(self): 
+    def test_probs(self):
         mut_wt, mut_max = 0.10, 0.10
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
         # hits
@@ -79,18 +76,18 @@ class TestHapVarBaseMatrix(unittest.TestCase):
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
         obs_I = zip(range(9), "GAAAAAAAA")
         self.assertEqual(str(hvb.prob_for_vars('I', obs_I)), str(0.9 ** 9))
-        self.assertEqual(str(hvb.prob_for_vars('C', obs_I)), 
+        self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),
                          str((0.9 ** 7) * ((0.1 / 3) ** 2)))
-        self.assertEqual(str(hvb.prob_for_vars('D', obs_I)), 
+        self.assertEqual(str(hvb.prob_for_vars('D', obs_I)),
                          str((0.9 ** 5) * ((0.1 / 3) ** 4)))
 
     def test_probs_for_vars_mut_wts(self):
         mut_wt, mut_max = 0.10, 0.50
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
         obs_I = zip(range(9), "GAAAAAAAA")
-        self.assertEqual(str(hvb.prob_for_vars('I', obs_I)), 
+        self.assertEqual(str(hvb.prob_for_vars('I', obs_I)),
                          str((0.9 ** 7) * (0.8 ** 2)))
-        self.assertEqual(str(hvb.prob_for_vars('C', obs_I)), 
+        self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),
                          str((0.9 ** 5) * (0.8 ** 2) * ((0.1 / 3) ** 2)))
 
 
@@ -106,7 +103,7 @@ class TestReadSignatures(unittest.TestCase):
         self.assertEqual(sig, "1:A,2:C,3:G,4:T")
         obs_from_sig = preprocess.pos_obs_from_sig(sig)
         self.assertEqual(obs_tab, dict(obs_from_sig))
-    
+
     def test_read_signature_bad_input(self):
         with self.assertRaises(TypeError):
             obs_tab = {'A':'A', 2:'C', 3:'G', 4:'T'}
@@ -151,22 +148,51 @@ class TestReadSignatures(unittest.TestCase):
         self.assertEqual(res, sigs)
 
 
-#class TestVariantMethods(unittest.TestCase):
-#
-#
-#class TestPhylotreeSimple(unittest.TestCase):
-#    def setUp(self):
-#        phy_in = ['I, A1G ,,',
-#                  ',H, A3T A5T ,,',
-#                  ',,F, A6T ,,',
-#                  ',,,B, A8T ,,',
-#                  ',,,C, T5A! ,,',
-#                  ',,G, A7T ,,',
-#                  ',,,D, (A9T) ,,',
-#                  ',,,E, A4t ,,',
-#                  ',A, A2T a4t ,,']
-#        self.phy = phylotree.Phylotree(phy_in)
+class TestBuildEMMatrix(unittest.TestCase):
+    def setUp(self):
+        parser = argparse.ArgumentParser()
+        self.args = parser.parse_args([])
+        self.args.verbose = False
 
+        phy_in = ['I, A1G ,,',
+                  ',H, A3T A5T ,,',
+                  ',,F, A6T ,,',
+                  ',,,B, A8T ,,',
+                  ',,,C, T5A ,,',
+                  ',,G, A7T ,,',
+                  ',,,D, A9T ,,',
+                  ',,,E, A4T ,,',
+                  ',A, A2T A4T ,,']
+        self.phy = phylotree.Phylotree(phy_in)
+        self.ref = "AAAAAAAAA"
+        self.haps = list("ABCDEFGHI")
+
+    def test_build_em_matrix_simple(self):
+        reads = ["1:A,2:C", "1:T,2:C", "3:T,4:T", "2:A,4:T"]
+        in_mat = preprocess.build_em_matrix(self.ref, self.phy,
+                                            reads, self.haps, self.args)
+        r1 = ([(0.01/3) * (0.01/3)] +
+             ([0.99 * (0.01/3)] * 8))
+        r2 = ([0.99 * (0.01/3)] +
+             ([(0.01/3) * (0.01/3)] * 8))
+        r3 = ([(0.98) * (0.02/3)] + [(0.02/3) * (0.98)] +
+              [(0.02/3) * (0.02/3)] + [(0.02/3) * (0.98)] +
+              [0.98 * 0.98] + ([(0.02/3) * (0.98)] * 3) +
+              [(0.02/3) * (0.02/3)])
+        r4 = ([0.99 * (0.02/3)] + [(0.01/3) * (0.98)] + [(0.01/3) * (0.02/3)] +
+              ([(0.01/3) * (0.98)] * 5) + [0.99 * (0.02/3)])
+        res_mat = numpy.array([r1, r2, r3, r4])
+        self.assertEqual(in_mat.shape, (len(reads), len(self.haps)))
+        self.assertTrue(numpy.allclose(in_mat, res_mat))
+
+    def test_build_em_matrix_diff_mut(self):
+        # need to implement this first.
+        pass
+
+
+class TestBuildEMInput(unittest.TestCase):
+    # Need bam file for this too.
+    pass
 
 
 if __name__ == '__main__':
