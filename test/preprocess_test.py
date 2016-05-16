@@ -10,7 +10,7 @@ import argparse
 import phylotree
 import preprocess
 
-# Stuff to test:
+# TODO: Stuff to test:
 # def process_reads(samfile, var_pos, min_mq, min_bq):
 # def build_em_input(samfile, refseq, phylo, args):
 
