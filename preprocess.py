@@ -162,7 +162,7 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
-def build_em_matrix(refseq, phylo, reads, haplogroups, verbose=True):
+def build_em_matrix(refseq, phylo, reads, haplogroups, verbose=False):
     """ 
     Returns the matrix that describes the probabiliy of each read 
     originating in each haplotype. 

@@ -70,7 +70,16 @@ class TestAllEM(unittest.TestCase):
         self.args.n_multi    = 1
         self.args.verbose    = False
 
-        phy = phylotree.example()
+        phy_in = ['I, A1G ,,',
+                  ',H, A3T A5T ,,',
+                  ',,F, A6T ,,',
+                  ',,,B, A8T ,,',
+                  ',,,C, T5A ,,',
+                  ',,G, A7T ,,',
+                  ',,,D, A9T ,,',
+                  ',,,E, A4T ,,',
+                  ',A, A2T A4T ,,']
+        phy = phylotree.Phylotree(phy_in) 
         ref = "AAAAAAAAA"
         reads = list(["1:A,2:T,3:A", "2:T,3:A", "3:A,4:T,5:T", "5:T,6:A",
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
