@@ -63,7 +63,7 @@ class TestEMHelpers(unittest.TestCase):
 class TestAllEM(unittest.TestCase):
     def setUp(self):
         parser = argparse.ArgumentParser()
-        self.args = parser.parse_args()
+        self.args = parser.parse_args([])
         self.args.init_alpha = 1.0
         self.args.tolerance  = 0.0001
         self.args.max_iter   = 1000
