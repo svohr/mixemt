@@ -142,7 +142,7 @@ def main():
                       "6:A,7:T", "6:A,7:T,8:A", "7:T,8:A", "4:T,5:T",
                       "1:A,2:T,3:T,4:T", "5:A,6:T,7:A,8:A"])
         haps = list('ABCDEFGHI')
-        input_mat = preprocess.build_em_matrix(ref, phy, reads, haps)
+        input_mat = preprocess.build_em_matrix(ref, phy, reads, haps, args)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
         print props
