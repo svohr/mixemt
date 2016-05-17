@@ -29,7 +29,7 @@ class TestVariantMethods(unittest.TestCase):
         self.assertEqual(phylotree.der_allele("(T195C!)"), 'C')
         self.assertEqual(phylotree.der_allele("C182T!!"), 'T')
         self.assertEqual(phylotree.der_allele("T10454c"), 'C')
-    
+
     def test_anc_allele(self):
         self.assertEqual(phylotree.anc_allele("T14034C"), 'T')
         self.assertEqual(phylotree.anc_allele("T182C!"), 'T')
@@ -50,7 +50,7 @@ class TestVariantMethods(unittest.TestCase):
         self.assertFalse(phylotree.is_unstable("T182C!"))
         self.assertFalse(phylotree.is_unstable("T16325d"))
         self.assertFalse(phylotree.is_unstable("5899.XCd!"))
-    
+
     def test_is_backmutation(self):
         self.assertTrue(phylotree.is_backmutation("T182C!"))
         self.assertTrue(phylotree.is_backmutation("(T195C!)"))
@@ -94,6 +94,11 @@ class TestPhylotreeSimple(unittest.TestCase):
                   ',A, A2T a4t ,,']
         self.phy = phylotree.Phylotree(phy_in)
 
+    def test_phylonode_get_anon_name(self):
+        node = phylotree.Phylotree.PhyloNode('A')
+        for i in xrange(1, 5):
+            self.assertEqual('A[%d]' % i, node.get_anon_name())
+
     def test_get_variant_pos(self):
         self.assertEqual(self.phy.get_variant_pos(), [0,1,2,3,4,5,6,7,8])
 
@@ -106,6 +111,9 @@ class TestPhylotreeSimple(unittest.TestCase):
     def test_add_custom_hap_same_name(self):
         with self.assertRaises(ValueError):
             self.phy.add_custom_hap('A', ['A1G', 'A5C', 'A9T'])
+
+    def test_phylotree_nodes(self):
+        self.assertEquals('I', self.phy.root.hap_id)
 
     def test_hapvar(self):
         self.assertIn('A', self.phy.hap_var)
@@ -152,6 +160,36 @@ class TestPhylotreeSimple(unittest.TestCase):
         self.assertEqual(self.phy.hap_var['F'], ['A3T', 'A5T', 'A6T'])
         self.assertEqual(self.phy.hap_var['G'], ['A3T', 'A5T', 'A7T'])
         self.assertEqual(self.phy.hap_var['H'], ['A3T', 'A5T'])
+        self.assertEqual(self.phy.hap_var['I'], [])
+
+    def test_ignore_sites_range(self):
+        self.phy.ignore_sites("1-3")
+        for i in xrange(3):
+            self.assertNotIn(i, self.phy.variants)
+            self.assertIn(i, self.phy.ignore)
+        self.assertEqual(self.phy.hap_var['A'], ['A4T'])
+        self.assertEqual(self.phy.hap_var['B'], ['A5T', 'A6T', 'A8T'])
+        self.assertEqual(self.phy.hap_var['C'], ['T5A', 'A6T'])
+        self.assertEqual(self.phy.hap_var['D'], ['A5T', 'A7T', 'A9T'])
+        self.assertEqual(self.phy.hap_var['E'], ['A4T', 'A5T', 'A7T'])
+        self.assertEqual(self.phy.hap_var['F'], ['A5T', 'A6T'])
+        self.assertEqual(self.phy.hap_var['G'], ['A5T', 'A7T'])
+        self.assertEqual(self.phy.hap_var['H'], ['A5T'])
+        self.assertEqual(self.phy.hap_var['I'], [])
+
+    def test_ignore_sites_mix(self):
+        self.phy.ignore_sites("1,2-3")
+        for i in xrange(3):
+            self.assertNotIn(i, self.phy.variants)
+            self.assertIn(i, self.phy.ignore)
+        self.assertEqual(self.phy.hap_var['A'], ['A4T'])
+        self.assertEqual(self.phy.hap_var['B'], ['A5T', 'A6T', 'A8T'])
+        self.assertEqual(self.phy.hap_var['C'], ['T5A', 'A6T'])
+        self.assertEqual(self.phy.hap_var['D'], ['A5T', 'A7T', 'A9T'])
+        self.assertEqual(self.phy.hap_var['E'], ['A4T', 'A5T', 'A7T'])
+        self.assertEqual(self.phy.hap_var['F'], ['A5T', 'A6T'])
+        self.assertEqual(self.phy.hap_var['G'], ['A5T', 'A7T'])
+        self.assertEqual(self.phy.hap_var['H'], ['A5T'])
         self.assertEqual(self.phy.hap_var['I'], [])
 
 
