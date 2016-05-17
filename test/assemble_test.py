@@ -13,9 +13,6 @@ import phylotree
 import preprocess
 
 # TODO: Write tests for the follwing functions.
-# _find_best_n_for_read(read_prob, con_indexes, top_n=2)
-# get_contrib_read_ids(indexes, reads, read_sigs)
-# assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold)
 # write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose)
 
 
@@ -149,6 +146,10 @@ class TestAssignReads(unittest.TestCase):
         self.reads = ['read%d' % (i + 1) for i in xrange(4)]
         self.em_results = (self.props, self.mix_mat)
         self.cons = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
+        self.read_sigs = {'read1':['A', 'B'],
+                          'read2':['C'],
+                          'read3':['D'],
+                          'read4':['E', 'F', 'G']}
 
     def test_find_best_n_for_read_n2(self):
         prob = numpy.array([0.1, 0.2, 0.1, 0.3, 0.9, 0.1])
@@ -185,6 +186,21 @@ class TestAssignReads(unittest.TestCase):
                                     self.mix_mat, self.props, 2)
         exp = {"hap1":{0, 1, 2, 3}}
         self.assertEqual(res, exp)
+
+    def test_get_contrib_read_ids_simple(self):
+        idxs = [0, 2]
+        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        self.assertEqual(set('ABD'), res)
+
+    def test_get_contrib_read_ids_all(self):
+        idxs = range(len(self.reads))
+        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        self.assertEqual(set('ABCDEFG'), res)
+
+    def test_get_contrib_read_ids_empty(self):
+        idxs = []
+        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        self.assertEqual(set(), res)
 
 
 if __name__ == '__main__':
