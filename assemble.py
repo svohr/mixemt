@@ -220,38 +220,62 @@ def get_contrib_read_ids(indexes, reads, read_sigs):
     return hap_read_ids
 
 
-def write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose):
+def write_haplotypes(samfile, contrib_reads, args):
     """
-    For each contributing haplotype in contrib_reads, creates a new SAM/BAM
-    file based on the one provided and the prefix string and writes the reads
-    from the original SAM/BAM input that have been assigned to the contributor.
-    A separate file is also written for unassigned reads.
+    Writes a new BAM file based on the original 'samfile' for each contributor
+    described in the table 'contrib_reads' that maps a haplotype id to a list
+    of pysam AlignedSegment objects.
+
+    Args:
+        samfile: a pysam AlignmentFile for the original BAM file.
+
+        contrib_reads: a dictionary mapping our haplotype label to a list of
+            pysam AlignedSegments for the reads that have been assigned to this
+            contributor.
+
+        args: arguments namespace from argparse. Used to get filename prefix
+            for new BAM files and whether verbose mode is enabled.
+
+    Returns:
+        0 if all files written successfully, 1 otherwise.
     """
     ext = samfile.filename[-3:]
     mode = 'wb'
     if ext != 'bam':
         mode = 'w'
-    if verbose:
-        sys.stderr.write('\n')
+    if args.verbose:
+        sys.stderr.write('\nWriting haplotype alignment files...\n')
     for contrib in contrib_reads:
         if not contrib_reads[contrib]:
             # No reads assigned to this contributor
             continue
-        hap_read_ids = get_contrib_read_ids(contrib_reads[contrib],
-                                            reads, read_sigs)
-        hap_fn = "%s.%s.%s" % (prefix, contrib, ext)
+        hap_fn = "%s.%s.%s" % (args.prefix, contrib, ext)
         try:
             hap_samfile = pysam.AlignmentFile(hap_fn, mode, template=samfile)
             written = 0
-            for aln in samfile.fetch():
-                if aln.query_name in hap_read_ids:
-                    hap_samfile.write(aln)
-                    written += 1
-            if verbose:
-                sys.stderr.write('Wrote %d aligned segments to %s\n'
+            for aln in contrib_reads[contrib]:
+                hap_samfile.write(aln)
+                written += 1
+            if args.verbose:
+                sys.stderr.write('  Wrote %d aligned segments to %s\n'
                                  % (written, hap_fn))
             hap_samfile.close()
         except (ValueError, IOError) as inst:
             sys.stderr.write("Error writing '%s': %s\n" % (hap_fn, inst))
             return 1
     return 0
+
+
+def assemble_haplotypes(samfile, em_results, contribs, args):
+    """
+    This function encapsulates the steps of assigning reads to contributors
+    from the EM results and any attempts to extend the assemblies.
+
+    Args:
+    Returns:
+    Raises:
+    """
+    # Assign reads based on em_results
+
+    # If enabled, try to extend the assembly
+    return
