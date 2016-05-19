@@ -6,6 +6,7 @@ import unittest
 import sys
 import numpy
 import argparse
+import pysam
 
 import phylotree
 import preprocess
@@ -92,8 +93,122 @@ class TestHapVarBaseMatrix(unittest.TestCase):
 
 
 class TestProcessReads(unittest.TestCase):
-    # Need a bam file to test this out on.
-    pass
+    def setUp(self):
+        self.mq = 30
+        self.bq = 30
+        aln1 = pysam.AlignedSegment()
+        aln1.reference_start = 10
+        aln1.query_name = 'read1'
+        aln1.mapping_quality = 30
+        aln1.query_sequence = "AAAAATAAAATAAAAT"
+        aln1.query_qualities = [30] * 16
+        aln1.cigarstring = '16M'
+
+        aln2 = pysam.AlignedSegment()
+        aln2.reference_start = 12
+        aln2.query_name = 'read2'
+        aln2.mapping_quality = 20
+        aln2.query_sequence = "AAAGAAGAAAAG"
+        qqual = [33] * 12
+        qqual[3] = 20
+        aln2.query_qualities = qqual
+        aln2.cigarstring = '5M2D7M'
+
+        aln3 = pysam.AlignedSegment()
+        aln3.mapping_quality = 0
+        aln3.query_name = 'read3'
+
+        self.alns = [aln1, aln2, aln3]
+
+    def test_process_reads_read_obs_simple(self):
+        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 20, 10)
+        exp = {'read1':{15:'T', 20:'T', 25:'T'},
+               'read2':{15:'G', 20:'G', 25:'G'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_read_obs_min_map_quality(self):
+        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 25, 10)
+        exp = {'read1':{15:'T', 20:'T', 25:'T'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_read_obs_min_base_quality(self):
+        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 20, 30)
+        exp = {'read1':{15:'T', 20:'T', 25:'T'},
+               'read2':{20:'G', 25:'G'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_read_obs_paired_end(self):
+        aln1b = pysam.AlignedSegment()
+        aln1b.reference_start = 30
+        aln1b.query_name = 'read1'
+        aln1b.mapping_quality = 30
+        aln1b.query_sequence = "AAAAACAAAACAAAAT"
+        aln1b.query_qualities = [30] * 16
+        aln1b.cigarstring = '16M'
+        self.alns.append(aln1b)
+
+        var_pos = [15, 20, 25, 35, 40]
+
+        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        exp = {'read1':{15:'T', 20:'T', 25:'T', 35:'C', 40:'C'},
+               'read2':{15:'G', 20:'G', 25:'G'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_read_obs_paired_end_overlap(self):
+        aln1b = pysam.AlignedSegment()
+        aln1b.reference_start = 20
+        aln1b.query_name = 'read1'
+        aln1b.mapping_quality = 20
+        aln1b.query_sequence = "AAAAATAAAACAAAAT"
+        aln1b.query_qualities = [30] * 16
+        aln1b.cigarstring = '16M'
+        self.alns.append(aln1b)
+
+        var_pos = [15, 20, 25, 35]
+
+        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        exp = {'read1':{15:'T', 25:'T', 35:'T'},
+               'read2':{15:'G', 20:'G', 25:'G'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_read_obs_paired_end_overlap_1bad_base_qual(self):
+        aln1b = pysam.AlignedSegment()
+        aln1b.reference_start = 20
+        aln1b.query_name = 'read1'
+        aln1b.mapping_quality = 20
+        aln1b.query_sequence = "AAAAATAAAACAAAAC"
+        qqual = [30] * 16
+        qqual[0] = 5
+        aln1b.query_qualities = qqual
+        aln1b.cigarstring = '16M'
+        self.alns.append(aln1b)
+
+        var_pos = [15, 20, 25, 35]
+
+        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        exp = {'read1':{15:'T', 20:'T', 25:'T', 35:'C'},
+               'read2':{15:'G', 20:'G', 25:'G'}}
+        self.assertEqual(res, exp)
+
+    def test_process_reads_base_obs_simple(self):
+        _, res = preprocess.process_reads(self.alns, [15, 20, 25], 20, 10)
+        exp = {10:{'A':1},
+               11:{'A':1},
+               12:{'A':2},
+               13:{'A':2},
+               14:{'A':2},
+               15:{'G':1, 'T':1},
+               16:{'A':2},
+               17:{'A':1},
+               18:{'A':1},
+               19:{'A':2},
+               20:{'G':1, 'T':1},
+               21:{'A':2},
+               22:{'A':2},
+               23:{'A':2},
+               24:{'A':2},
+               25:{'G':1, 'T':1}}
+        self.assertEqual(res, exp)
 
 
 class TestReadSignatures(unittest.TestCase):
