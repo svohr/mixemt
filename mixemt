@@ -138,7 +138,6 @@ def load_prev(prefix):
     try:
         haps  = list()
         reads = list()
-        read_sigs = dict()
         read_wts  = list()
         with open("%s.haps" % (prefix), 'r') as hap_in:
             for line in hap_in:
@@ -146,21 +145,20 @@ def load_prev(prefix):
         with open("%s.reads" % (prefix), 'r') as read_in:
             for line in read_in:
                 items = line.split('\t')
-                sig = items[0]
-                reads.append(sig)
-                read_sigs[sig] = items[1].rstrip().split(',')
-                read_wts.append(len(read_sigs[sig]))
+                read_ids = items[1].rstrip().split(',')
+                reads.append(read_ids)
+                read_wts.append(len(read_ids))
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
         wts = numpy.array(read_wts)
-        return haps, reads, read_sigs, wts, (props, read_hap_mat)
+        return haps, reads, wts, (props, read_hap_mat)
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
     return
 
 
-def dump_all(prefix, haps, reads, read_sigs, em_results): 
+def dump_all(prefix, haps, reads, em_results): 
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
@@ -171,8 +169,8 @@ def dump_all(prefix, haps, reads, read_sigs, em_results):
             for hap in haps:
                 hap_out.write('%s\n' % (hap))
         with open("%s.reads" % (prefix), 'w') as read_out:
-            for read in reads:
-                read_out.write('%s\t%s\n' % (read, ','.join(read_sigs[read])))
+            for i in xrange(len(reads)):
+                read_out.write('%d\t%s\n' % (i, ','.join(reads[i])))
         props, read_hap_mat = em_results
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
@@ -196,7 +194,7 @@ def process_and_report(args):
         if args.verbose:
             sys.stderr.write('\nLoading previous results from %s.*\n'
                              % (args.load))
-        haplogroups, reads, read_sigs, wts, em_results = load_prev(args.load)
+        haplogroups, reads, wts, em_results = load_prev(args.load)
 
         # Re-process the reads to get the reference base observation table.
         _, base_obs = preprocess.process_reads(samfile, [], min_mq=args.min_mq,
@@ -208,7 +206,7 @@ def process_and_report(args):
                              % (numpy.sum(wts), len(reads)))
     else:
         # Build input for EM step
-        em_mat, wts, haplogroups, reads, read_sigs, base_obs = \
+        em_mat, wts, haplogroups, reads, base_obs = \
             preprocess.build_em_input(samfile, refseq, phylo, args)
 
         if args.verbose:
@@ -224,14 +222,12 @@ def process_and_report(args):
         if args.save is not None:
             if args.verbose:
                 sys.stderr.write('\nSaving results to %s.*\n\n' % (args.save))
-            dump_all(args.save, haplogroups, reads,
-                     read_sigs, em_results)
+            dump_all(args.save, haplogroups, reads, em_results)
 
     contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                          em_results, args)
-    contrib_reads = assemble.assign_reads(contribs, haplogroups, reads, 
-                                          em_results[1], em_results[0], 
-                                          args.min_fold)
+    contrib_reads = assemble.assign_reads(samfile, contribs, em_results, 
+                                          haplogroups, reads, args)
  
     # Report the results
     if args.verbose:
@@ -243,9 +239,8 @@ def process_and_report(args):
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
 
     if args.out_prefix is not None:
-        return assemble.write_haplotypes(samfile, contrib_reads, reads, 
-                                         read_sigs, args.out_prefix, 
-                                         args.verbose)
+        return assemble.write_haplotypes(samfile, contrib_reads, args) 
+
     return 0
 
 

@@ -23,6 +23,58 @@ import sys
 import phylotree
 
 
+def report_top_props(haplogroups, props, top_n=10):
+    """
+    Prints to stderr the names and fractions of the n haplogroups with the
+    highest estimated proportions.
+    """
+    order = numpy.argsort(props)[::-1]
+    sys.stderr.write('\nTop %d haplogroups by proportion...\n' % (top_n))
+    for i in xrange(top_n):
+        sys.stderr.write("%d\t%0.6f\t%s\n" % (i + 1, props[order[i]],
+                                              haplogroups[order[i]]))
+    sys.stderr.write('\n')
+    return
+
+
+def report_read_votes(haplogroups, read_hap_mat, top_n=10):
+    """
+    Each read "votes" for a haplogroup; the haplogroup with the highest
+    probability. Report the vote counts for the top N.
+    """
+    votes = numpy.argmax(read_hap_mat, 1)
+    vote_count = collections.Counter(votes)
+    for hap_i, count in vote_count.most_common(top_n):
+        sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
+    return
+
+
+def report_contributors(out, contribs, contrib_reads, wts):
+    """
+    Prints a table that summarizes the contributors, their proportions and
+    number of reads assigned to each. Formats the output nicely if out is
+    a TTY, otherwise prints a tab-delimited table.
+    """
+    if out.isatty():
+        out.write("hap#   Haplogroup      Contribution   Reads\n")
+        out.write("-------------------------------------------\n")
+    for hap_id, haplogroup, prop in contribs:
+        total_reads = 0
+        for read_index in contrib_reads[hap_id]:
+            total_reads += wts[read_index]
+        if out.isatty():
+            prop_str = '%.4f' % (prop)
+            read_str = '%d' % (total_reads)
+            out.write('%s %s %s %s\n' % (hap_id.ljust(6),
+                                         haplogroup.ljust(15),
+                                         prop_str.rjust(12),
+                                         read_str.rjust(7)))
+        else:
+            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
+                                              prop, total_reads))
+    return
+
+
 def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     """
     Takes the haplogroup tree, table of observed bases by reference position,
@@ -100,6 +152,40 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
     return pass_contribs
 
 
+def assign_reads(samfile, contribs, em_results, haps, reads, args):
+    """
+    Assigns reads from the BAM file to contributors using the results from EM.
+
+    Args:
+        samfile: The original samfile containing the reads to be assigned to
+                 contributors.
+        contribs: The table of contributors as returned by get_contributors()
+        em_results: A tuple containing the final mixture proportion vector and
+                    the read/haplogroup conditional probabilities from EM.
+        haps: A list haplogroup IDs/label for each column in the matrix.
+        reads: A list of lists where each row index in the matrix is associated
+               with the read ID(s) it represents.
+        args: From argparse.
+
+    Returns: A table that maps contributor names to a list of AlignedSegments
+             reprenting the reads that have been assigned to that contributor.
+    """
+    contrib_reads = collections.defaultdict(list)
+    read_to_con = dict()
+    con_read_indexes = assign_read_indexes(contribs, em_results,
+                                           haps, reads, args.min_fold)
+    for con in con_read_indexes:
+        con_read_ids = get_contrib_read_ids(con_read_indexes(con), reads)
+        for read_id in con_read_ids:
+            read_to_con[read_id] = contrib_reads[con]
+
+    for aln in samfile.fetch():
+        if aln.query_name in read_to_con:
+            read_to_con[aln.query].append(aln)
+
+    return contrib_reads
+
+
 def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
     """
     Takes a vector of haplogroup probabilities for a single read (read_prob)
@@ -117,7 +203,7 @@ def _find_best_n_for_read(read_prob, con_indexes, top_n=2):
     return results
 
 
-def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
+def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
     """
     Takes the list of identified contributors, the list of haplotype ids and
     the read-haplogroup probability under mixture proportions matrix, and
@@ -130,7 +216,20 @@ def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
     of each. This way, reads that could be assigned to more than 1
     contributor are not simply assigned to the contributor that represents
     the larger proportion of the mixture.
+
+    Args:
+        contribs: The table of contributors as returned by get_contributors()
+        em_results: A tuple containing the final mixture proportion vector and
+                    the read/haplogroup conditional probabilities from EM.
+        haps: A list haplogroup IDs/label for each column in the matrix.
+        reads: The sub-haplotype identifier (read signature) for each row
+               in the matrix.
+        min_fold: The minimum odds ratio between top two contributors to assign
+                  a read to a contributor.
+    Returns: A dictionary mapping contributor names to a list of indexes to
+             entries in 'reads'
     """
+    props, read_hap_mat = em_results
     contrib_reads = collections.defaultdict(set)
 
     index_to_hap = dict([(haps.index(group), hap_n)
@@ -155,59 +254,7 @@ def assign_reads(contribs, haps, reads, read_hap_mat, props, min_fold):
     return contrib_reads
 
 
-def report_top_props(haplogroups, props, top_n=10):
-    """
-    Prints to stderr the names and fractions of the n haplogroups with the
-    highest estimated proportions.
-    """
-    order = numpy.argsort(props)[::-1]
-    sys.stderr.write('\nTop %d haplogroups by proportion...\n' % (top_n))
-    for i in xrange(top_n):
-        sys.stderr.write("%d\t%0.6f\t%s\n" % (i + 1, props[order[i]],
-                                              haplogroups[order[i]]))
-    sys.stderr.write('\n')
-    return
-
-
-def report_read_votes(haplogroups, read_hap_mat, top_n=10):
-    """
-    Each read "votes" for a haplogroup; the haplogroup with the highest
-    probability. Report the vote counts for the top N.
-    """
-    votes = numpy.argmax(read_hap_mat, 1)
-    vote_count = collections.Counter(votes)
-    for hap_i, count in vote_count.most_common(top_n):
-        sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
-    return
-
-
-def report_contributors(out, contribs, contrib_reads, wts):
-    """
-    Prints a table that summarizes the contributors, their proportions and
-    number of reads assigned to each. Formats the output nicely if out is
-    a TTY, otherwise prints a tab-delimited table.
-    """
-    if out.isatty():
-        out.write("hap#   Haplogroup      Contribution   Reads\n")
-        out.write("-------------------------------------------\n")
-    for hap_id, haplogroup, prop in contribs:
-        total_reads = 0
-        for read_index in contrib_reads[hap_id]:
-            total_reads += wts[read_index]
-        if out.isatty():
-            prop_str = '%.4f' % (prop)
-            read_str = '%d' % (total_reads)
-            out.write('%s %s %s %s\n' % (hap_id.ljust(6),
-                                         haplogroup.ljust(15),
-                                         prop_str.rjust(12),
-                                         read_str.rjust(7)))
-        else:
-            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
-                                              prop, total_reads))
-    return
-
-
-def get_contrib_read_ids(indexes, reads, read_sigs):
+def get_contrib_read_ids(indexes, reads):
     """
     Takes a set of indexes from assign_reads and the list of read signatures
     plus the dictionary mapping signatures to aligned read IDs and returns
@@ -215,7 +262,7 @@ def get_contrib_read_ids(indexes, reads, read_sigs):
     """
     hap_read_ids = set()
     for read_idx in indexes:
-        for read_id in read_sigs[reads[read_idx]]:
+        for read_id in reads[read_idx]:
             hap_read_ids.add(read_id)
     return hap_read_ids
 
@@ -239,12 +286,15 @@ def write_haplotypes(samfile, contrib_reads, args):
     Returns:
         0 if all files written successfully, 1 otherwise.
     """
+    # Set up for opening new bam files.
     ext = samfile.filename[-3:]
     mode = 'wb'
     if ext != 'bam':
         mode = 'w'
+
     if args.verbose:
         sys.stderr.write('\nWriting haplotype alignment files...\n')
+
     for contrib in contrib_reads:
         if not contrib_reads[contrib]:
             # No reads assigned to this contributor

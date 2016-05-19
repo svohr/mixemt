@@ -69,7 +69,7 @@ class TestContributors(unittest.TestCase):
         self.assertEqual(res, exp)
 
     def test_get_contributors_with_phy_vars(self):
-        self.args.var_check = True 
+        self.args.var_check = True
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
                                         self.em_results, self.args)
         exp = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
@@ -143,13 +143,9 @@ class TestAssignReads(unittest.TestCase):
             [0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
             [0.30, 0.01, 0.01, 0.01, 0.40, 0.01, 0.01, 0.01, 0.01],
             [0.01, 0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01]])
-        self.reads = ['read%d' % (i + 1) for i in xrange(4)]
         self.em_results = (self.props, self.mix_mat)
         self.cons = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
-        self.read_sigs = {'read1':['A', 'B'],
-                          'read2':['C'],
-                          'read3':['D'],
-                          'read4':['E', 'F', 'G']}
+        self.reads = [['A', 'B'], ['C'], ['D'], ['E', 'F', 'G']]
 
     def test_find_best_n_for_read_n2(self):
         prob = numpy.array([0.1, 0.2, 0.1, 0.3, 0.9, 0.1])
@@ -164,42 +160,42 @@ class TestAssignReads(unittest.TestCase):
         self.assertEqual(res, [3,1,5])
 
     def test_assign_reads_simple(self):
-        res = assemble.assign_reads(self.cons, self.haps, self.reads,
-                                    self.mix_mat, self.props, 2.0)
+        res = assemble.assign_read_indexes(self.cons, self.em_results,
+                                           self.haps, self.reads, 2.0)
         exp = {"hap1":{0, 1}, "hap2":{3}, "unassigned":{2}}
         self.assertEqual(res, exp)
 
     def test_assign_reads_simple_low_min_fold(self):
-        res = assemble.assign_reads(self.cons, self.haps, self.reads,
-                                    self.mix_mat, self.props, 1.5)
+        res = assemble.assign_read_indexes(self.cons, self.em_results,
+                                           self.haps, self.reads, 1.5)
         exp = {"hap1":{0, 1}, "hap2":{2, 3}}
         self.assertEqual(res, exp)
 
     def test_assign_reads_simple_high_min_fold(self):
-        res = assemble.assign_reads(self.cons, self.haps, self.reads,
-                                    self.mix_mat, self.props, 200)
+        res = assemble.assign_read_indexes(self.cons, self.em_results,
+                                           self.haps, self.reads, 200)
         exp = {"unassigned":{0, 1, 2, 3}}
         self.assertEqual(res, exp)
 
     def test_assign_reads_simple_only_one_con(self):
-        res = assemble.assign_reads(self.cons[0:1], self.haps, self.reads,
-                                    self.mix_mat, self.props, 2)
+        res = assemble.assign_read_indexes(self.cons[0:1], self.em_results,
+                                           self.haps, self.reads, 2)
         exp = {"hap1":{0, 1, 2, 3}}
         self.assertEqual(res, exp)
 
     def test_get_contrib_read_ids_simple(self):
         idxs = [0, 2]
-        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        res = assemble.get_contrib_read_ids(idxs, self.reads)
         self.assertEqual(set('ABD'), res)
 
     def test_get_contrib_read_ids_all(self):
         idxs = range(len(self.reads))
-        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        res = assemble.get_contrib_read_ids(idxs, self.reads)
         self.assertEqual(set('ABCDEFG'), res)
 
     def test_get_contrib_read_ids_empty(self):
         idxs = []
-        res = assemble.get_contrib_read_ids(idxs, self.reads, self.read_sigs)
+        res = assemble.get_contrib_read_ids(idxs, self.reads)
         self.assertEqual(set(), res)
 
 

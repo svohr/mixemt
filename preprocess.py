@@ -208,7 +208,10 @@ def build_em_input(samfile, refseq, phylo, args):
 
     em_matrix = build_em_matrix(refseq, phylo, reads, haplogroups, args)
 
-    return em_matrix, weights, haplogroups, reads, read_sigs, base_obs
+    # make a list mapping matrix indexes to read IDs from bam.
+    read_ids = [read_sigs[reads[i]] for i in xrange(reads)]
+
+    return em_matrix, weights, haplogroups, read_ids, base_obs
 
 
 def main():
