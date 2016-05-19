@@ -91,17 +91,17 @@ class HapVarBaseMatrix(object):
         return total
 
 
-def process_reads(samfile, var_pos, min_mq, min_bq):
+def process_reads(bamfile, var_pos, min_mq, min_bq):
     """
-    Reads in a set of reads from a SAM/BAM file and makes observations for
-    known variant positions. Each read is simplified into a signature of
-    observed base per variant site. At the same time, build a table of
-    observed bases for every position in the reference.
+    Reads in a set of reads from a BAM file and makes observations for known
+    variant positions. Each read is simplified into a signature of observed
+    base per variant site. At the same time, build a table of observed bases
+    for every position in the reference.
     """
     read_obs = collections.defaultdict(dict)
     base_obs = collections.defaultdict(collections.Counter)
     var_pos = set(var_pos)
-    for aln in samfile.fetch():
+    for aln in bamfile.fetch():
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
@@ -186,13 +186,13 @@ def build_em_matrix(refseq, phylo, reads, haplogroups, args):
     return read_hap_mat
 
 
-def build_em_input(samfile, refseq, phylo, args):
+def build_em_input(bamfile, refseq, phylo, args):
     """
     Builds the matrix that describes the "probability" that a read originated
     from a specific haplogroup.
     """
     var_pos = phylo.get_variant_pos()
-    read_obs, base_obs = process_reads(samfile, var_pos,
+    read_obs, base_obs = process_reads(bamfile, var_pos,
                                        args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
 

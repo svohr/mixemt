@@ -34,21 +34,21 @@ import em
 import assemble
 
 
-def open_aln_file(sam_fn, args):
+def open_aln_file(bam_fn, args):
     """
     Opens the file specifed by the filename parameter and returns the
     AlignmentFile object. If the file cannot be opened, and error is printed
     and the program exits.
     """
     try:
-        if sam_fn.endswith('.bam'):
-            samfile = pysam.AlignmentFile(sam_fn, 'rb')
-        else: # assume sam_fn.endswith('.sam'):
-            samfile = pysam.AlignmentFile(sam_fn, 'r')
+        if bam_fn.endswith('.bam'):
+            bamfile = pysam.AlignmentFile(bam_fn, 'rb')
+        else: # assume bam_fn.endswith('.bam'):
+            bamfile = pysam.AlignmentFile(bam_fn, 'r')
         if args.verbose:
-            sys.stderr.write('Read %d alignments from "%s".\n' 
-                             % (samfile.count(), sam_fn))
-        return samfile
+            sys.stderr.write('Read %d alignments from "%s".\n'
+                             % (bamfile.count(), bam_fn))
+        return bamfile
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
@@ -71,8 +71,8 @@ def open_phylotree(phy_fn, args):
                                  % (len(phy.variants), len(phy.hap_var)))
 
             if args.cust_hap_fn is not None:
-                open_custom_haplotypes(args.cust_hap_fn, phy, args) 
-            return phy 
+                open_custom_haplotypes(args.cust_hap_fn, phy, args)
+            return phy
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error: %s\n" % (inst))
         sys.exit(1)
@@ -119,7 +119,7 @@ def open_refseq(fa_fn, args):
     try:
         fafile = pysam.FastaFile(fa_fn)
         if args.verbose:
-            sys.stderr.write('Read reference sequence "%s" from "%s".\n' 
+            sys.stderr.write('Read reference sequence "%s" from "%s".\n'
                              % (fafile.references[0], fa_fn))
         return fafile.fetch(fafile.references[0]).upper()
     except (ValueError, IOError) as inst:
@@ -158,7 +158,7 @@ def load_prev(prefix):
     return
 
 
-def dump_all(prefix, haps, reads, em_results): 
+def dump_all(prefix, haps, reads, em_results):
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
@@ -185,9 +185,9 @@ def process_and_report(args):
     of preprocessing EM and interpretation.
     """
     # Load up the data.
-    refseq  = open_refseq(args.ref_fn, args)
-    samfile = open_aln_file(args.sam_fn, args)
-    phylo   = open_phylotree(args.phy_fn, args)
+    refseq = open_refseq(args.ref_fn, args)
+    bamfile = open_aln_file(args.bam_fn, args)
+    phylo = open_phylotree(args.phy_fn, args)
 
     if args.load is not None:
         # Just load the saved results instead of running everything again.
@@ -197,7 +197,7 @@ def process_and_report(args):
         haplogroups, reads, wts, em_results = load_prev(args.load)
 
         # Re-process the reads to get the reference base observation table.
-        _, base_obs = preprocess.process_reads(samfile, [], min_mq=args.min_mq,
+        _, base_obs = preprocess.process_reads(bamfile, [], min_mq=args.min_mq,
                                                             min_bq=args.min_bq)
 
         if args.verbose:
@@ -207,7 +207,7 @@ def process_and_report(args):
     else:
         # Build input for EM step
         em_mat, wts, haplogroups, reads, base_obs = \
-            preprocess.build_em_input(samfile, refseq, phylo, args)
+            preprocess.build_em_input(bamfile, refseq, phylo, args)
 
         if args.verbose:
             sys.stderr.write("\nTop 10 haplogroups "
@@ -226,9 +226,9 @@ def process_and_report(args):
 
     contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                          em_results, args)
-    contrib_reads = assemble.assign_reads(samfile, contribs, em_results, 
+    contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
                                           haplogroups, reads, args)
- 
+
     # Report the results
     if args.verbose:
         assemble.report_top_props(haplogroups, em_results[0], 10)
@@ -239,7 +239,7 @@ def process_and_report(args):
     assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
 
     if args.out_prefix is not None:
-        return assemble.write_haplotypes(samfile, contrib_reads, args) 
+        return assemble.write_haplotypes(bamfile, contrib_reads, args)
 
     return 0
 
@@ -253,8 +253,8 @@ def main():
                         help="FASTA file contain the reference sequence.")
     parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
                         help="Phylotree CSV file")
-    parser.add_argument("sam_fn", metavar="reads.[sb]am", type=str,
-                        help="Aligned reads in SAM/BAM format.")
+    parser.add_argument("bam_fn", metavar="reads.bam", type=str,
+                        help="Aligned reads in indexed BAM file.")
     parser.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
                         metavar='custom.tab', default=None,
                         help="Custom haplotypes to be considered in addition "
@@ -310,12 +310,11 @@ def main():
     parser.add_argument('-o', '--out', dest='out_prefix', type=str,
                         default=None, metavar='PREFIX',
                         help="If set, write assigned reads to contributor-"
-                             "specific SAM/BAM files using this "
-                             "filename prefix")
+                             "specific BAM files using this filename prefix")
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
     args = parser.parse_args()
-    
+
     if args.verbose:
         sys.stderr.write('%s\n\n' % (' '.join(sys.argv)))
 

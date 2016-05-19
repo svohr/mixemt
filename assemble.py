@@ -152,12 +152,12 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
     return pass_contribs
 
 
-def assign_reads(samfile, contribs, em_results, haps, reads, args):
+def assign_reads(bamfile, contribs, em_results, haps, reads, args):
     """
     Assigns reads from the BAM file to contributors using the results from EM.
 
     Args:
-        samfile: The original samfile containing the reads to be assigned to
+        bamfile: The original bamfile containing the reads to be assigned to
                  contributors.
         contribs: The table of contributors as returned by get_contributors()
         em_results: A tuple containing the final mixture proportion vector and
@@ -179,7 +179,7 @@ def assign_reads(samfile, contribs, em_results, haps, reads, args):
         for read_id in con_read_ids:
             read_to_con[read_id] = contrib_reads[con]
 
-    for aln in samfile.fetch():
+    for aln in bamfile.fetch():
         if aln.query_name in read_to_con:
             read_to_con[aln.query].append(aln)
 
@@ -258,7 +258,7 @@ def get_contrib_read_ids(indexes, reads):
     """
     Takes a set of indexes from assign_reads and the list of read signatures
     plus the dictionary mapping signatures to aligned read IDs and returns
-    the set of corresponding aligned read IDs (SAM/BAM query IDs).
+    the set of corresponding aligned read IDs (BAM query IDs).
     """
     hap_read_ids = set()
     for read_idx in indexes:
@@ -267,14 +267,14 @@ def get_contrib_read_ids(indexes, reads):
     return hap_read_ids
 
 
-def write_haplotypes(samfile, contrib_reads, args):
+def write_haplotypes(bamfile, contrib_reads, args):
     """
-    Writes a new BAM file based on the original 'samfile' for each contributor
+    Writes a new BAM file based on the original 'bamfile' for each contributor
     described in the table 'contrib_reads' that maps a haplotype id to a list
     of pysam AlignedSegment objects.
 
     Args:
-        samfile: a pysam AlignmentFile for the original BAM file.
+        bamfile: a pysam AlignmentFile for the original BAM file.
 
         contrib_reads: a dictionary mapping our haplotype label to a list of
             pysam AlignedSegments for the reads that have been assigned to this
@@ -287,10 +287,8 @@ def write_haplotypes(samfile, contrib_reads, args):
         0 if all files written successfully, 1 otherwise.
     """
     # Set up for opening new bam files.
-    ext = samfile.filename[-3:]
+    ext = 'bam' 
     mode = 'wb'
-    if ext != 'bam':
-        mode = 'w'
 
     if args.verbose:
         sys.stderr.write('\nWriting haplotype alignment files...\n')
@@ -301,22 +299,22 @@ def write_haplotypes(samfile, contrib_reads, args):
             continue
         hap_fn = "%s.%s.%s" % (args.prefix, contrib, ext)
         try:
-            hap_samfile = pysam.AlignmentFile(hap_fn, mode, template=samfile)
+            hap_bamfile = pysam.AlignmentFile(hap_fn, mode, template=bamfile)
             written = 0
             for aln in contrib_reads[contrib]:
-                hap_samfile.write(aln)
+                hap_bamfile.write(aln)
                 written += 1
             if args.verbose:
                 sys.stderr.write('  Wrote %d aligned segments to %s\n'
                                  % (written, hap_fn))
-            hap_samfile.close()
+            hap_bamfile.close()
         except (ValueError, IOError) as inst:
             sys.stderr.write("Error writing '%s': %s\n" % (hap_fn, inst))
             return 1
     return 0
 
 
-def assemble_haplotypes(samfile, em_results, contribs, args):
+def assemble_haplotypes(bamfile, em_results, contrib_reads, args):
     """
     This function encapsulates the steps of assigning reads to contributors
     from the EM results and any attempts to extend the assemblies.
