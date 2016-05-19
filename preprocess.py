@@ -91,17 +91,31 @@ class HapVarBaseMatrix(object):
         return total
 
 
-def process_reads(bamfile, var_pos, min_mq, min_bq):
+def process_reads(alns, var_pos, min_mq, min_bq):
     """
-    Reads in a set of reads from a BAM file and makes observations for known
+    Read alignments from an iterator/iterable and makes observations for known
     variant positions. Each read is simplified into a signature of observed
     base per variant site. At the same time, build a table of observed bases
     for every position in the reference.
+
+    Args:
+        alns: An iterator/iterable of pysam AlignedSegments
+        var_pos: A sorted list of all known variant positions from Phylotree.
+        min_mq: The minimum mapping quality score required for a read to be
+                considered.
+        min_bq: The minimum base quality score required for a base observation.
+
+    Returns:
+        read_obs: A dictionary that maps AlignedSegment query_names to
+                  dictionaries mapping reference positions to base
+                  observations.
+        base_obs: A dictionary containing counts of base observations for each
+                  position in the reference.
     """
     read_obs = collections.defaultdict(dict)
     base_obs = collections.defaultdict(collections.Counter)
     var_pos = set(var_pos)
-    for aln in bamfile.fetch():
+    for aln in alns:
         if aln.mapping_quality >= min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
@@ -192,7 +206,9 @@ def build_em_input(bamfile, refseq, phylo, args):
     from a specific haplogroup.
     """
     var_pos = phylo.get_variant_pos()
-    read_obs, base_obs = process_reads(bamfile, var_pos,
+
+    input_alns = bamfile.fetch()
+    read_obs, base_obs = process_reads(input_alns, var_pos,
                                        args.min_mq, args.min_bq)
     read_sigs = reduce_reads(read_obs)
 
