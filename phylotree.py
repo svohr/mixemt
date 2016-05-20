@@ -193,6 +193,33 @@ class Phylotree(object):
         self.process_haplotypes()
         return
 
+    def polymorphic_sites(self, haps):
+        """
+        Takes a list of haplogroups and returns the sites that are expected to
+        be polymorphic within the sample.
+
+        Args:
+            self: this Phylotree object
+            haps: a list of haplogroup IDs
+        Returns: a list of positions in the reference.
+        """
+        def derived_diff(variants):
+            """
+            Takes a list of variants and returns True if they all result in the
+            same derived base.
+            """
+            der_bases = [der_allele(var) for var in variants]
+            return not all([base == der_bases[0] for base in der_bases])
+        
+        var_tab = collections.defaultdict(list)
+        for hap in haps: 
+            var = self.hap_var[hap]
+            pos = pos_from_var(var)
+            var_tab[pos].append(var)
+        poly = [pos for pos in var_tab if (len(var_tab[pos]) < len(haps)) or
+                                           derived_diff(var_tab[pos])]
+        return poly
+
 
 def pos_from_var(var):
     """ Returns the position of the variant """
