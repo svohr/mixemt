@@ -32,6 +32,7 @@ import phylotree
 import preprocess
 import em
 import assemble
+import stats
 
 
 def open_aln_file(bam_fn, args):
@@ -212,7 +213,7 @@ def process_and_report(args):
         if args.verbose:
             sys.stderr.write("\nTop 10 haplogroups "
                              "by read probabilities before EM...\n")
-            assemble.report_read_votes(haplogroups, em_mat, 10)
+            stats.report_read_votes(haplogroups, em_mat, 10)
             sys.stderr.write("\n")
 
         # Run EM
@@ -231,12 +232,12 @@ def process_and_report(args):
 
     # Report the results
     if args.verbose:
-        assemble.report_top_props(haplogroups, em_results[0], 10)
+        stats.report_top_props(haplogroups, em_results[0], 10)
         sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
-        assemble.report_read_votes(haplogroups, em_results[1], 10)
+        stats.report_read_votes(haplogroups, em_results[1], 10)
         sys.stderr.write("\n")
 
-    assemble.report_contributors(sys.stdout, contribs, contrib_reads, wts)
+    stats.report_contributors(sys.stdout, contribs, contrib_reads, wts)
 
     if args.out_prefix is not None:
         return assemble.write_haplotypes(bamfile, contrib_reads, args)
