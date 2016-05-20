@@ -13,6 +13,7 @@ import sys
 import numpy
 import collections
 
+import phylotree
 
 def report_top_props(haplogroups, props, top_n=10):
     """
@@ -64,3 +65,51 @@ def report_contributors(out, contribs, contrib_reads, wts):
             out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
                                               prop, total_reads))
     return
+
+
+def write_coverage(out, obs_tab):
+    """
+    Write the coverage at each position to the file handle.
+
+    Args:
+        out: File handle to write output to.
+        obs_tab: Table of base observations for positions in the reference.
+    Returns: nothing
+    """
+    for ref_pos in xrange(max(obs_tab)):
+        cov = sum(obs_tab[ref_pos])
+        out.write('%d\t%d\n' % (ref_pos, cov))
+    return
+
+
+def write_base_obs(out, obs_tab):
+    """
+    Write the counts of observed bases for each position to the file handle.
+
+    Args:
+        out: File handle to write output to.
+        obs_tab: Table of base observations for positions in the reference.
+    Returns: nothing
+    """
+    for ref_pos in xrange(max(obs_tab)):
+        out.write("%d\t%s\n" % (ref_pos, ['\t'.join(obs_tab[ref_pos][base])
+                                          for base in 'ACGT']))
+    return
+
+
+def write_variants(out, phylo, contribs):
+    """
+    Write a table of the variants used in this analysis and note whether the
+    position is expected to be polymorphic in the sample given the set of
+    identified contributors.
+
+    Args:
+        out: File handle to write output to.
+        phylo: The Phylotree object used in EM analysis
+        contribs: Table of identified contributors with fields  hap#,
+                  haplogroup, fraction
+    Returns: nothing
+    """
+
+    return
+
