@@ -11,6 +11,7 @@ Fri May 20 14:04:02 PDT 2016
 
 import sys
 import numpy
+import collections
 
 
 def report_top_props(haplogroups, props, top_n=10):
