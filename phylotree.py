@@ -216,8 +216,9 @@ class Phylotree(object):
             var = self.hap_var[hap]
             pos = pos_from_var(var)
             var_tab[pos].append(var)
-        poly = [pos for pos in var_tab if (len(var_tab[pos]) < len(haps)) or
-                                           derived_diff(var_tab[pos])]
+        poly = [pos for pos in sorted(var_tab) 
+                if (len(var_tab[pos]) < len(haps)) 
+                    or derived_diff(var_tab[pos])]
         return poly
 
 
