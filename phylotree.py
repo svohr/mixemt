@@ -69,7 +69,7 @@ class Phylotree(object):
                 child.dump(out, indent + 2)
 
         def get_anon_name(self):
-            """ 
+            """
             Returns a unique haplogroup name based on this one for a child with
             no specified name.
             """
@@ -170,7 +170,7 @@ class Phylotree(object):
         if hap_id in self.hap_var:
             raise ValueError("Custom haplogroup name '%s' already in use."
                              % (hap_id))
-        ok_vars = [var for var in variants 
+        ok_vars = [var for var in variants
                    if pos_from_var(var) not in self.ignore]
         self.hap_var[hap_id] = ok_vars
         return
@@ -210,14 +210,14 @@ class Phylotree(object):
             """
             der_bases = [der_allele(var) for var in variants]
             return not all([base == der_bases[0] for base in der_bases])
-        
+
         var_tab = collections.defaultdict(list)
-        for hap in haps: 
+        for hap in haps:
             var = self.hap_var[hap]
             pos = pos_from_var(var)
             var_tab[pos].append(var)
-        poly = [pos for pos in sorted(var_tab) 
-                if (len(var_tab[pos]) < len(haps)) 
+        poly = [pos for pos in sorted(var_tab)
+                if (len(var_tab[pos]) < len(haps))
                     or derived_diff(var_tab[pos])]
         return poly
 
@@ -246,7 +246,7 @@ def is_snp(var):
     """ Returns true if var is a SNP or False if it is an indel """
     if '.' in var or 'd' in var:
         return False # Variant is an indel
-    return True 
+    return True
 
 
 def is_unstable(var):
@@ -264,7 +264,7 @@ def is_backmutation(var):
 
 
 def rm_snp_annot(var):
-    """ 
+    """
     Returns the SNP variant string, nicely formatted with annotation stripped.
     """
     if var.startswith('('):

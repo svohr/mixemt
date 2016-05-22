@@ -235,7 +235,7 @@ def write_haplotypes(bamfile, contrib_reads, args):
         0 if all files written successfully, 1 otherwise.
     """
     # Set up for opening new bam files.
-    ext = 'bam' 
+    ext = 'bam'
     mode = 'wb'
 
     if args.verbose:
