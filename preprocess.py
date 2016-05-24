@@ -225,7 +225,7 @@ def build_em_input(bamfile, refseq, phylo, args):
     em_matrix = build_em_matrix(refseq, phylo, reads, haplogroups, args)
 
     # make a list mapping matrix indexes to read IDs from bam.
-    read_ids = [read_sigs[reads[i]] for i in xrange(reads)]
+    read_ids = [read_sigs[reads[i]] for i in xrange(len(reads))]
 
     return em_matrix, weights, haplogroups, read_ids, base_obs
 
