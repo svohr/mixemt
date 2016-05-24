@@ -41,7 +41,7 @@ def report_read_votes(haplogroups, read_hap_mat, top_n=10):
     return
 
 
-def report_contributors(out, contribs, contrib_reads, wts):
+def report_contributors(out, contribs, contrib_reads):
     """
     Prints a table that summarizes the contributors, their proportions and
     number of reads assigned to each. Formats the output nicely if out is
@@ -51,9 +51,7 @@ def report_contributors(out, contribs, contrib_reads, wts):
         out.write("hap#   Haplogroup      Contribution   Reads\n")
         out.write("-------------------------------------------\n")
     for hap_id, haplogroup, prop in contribs:
-        total_reads = 0
-        for read_index in contrib_reads[hap_id]:
-            total_reads += wts[read_index]
+        total_reads = len(contrib_reads[hap_id])
         if out.isatty():
             prop_str = '%.4f' % (prop)
             read_str = '%d' % (total_reads)
