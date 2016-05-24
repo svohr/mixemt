@@ -123,7 +123,7 @@ def assign_reads(bamfile, contribs, em_results, haps, reads, args):
     con_read_indexes = assign_read_indexes(contribs, em_results,
                                            haps, reads, args.min_fold)
     for con in con_read_indexes:
-        con_read_ids = get_contrib_read_ids(con_read_indexes(con), reads)
+        con_read_ids = get_contrib_read_ids(con_read_indexes[con], reads)
         for read_id in con_read_ids:
             read_to_con[read_id] = contrib_reads[con]
 
