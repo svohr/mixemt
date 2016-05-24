@@ -245,7 +245,7 @@ def write_haplotypes(bamfile, contrib_reads, args):
         if not contrib_reads[contrib]:
             # No reads assigned to this contributor
             continue
-        hap_fn = "%s.%s.%s" % (args.prefix, contrib, ext)
+        hap_fn = "%s.%s.%s" % (args.out_prefix, contrib, ext)
         try:
             hap_bamfile = pysam.AlignmentFile(hap_fn, mode, template=bamfile)
             written = 0
