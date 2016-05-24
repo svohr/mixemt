@@ -129,7 +129,7 @@ def assign_reads(bamfile, contribs, em_results, haps, reads, args):
 
     for aln in bamfile.fetch():
         if aln.query_name in read_to_con:
-            read_to_con[aln.query].append(aln)
+            read_to_con[aln.query_name].append(aln)
 
     return contrib_reads
 
