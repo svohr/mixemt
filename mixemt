@@ -198,6 +198,7 @@ def process_and_report(args):
         haplogroups, reads, wts, em_results = load_prev(args.load)
 
         # Re-process the reads to get the reference base observation table.
+        bamfile.reset()
         _, base_obs = preprocess.process_reads(bamfile, [], min_mq=args.min_mq,
                                                             min_bq=args.min_bq)
 
