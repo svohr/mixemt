@@ -95,7 +95,7 @@ def write_base_obs(out, obs_tab):
     return
 
 
-def write_variants(out, phylo, contribs):
+def write_variants(out, phylo, ref, contribs):
     """
     Write a table of the variants used in this analysis and note whether the
     position is expected to be polymorphic in the sample given the set of
@@ -108,6 +108,7 @@ def write_variants(out, phylo, contribs):
                   haplogroup, fraction
     Returns: nothing
     """
-
+    for var in phylo.get_variant_pos():
+        out.write("%d\n" % (var))
     return
 

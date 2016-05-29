@@ -193,7 +193,7 @@ class Phylotree(object):
         self.process_haplotypes()
         return
 
-    def polymorphic_sites(self, haps):
+    def polymorphic_sites(self, haps, ref):
         """
         Takes a list of haplogroups and returns the sites that are expected to
         be polymorphic within the sample.
@@ -213,9 +213,13 @@ class Phylotree(object):
 
         var_tab = collections.defaultdict(list)
         for hap in haps:
-            var = self.hap_var[hap]
-            pos = pos_from_var(var)
-            var_tab[pos].append(var)
+            for var in self.hap_var[hap]:
+                pos = pos_from_var(var)
+                der = der_allele(var)
+                if der != ref[pos]:
+                    var_tab[pos].append(var)
+        # Position is polymorphic if not all contributors have a non reference
+        # allele or if any derived alleles differ.
         poly = [pos for pos in sorted(var_tab)
                 if (len(var_tab[pos]) < len(haps))
                     or derived_diff(var_tab[pos])]

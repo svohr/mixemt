@@ -93,6 +93,7 @@ class TestPhylotreeSimple(unittest.TestCase):
                   ',,,E, A4t ,,',
                   ',A, A2T a4t ,,']
         self.phy = phylotree.Phylotree(phy_in)
+        self.ref = "AAAAAAAAA"
 
     def test_phylonode_get_anon_name(self):
         node = phylotree.Phylotree.PhyloNode('A')
@@ -191,6 +192,24 @@ class TestPhylotreeSimple(unittest.TestCase):
         self.assertEqual(self.phy.hap_var['G'], ['A5T', 'A7T'])
         self.assertEqual(self.phy.hap_var['H'], ['A5T'])
         self.assertEqual(self.phy.hap_var['I'], [])
+
+    def test_find_polymorphic_one_haplogroup(self):
+        self.assertEqual(self.phy.polymorphic_sites(['A'], self.ref), [])
+
+    def test_find_polymorphic_two_haplogroups(self):
+        res = self.phy.polymorphic_sites(['F', 'G'], self.ref)
+        exp = [5, 6]
+        self.assertEqual(res, exp)
+
+    def test_find_polymorphic_two_haplogroups_backmutation(self):
+        res = self.phy.polymorphic_sites(['A', 'C'], self.ref)
+        exp = [1, 2, 3, 5]
+        self.assertEqual(res, exp)
+
+    def test_find_polymorphic_multi_haplogroups(self):
+        res = self.phy.polymorphic_sites(['B', 'C', 'D', 'E'], self.ref)
+        exp = [3, 4, 5, 6, 7, 8]
+        self.assertEqual(res, exp)
 
 
 if __name__ == '__main__':
