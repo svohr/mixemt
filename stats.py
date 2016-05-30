@@ -80,7 +80,7 @@ def write_coverage(out, obs_tab):
     return
 
 
-def write_base_obs(out, obs_tab):
+def write_base_obs(out, obs_tab, prefix=''):
     """
     Write the counts of observed bases for each position to the file handle.
 
@@ -89,9 +89,13 @@ def write_base_obs(out, obs_tab):
         obs_tab: Table of base observations for positions in the reference.
     Returns: nothing
     """
+    if prefix:
+        prefix += '\t'
     for ref_pos in xrange(max(obs_tab)):
-        out.write("%d\t%s\n" % (ref_pos, ['\t'.join(obs_tab[ref_pos][base])
-                                          for base in 'ACGT']))
+        out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
+                                      ['\t'.join(obs_tab[ref_pos][base])
+                                       for base in 'ACGT'],
+                                      sum(obs_tab[ref_pos].values())))
     return
 
 
@@ -108,7 +112,42 @@ def write_variants(out, phylo, ref, contribs):
                   haplogroup, fraction
     Returns: nothing
     """
+    haplogroups = [con[1] for con in contribs]
+    polymorphic = set(phylo.polymorphic_sites(haplogroups, ref))
     for var in phylo.get_variant_pos():
-        out.write("%d\n" % (var))
+        status = "fixed"
+        if var in polymorphic:
+            status = "polymorphic"
+        out.write("%d\t%s\n" % (var, status))
+    return
+
+
+def write_statistics(phylo, ref, contribs, contrib_reads, args):
+    """
+    Write a bunch of files to use for plotting the results of our EM and
+    assembly steps. These will include 1) base observations for each
+    contributor and 2) sites from phylotree that were used to estimate mixture
+    contributions and whether or not we think these should be polymorphic
+    or not.
+
+    Args:
+        contribs: The contributor table returned by assembly.get_contributors,
+                  a list of (hap#, haplogroup, proportion) tuples.
+        contrib_reads: a dictionary mapping hap#s to list of pysam
+                       AlignedSegments
+        obs_tab: The table of single base per reference position for the
+                 entire sample.
+        ref: The reference sequence.
+        args: The argparse namespace, used for the stats_prefix filename prefix
+    Returns: nothing
+    """
+    haplogroups = {con[0]:con[1] for con in contribs}
+    with open("%s.pos.tab" % (args.stats_prefix), 'w') as var_out:
+        write_variants(var_out, phylo, ref, contribs)
+    for con in contrib_reads:
+        with open("%s.%s.obs.tab" % (args.stats_prefix, con), 'w') as obs_out:
+            obs_tab = preprocess.process_reads(contrib_reads[con], [],
+                                               args.min_mq, args.min_bq)
+            write_base_obs(out, obs_tab, "%s\t%s" % (con, haplogroup[con]))
     return
 
