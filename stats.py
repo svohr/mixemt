@@ -94,8 +94,8 @@ def write_base_obs(out, obs_tab, prefix=''):
         prefix += '\t'
     for ref_pos in xrange(max(obs_tab)):
         out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
-                                      ['\t'.join(obs_tab[ref_pos][base])
-                                       for base in 'ACGT'],
+                                      '\t'.join([str(obs_tab[ref_pos][base])
+                                       for base in 'ACGT']),
                                       sum(obs_tab[ref_pos].values())))
     return
 
@@ -147,8 +147,11 @@ def write_statistics(phylo, ref, contribs, contrib_reads, args):
         write_variants(var_out, phylo, ref, contribs)
     for con in contrib_reads:
         with open("%s.%s.obs.tab" % (args.stats_prefix, con), 'w') as obs_out:
-            obs_tab = preprocess.process_reads(contrib_reads[con], [],
-                                               args.min_mq, args.min_bq)
-            write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroups[con]))
+            _, obs_tab = preprocess.process_reads(contrib_reads[con], [],
+                                                  args.min_mq, args.min_bq)
+            haplogroup = ""
+            if con in haplogroups:
+                haplogroup = haplogroups[con]
+            write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroup))
     return
 

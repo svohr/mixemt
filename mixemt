@@ -145,8 +145,8 @@ def load_prev(prefix):
                 haps.append(line.rstrip())
         with open("%s.reads" % (prefix), 'r') as read_in:
             for line in read_in:
-                items = line.split('\t')
-                read_ids = items[1].rstrip().split(',')
+                items = line.rstrip().split('\t')
+                read_ids = items[1:]
                 reads.append(read_ids)
                 read_wts.append(len(read_ids))
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
@@ -171,7 +171,7 @@ def dump_all(prefix, haps, reads, em_results):
                 hap_out.write('%s\n' % (hap))
         with open("%s.reads" % (prefix), 'w') as read_out:
             for i in xrange(len(reads)):
-                read_out.write('%d\t%s\n' % (i, ','.join(reads[i])))
+                read_out.write('%d\t%s\n' % (i, '\t'.join(reads[i])))
         props, read_hap_mat = em_results
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
@@ -241,7 +241,7 @@ def process_and_report(args):
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
     if args.stats_prefix:
-        stats.write_statistics(phylo, contribs, contrib_reads, refseq, args)
+        stats.write_statistics(phylo, refseq, contribs, contrib_reads, args)
     if args.out_prefix:
         return assemble.write_haplotypes(bamfile, contrib_reads, args)
  
