@@ -13,7 +13,8 @@ import sys
 import numpy
 import collections
 
-import phylotree
+import preprocess
+
 
 def report_top_props(haplogroups, props, top_n=10):
     """
@@ -148,6 +149,6 @@ def write_statistics(phylo, ref, contribs, contrib_reads, args):
         with open("%s.%s.obs.tab" % (args.stats_prefix, con), 'w') as obs_out:
             obs_tab = preprocess.process_reads(contrib_reads[con], [],
                                                args.min_mq, args.min_bq)
-            write_base_obs(out, obs_tab, "%s\t%s" % (con, haplogroup[con]))
+            write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroups[con]))
     return
 
