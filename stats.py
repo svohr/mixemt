@@ -149,7 +149,7 @@ def write_statistics(phylo, ref, contribs, contrib_reads, args):
         with open("%s.%s.obs.tab" % (args.stats_prefix, con), 'w') as obs_out:
             _, obs_tab = preprocess.process_reads(contrib_reads[con], [],
                                                   args.min_mq, args.min_bq)
-            haplogroup = ""
+            haplogroup = "unassigned"
             if con in haplogroups:
                 haplogroup = haplogroups[con]
             write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroup))
