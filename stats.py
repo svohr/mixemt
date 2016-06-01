@@ -75,7 +75,7 @@ def write_coverage(out, obs_tab):
         obs_tab: Table of base observations for positions in the reference.
     Returns: nothing
     """
-    for ref_pos in xrange(max(obs_tab)):
+    for ref_pos in xrange(max(obs_tab) + 1):
         cov = sum(obs_tab[ref_pos])
         out.write('%d\t%d\n' % (ref_pos, cov))
     return
@@ -92,7 +92,7 @@ def write_base_obs(out, obs_tab, prefix=''):
     """
     if prefix:
         prefix += '\t'
-    for ref_pos in xrange(max(obs_tab)):
+    for ref_pos in xrange(max(obs_tab) + 1):
         out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
                                       '\t'.join([str(obs_tab[ref_pos][base])
                                        for base in 'ACGT']),
