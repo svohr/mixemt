@@ -262,6 +262,58 @@ def write_haplotypes(bamfile, contrib_reads, args):
     return 0
 
 
+def call_consensus(alns):
+    """
+    Generates a consensus sequence based on the list of AlignedSegments.
+
+    Args:
+        alns: A list of pysam AlignedSegments
+    Returns: A string representing the consensus of the alignments in alns
+    """
+    return
+
+
+def find_new_variants(contrib_consensus):
+    """
+    Produces a dictionary that maps reference positions and base tuples to the
+    contributing haplotype with which it is associated.
+
+    Args:
+    Returns:
+        A dictionary mapping (ref pos., base) to a contributor.
+    """
+    return
+
+
+def assign_reads_from_new_vars(contrib_reads, new_variants):
+    """
+    Assigns reads from the 'unassigned' list in contrib reads to contributors
+    using a dictionary mapping new variant positions and base observations to
+    contributors.
+
+    Args:
+    Returns:
+    """
+    return
+
+
+def extend_assemblies(contrib_reads, args):
+    """
+    Iteratively tries to extend current assemblies by discovering novel
+    variants from haplotype assembly consensus sequences, assigning reads to
+    contributors based on new variants and repeating until convergence.
+
+    Args:
+        contrib_reads: A table mapping hap# IDs to lists of pysam
+                       AlignedSegments + an entry of unassigned.
+        args: The argument values from mixemt's argparse results.
+    Returns:
+        Update version of contrib_reads.
+    """
+
+    return
+
+
 def assemble_haplotypes(bamfile, em_results, contrib_reads, args):
     """
     This function encapsulates the steps of assigning reads to contributors
