@@ -262,15 +262,31 @@ def write_haplotypes(bamfile, contrib_reads, args):
     return 0
 
 
-def call_consensus(alns):
+def call_consensus(alns, args):
     """
     Generates a consensus sequence based on the list of AlignedSegments.
 
     Args:
         alns: A list of pysam AlignedSegments
+        args: The argument values from mixemt's argparse results.
     Returns: A string representing the consensus of the alignments in alns
     """
-    return
+    def consensus_base(base_counts):
+        """
+        Given a Counter for a reference position, return the base that
+        represents the consensus:
+        N if coverage requirement is not met or if bases disagree
+        or the observed base if all observations agree.
+        """
+        total_obs = sum(base_counts.values())
+        if total_obs < args.min_cov:
+            return 'N'
+        base, count = base_counts.most_common(1)[0]
+        if count == total_obs:
+            return base
+        return 'N'
+    _, obs_tab = preprocess.process_reads(alns, [], args.min_mq, args.min_bq)
+    return str([consensus_base(obs_tab[pos]) for pos in xrange(max(obs_tab))])
 
 
 def find_new_variants(contrib_consensus):
