@@ -21,6 +21,7 @@ import collections
 import sys
 
 import phylotree
+import preprocess
 
 
 def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
@@ -285,20 +286,42 @@ def call_consensus(alns, args):
         if count == total_obs:
             return base
         return 'N'
+    if not alns:
+        # Sometimes alns can be empty.
+        return ""
     _, obs_tab = preprocess.process_reads(alns, [], args.min_mq, args.min_bq)
-    return str([consensus_base(obs_tab[pos]) for pos in xrange(max(obs_tab))])
+    cons_bases = [consensus_base(obs_tab[pos])
+                  for pos in xrange(max(obs_tab) + 1)]
+    return str(''.join(cons_bases))
 
 
-def find_new_variants(contrib_consensus):
+def find_new_variants(contrib_reads, args):
     """
     Produces a dictionary that maps reference positions and base tuples to the
     contributing haplotype with which it is associated.
 
     Args:
+        contrib_reads: dictionary mapping hapN ids to lists of pysam
+                       AlignedSegments
+        args: The argument values from mixemt's argparse results.
     Returns:
-        A dictionary mapping (ref pos., base) to a contributor.
+        A dictionary mapping (ref pos., base) to a contributor hapN id.
     """
-    return
+    new_vars = dict()
+    contrib_cons = {con:call_consensus(contrib_reads, args)
+                    for con in contrib_reads if con != 'unassigned'}
+    min_cons_len = min([len(contrib_cons[cons]) for cons in contrib_cons])
+    for pos in xrange(min_cons_len):
+        if any([cons[pos] == 'N' for cons in contrib_cons.values()]):
+            continue
+        # base observed in all consensus sequences
+        for hap in contrib_cons:
+            base = contrib_cons[hap][pos]
+            base_is_uniq = all([contrib_cons[con][pos] != base
+                               for con in contrib_cons if con != hap])
+            if base_is_uniq:
+                new_vars[pos, base] = hap
+    return new_vars
 
 
 def assign_reads_from_new_vars(contrib_reads, new_variants):

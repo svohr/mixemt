@@ -7,6 +7,7 @@ import sys
 import numpy
 import argparse
 import collections
+import pysam
 
 import assemble
 import phylotree
@@ -197,6 +198,72 @@ class TestAssignReads(unittest.TestCase):
         idxs = []
         res = assemble.get_contrib_read_ids(idxs, self.reads)
         self.assertEqual(set(), res)
+
+
+class TestExtendAssemblies(unittest.TestCase):
+    def setUp(self):
+        parser = argparse.ArgumentParser()
+        self.args = parser.parse_args([])
+        self.args.min_mq = 30
+        self.args.min_bq = 30
+        self.args.min_cov = 2
+        self.aln1 = pysam.AlignedSegment()
+        self.aln1.reference_start = 10
+        self.aln1.query_name = 'read1'
+        self.aln1.mapping_quality = 30
+        self.aln1.query_sequence = "AAAAA"
+        self.aln1.query_qualities = [30] * 5
+        self.aln1.cigarstring = '5M'
+        self.aln2 = pysam.AlignedSegment()
+        self.aln2.reference_start = 13
+        self.aln2.query_name = 'read2'
+        self.aln2.mapping_quality = 30
+        self.aln2.query_sequence = "AAAAA"
+        self.aln2.query_qualities = [30] * 5
+        self.aln2.cigarstring = '5M'
+        self.aln3 = pysam.AlignedSegment()
+        self.aln3.reference_start = 15
+        self.aln3.query_name = 'read3'
+        self.aln3.mapping_quality = 30
+        self.aln3.query_sequence = "TAAAA"
+        self.aln3.query_qualities = [30] * 5
+        self.aln3.cigarstring = '5M'
+        return
+
+    def test_call_consensus_no_aligned_sequences(self):
+        res = assemble.call_consensus([], self.args)
+        exp = ''
+        self.assertEqual(res, exp)
+
+    def test_call_consensus_simple(self):
+        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
+        exp = 'NNNNNNNNNNNNNAANNN'
+        self.assertEqual(res, exp)
+
+    def test_call_consensus_high_coverage_requirement(self):
+        self.args.min_cov = 3
+        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
+        exp = 'NNNNNNNNNNNNNNNNNN'
+        self.assertEqual(res, exp)
+
+    def test_call_consensus_low_coverage_requirement(self):
+        self.args.min_cov = 1
+        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
+        exp = 'NNNNNNNNNNAAAAAAAA'
+        self.assertEqual(res, exp)
+
+    def test_call_consensus_disagreement_low_coverage_requirement(self):
+        self.args.min_cov = 1
+        res = assemble.call_consensus([self.aln1, self.aln2, self.aln3],
+                                      self.args)
+        exp = 'NNNNNNNNNNAAAAANAAAA'
+        self.assertEqual(res, exp)
+
+    def test_call_consensus_disagreement_coverage_requirement(self):
+        res = assemble.call_consensus([self.aln1, self.aln2, self.aln3],
+                                      self.args)
+        exp = 'NNNNNNNNNNNNNAANAANN'
+        self.assertEqual(res, exp)
 
 
 if __name__ == '__main__':
