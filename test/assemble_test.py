@@ -265,6 +265,25 @@ class TestExtendAssemblies(unittest.TestCase):
         exp = 'NNNNNNNNNNNNNAANAANN'
         self.assertEqual(res, exp)
 
+    def test_find_new_variants_empty_input(self):
+        res = assemble.find_new_variants({}, self.args)
+        exp = {}
+        self.assertEqual(res, exp)
+
+    def test_find_new_variants_none_to_find(self):
+        res = assemble.find_new_variants({'A':[self.aln1, self.aln2],
+                                          'B':[self.aln1, self.aln1],
+                                          'unassigned':[self.aln3]}, self.args)
+        exp = {}
+        self.assertEqual(res, exp)
+
+    def test_find_new_variants_one_diff_two_contributors(self):
+        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+                                          'B':[self.aln3, self.aln3],
+                                          'unassigned':[self.aln1]}, self.args)
+        exp = {(15, 'A'):'A', (15, 'T'):'B'}
+        self.assertEqual(res, exp)
+
 
 if __name__ == '__main__':
     unittest.main()
