@@ -308,8 +308,11 @@ def find_new_variants(contrib_reads, args):
         A dictionary mapping (ref pos., base) to a contributor hapN id.
     """
     new_vars = dict()
-    contrib_cons = {con:call_consensus(contrib_reads, args)
+    contrib_cons = {con:call_consensus(contrib_reads[con], args)
                     for con in contrib_reads if con != 'unassigned'}
+    if not contrib_cons:
+        return {} # no contributors, no new variants.
+
     min_cons_len = min([len(contrib_cons[cons]) for cons in contrib_cons])
     for pos in xrange(min_cons_len):
         if any([cons[pos] == 'N' for cons in contrib_cons.values()]):

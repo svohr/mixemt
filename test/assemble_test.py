@@ -284,6 +284,34 @@ class TestExtendAssemblies(unittest.TestCase):
         exp = {(15, 'A'):'A', (15, 'T'):'B'}
         self.assertEqual(res, exp)
 
+    def test_find_new_variants_one_diff_three_contributors(self):
+        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+                                          'B':[self.aln3, self.aln3],
+                                          'C':[self.aln2, self.aln2],
+                                          'unassigned':[self.aln1]}, self.args)
+        # base 'T' can be assigned to hap 'B', but 'A' cannot be assigned
+        # because 'A' and 'C' both have 'A'.
+        exp = {(15, 'T'):'B'}
+        self.assertEqual(res, exp)
+
+    def test_find_new_variants_two_diff_missing_cov_three_contributors(self):
+        self.aln1.query_sequence = "AAGAA"
+        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+                                          'B':[self.aln3, self.aln3],
+                                          'C':[self.aln1, self.aln2,
+                                               self.aln2],
+                                          'unassigned':[self.aln1]}, self.args)
+        # A13G variant is only covered in hap 'C'. Cannot call new variant.
+        exp = {(15, 'T'):'B'}
+        self.assertEqual(res, exp)
+
+    def test_find_new_variants_one_diff_cant_assign(self):
+        res = assemble.find_new_variants({'A':[self.aln2, self.aln3],
+                                          'B':[self.aln2, self.aln3],
+                                          'unassigned':[self.aln1]}, self.args)
+        exp = {}
+        self.assertEqual(res, exp)
+
 
 if __name__ == '__main__':
     unittest.main()
