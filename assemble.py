@@ -19,6 +19,7 @@ import pysam
 import operator
 import collections
 import sys
+import itertools
 
 import phylotree
 import preprocess
@@ -327,7 +328,25 @@ def find_new_variants(contrib_reads, args):
     return new_vars
 
 
-def assign_reads_from_new_vars(contrib_reads, new_variants):
+def rm_dup_assigned_reads(read_sets):
+    """
+    Takes a dictionary of sets of read IDs (strs) and removes any read that
+    appears in more than one set.
+
+    Args:
+        reads_sets: dict of sets of read ID strs
+    Returns:
+        updated dict of read_sets
+    """
+    to_remove = set()
+    for con1, con2 in itertools.combinations(read_sets, 2):
+        to_remove.update(read_sets[con1].intersection(read_sets[con2]))
+    for con in read_sets:
+        read_sets[con].difference_update(to_remove)
+    return read_sets
+
+
+def assign_reads_from_new_vars(contrib_reads, new_variants, args):
     """
     Assigns reads from the 'unassigned' list in contrib reads to contributors
     using a dictionary mapping new variant positions and base observations to
@@ -336,6 +355,22 @@ def assign_reads_from_new_vars(contrib_reads, new_variants):
     Args:
     Returns:
     """
+    temp_assigns = {con:set() for con in contrib_reads if con != 'unassigned'}
+    
+    for aln in contrib_reads['unassigned']:
+        if aln.mapping_quality >= args.min_mq:
+            for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
+                qpos = int(qpos)
+                rpos = int(rpos)
+                if (not aln.query_qualities or 
+                    aln.query_qualities[qpos] >= args.min_bq):
+                    base = aln.query_sequence[qpos].upper()
+                    if (rpos, base) in new_variants:
+                        contrib = new_variants[(rpos, base)]
+                        temp_assigns[contrib].add(aln.query_name)
+    
+    rm_dup_assigned_reads(temp_assigns)
+    # Use the temp assignments to update the contrib_reads table.
     return
 
 
@@ -350,7 +385,7 @@ def extend_assemblies(contrib_reads, args):
                        AlignedSegments + an entry of unassigned.
         args: The argument values from mixemt's argparse results.
     Returns:
-        Update version of contrib_reads.
+        Updated version of contrib_reads.
     """
 
     return
