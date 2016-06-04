@@ -312,36 +312,6 @@ class TestExtendAssemblies(unittest.TestCase):
         exp = {}
         self.assertEqual(res, exp)
 
-    def test_remove_dup_reads_nothing_to_do(self):
-        read_sets = {'a':set('ABCD'), 'b':set('EFG'), 'c':set('HI')}
-        res = assemble.rm_dup_assigned_reads(read_sets)
-        exp = read_sets
-        self.assertEqual(res, exp)
-
-    def test_remove_dup_reads_simple_dup(self):
-        read_sets = {'a':set('ABCDIF'), 'b':set('AEFGI'), 'c':set('HI')}
-        res = assemble.rm_dup_assigned_reads(read_sets)
-        exp = {'a':set('BCD'), 'b':set('EG'), 'c':set('H')}
-        self.assertEqual(res, exp)
-
-    def test_remove_dup_reads_nothing_find_one(self):
-        read_sets = {'a':set('ABCD'), 'b':set('EFGH'), 'c':set('HI')}
-        res = assemble.rm_dup_assigned_reads(read_sets)
-        exp = {'a':set('ABCD'), 'b':set('EFG'), 'c':set('I')}
-        self.assertEqual(res, exp)
-
-    def test_remove_dup_reads_rm_all(self):
-        read_sets = {'a':set('ABC'), 'b':set('ABC'), 'c':set('AC')}
-        res = assemble.rm_dup_assigned_reads(read_sets)
-        exp = {'a':set(), 'b':set(), 'c':set()}
-        self.assertEqual(res, exp)
-
-    def test_remove_dup_reads_only_one_set(self):
-        read_sets = {'a':set('ABC')}
-        res = assemble.rm_dup_assigned_reads(read_sets)
-        exp = read_sets 
-        self.assertEqual(res, exp)
-
 
 if __name__ == '__main__':
     unittest.main()

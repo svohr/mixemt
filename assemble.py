@@ -19,7 +19,6 @@ import pysam
 import operator
 import collections
 import sys
-import itertools
 
 import phylotree
 import preprocess
@@ -328,24 +327,6 @@ def find_new_variants(contrib_reads, args):
     return new_vars
 
 
-def rm_dup_assigned_reads(read_sets):
-    """
-    Takes a dictionary of sets of read IDs (strs) and removes any read that
-    appears in more than one set.
-
-    Args:
-        reads_sets: dict of sets of read ID strs
-    Returns:
-        updated dict of read_sets
-    """
-    to_remove = set()
-    for con1, con2 in itertools.combinations(read_sets, 2):
-        to_remove.update(read_sets[con1].intersection(read_sets[con2]))
-    for con in read_sets:
-        read_sets[con].difference_update(to_remove)
-    return read_sets
-
-
 def assign_reads_from_new_vars(contrib_reads, new_variants, args):
     """
     Assigns reads from the 'unassigned' list in contrib reads to contributors
@@ -353,25 +334,43 @@ def assign_reads_from_new_vars(contrib_reads, new_variants, args):
     contributors.
 
     Args:
+        contrib_reads: a dictionary mapping hapN ids to lists of pysam
+                       AlignedSegments, including an entry for "unassigned"
+        new_variants: a dictionary mapping (ref. position, base) tuples to
+                       hapN IDs.
+        args: The argument values from mixemt's argparse results.
     Returns:
+        Updated version of contrib_reads.
     """
-    temp_assigns = {con:set() for con in contrib_reads if con != 'unassigned'}
-    
+    # TODO: Add insort to maintain sorted list of AlignedSegments
+    temp_assigns = collections.defaultdict(set)
+
     for aln in contrib_reads['unassigned']:
         if aln.mapping_quality >= args.min_mq:
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
                 rpos = int(rpos)
-                if (not aln.query_qualities or 
+                if (not aln.query_qualities or
                     aln.query_qualities[qpos] >= args.min_bq):
                     base = aln.query_sequence[qpos].upper()
                     if (rpos, base) in new_variants:
                         contrib = new_variants[(rpos, base)]
-                        temp_assigns[contrib].add(aln.query_name)
-    
-    rm_dup_assigned_reads(temp_assigns)
-    # Use the temp assignments to update the contrib_reads table.
-    return
+                        temp_assigns[aln.query_name].add(contrib)
+
+    # Find reads that have been assigned to exactly 1 contributor
+    uniq_assigns = {qname:list(contrib)[0]
+                    for qname, contrib in temp_assigns.iteritems()
+                    if len(contrib) == 1}
+
+    # Move reads that can be assigned to new contributor assignment
+    for aln in contrib_reads['unassigned']:
+        if aln.query_name in uniq_assigns:
+            contrib_reads[uniq_assigns[aln.query_name]].append(aln)
+
+    # Remove the reads that have been moved from "unassigned"
+    contrib_reads['unassigned'] = [aln for aln in contrib_reads['unassigned']
+                                   if aln.query_name not in uniq_assigns]
+    return contrib_reads
 
 
 def extend_assemblies(contrib_reads, args):
