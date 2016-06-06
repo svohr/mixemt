@@ -206,7 +206,7 @@ class TestExtendAssemblies(unittest.TestCase):
         self.args = parser.parse_args([])
         self.args.min_mq = 30
         self.args.min_bq = 30
-        self.args.min_cov = 2
+        self.args.cons_cov = 2
         self.aln1 = pysam.AlignedSegment()
         self.aln1.reference_start = 10
         self.aln1.query_name = 'read1'
@@ -241,19 +241,19 @@ class TestExtendAssemblies(unittest.TestCase):
         self.assertEqual(res, exp)
 
     def test_call_consensus_high_coverage_requirement(self):
-        self.args.min_cov = 3
+        self.args.cons_cov = 3
         res = assemble.call_consensus([self.aln1, self.aln2], self.args)
         exp = 'NNNNNNNNNNNNNNNNNN'
         self.assertEqual(res, exp)
 
     def test_call_consensus_low_coverage_requirement(self):
-        self.args.min_cov = 1
+        self.args.cons_cov = 1
         res = assemble.call_consensus([self.aln1, self.aln2], self.args)
         exp = 'NNNNNNNNNNAAAAAAAA'
         self.assertEqual(res, exp)
 
     def test_call_consensus_disagreement_low_coverage_requirement(self):
-        self.args.min_cov = 1
+        self.args.cons_cov = 1
         res = assemble.call_consensus([self.aln1, self.aln2, self.aln3],
                                       self.args)
         exp = 'NNNNNNNNNNAAAAANAAAA'

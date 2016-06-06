@@ -280,7 +280,7 @@ def call_consensus(alns, args):
         or the observed base if all observations agree.
         """
         total_obs = sum(base_counts.values())
-        if total_obs < args.min_cov:
+        if total_obs < args.cons_cov:
             return 'N'
         base, count = base_counts.most_common(1)[0]
         if count == total_obs:
@@ -386,20 +386,22 @@ def extend_assemblies(contrib_reads, args):
     Returns:
         Updated version of contrib_reads.
     """
+    last_unassigned = None
+    unassigned = len(contrib_reads['unassigned'])
+    run = 1
 
-    return
+    if args.verbose:
+        sys.stderr.write('\nAssembly extension step...\n')
+    while last_unassigned != unassigned:
+        new_variants = find_new_variants(contrib_reads, args)
+        contrib_reads = assign_reads_from_new_vars(contrib_reads,
+                                                   new_variants, args)
+        last_unassigned = unassigned
+        unassigned = len(contrib_reads['unassigned'])
+        if args.verbose:
+            sys.stderr.write("  %d: %d/%d reads assigned\n"
+                % (run, last_unassigned - unassigned, last_unassigned))
+        run += 1
 
+    return contrib_reads
 
-def assemble_haplotypes(bamfile, em_results, contrib_reads, args):
-    """
-    This function encapsulates the steps of assigning reads to contributors
-    from the EM results and any attempts to extend the assemblies.
-
-    Args:
-    Returns:
-    Raises:
-    """
-    # Assign reads based on em_results
-
-    # If enabled, try to extend the assembly
-    return
