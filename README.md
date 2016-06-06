@@ -1,3 +1,5 @@
-`mixemt` - Decovoluting mtDNA Mixtures by Expectation Maximization
+`mixemt` - Decovoluting mtDNA Mixtures by Expectation-Maximization
 ==================================================================
 
+`mixemt` is a program for making sense of mixtures of human mitochondrial
+sequences.
