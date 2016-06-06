@@ -312,6 +312,95 @@ class TestExtendAssemblies(unittest.TestCase):
         exp = {}
         self.assertEqual(res, exp)
 
+    def test_assign_reads_from_new_vars_no_assign(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[self.aln1]}
+        new_var = {(15, 'A'):'A', (15, 'T'):'B'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3],
+                'unassigned':[self.aln1]}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_simple_assign(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[self.aln2]}
+        new_var = {(15, 'A'):'A', (15, 'T'):'B'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3],
+                'unassigned':[]}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_multi_assign(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[self.aln1, self.aln2, self.aln3]}
+        new_var = {(15, 'A'):'A', (15, 'T'):'B'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3, self.aln3],
+                'unassigned':[self.aln1]}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_single_assign(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'C':[self.aln3, self.aln3],
+                         'unassigned':[self.aln1, self.aln2, self.aln3]}
+        new_var = {(15, 'A'):'A'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3],
+                'C':[self.aln3, self.aln3],
+                'unassigned':[self.aln1, self.aln3]}
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_disagree(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[self.aln1, self.aln2, self.aln3]}
+        new_var = {(13, 'A'):'B', (15, 'A'):'A'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3, self.aln1],
+                'unassigned':[self.aln2, self.aln3]}
+        self.maxDiff = None
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_empty_unassigned(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[]}
+        new_var = {(13, 'A'):'B', (15, 'A'):'A'}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3],
+                'unassigned':[]}
+        self.maxDiff = None
+        self.assertEqual(res, exp)
+
+    def test_assign_reads_from_new_vars_no_vars(self):
+        contrib_reads = {'A':[self.aln2, self.aln2],
+                         'B':[self.aln3, self.aln3],
+                         'unassigned':[self.aln1, self.aln2, self.aln3]}
+        new_var = {}
+        res = assemble.assign_reads_from_new_vars(contrib_reads, new_var,
+                                                  self.args)
+        exp =  {'A':[self.aln2, self.aln2],
+                'B':[self.aln3, self.aln3],
+                'unassigned':[self.aln1, self.aln2, self.aln3]}
+        self.maxDiff = None
+        self.assertEqual(res, exp)
+
 
 if __name__ == '__main__':
     unittest.main()
