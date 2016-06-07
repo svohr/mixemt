@@ -392,6 +392,7 @@ def extend_assemblies(contrib_reads, args):
 
     if args.verbose:
         sys.stderr.write('\nAssembly extension step...\n')
+
     while last_unassigned != unassigned:
         new_variants = find_new_variants(contrib_reads, args)
         contrib_reads = assign_reads_from_new_vars(contrib_reads,
@@ -399,9 +400,14 @@ def extend_assemblies(contrib_reads, args):
         last_unassigned = unassigned
         unassigned = len(contrib_reads['unassigned'])
         if args.verbose:
-            sys.stderr.write("  %d: %d/%d reads assigned\n"
-                % (run, last_unassigned - unassigned, last_unassigned))
+            sys.stderr.write(
+                "  %d: %d/%d reads assigned using %d variants\n"
+                    % (run, last_unassigned - unassigned, last_unassigned,
+                       len(new_variants)))
         run += 1
+
+    if args.verbose:
+        sys.stderr.write('\n')
 
     return contrib_reads
 
