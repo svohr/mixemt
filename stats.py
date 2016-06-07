@@ -123,7 +123,7 @@ def write_variants(out, phylo, ref, contribs):
     return
 
 
-def write_statistics(phylo, ref, contribs, contrib_reads, args):
+def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
     """
     Write a bunch of files to use for plotting the results of our EM and
     assembly steps. These will include 1) base observations for each
@@ -132,26 +132,29 @@ def write_statistics(phylo, ref, contribs, contrib_reads, args):
     or not.
 
     Args:
+        phylo: The phylotree object these assignments are based on.
+        ref: The reference sequence.
+        all_obs: The table of single base per reference position for the
+                 entire sample.
         contribs: The contributor table returned by assembly.get_contributors,
                   a list of (hap#, haplogroup, proportion) tuples.
         contrib_reads: a dictionary mapping hap#s to list of pysam
                        AlignedSegments
-        obs_tab: The table of single base per reference position for the
-                 entire sample.
-        ref: The reference sequence.
         args: The argparse namespace, used for the stats_prefix filename prefix
     Returns: nothing
     """
     haplogroups = {con[0]:con[1] for con in contribs}
     with open("%s.pos.tab" % (args.stats_prefix), 'w') as var_out:
         write_variants(var_out, phylo, ref, contribs)
-    for con in contrib_reads:
-        with open("%s.%s.obs.tab" % (args.stats_prefix, con), 'w') as obs_out:
+    with open("%s.obs.tab" % (args.stats_prefix), 'w') as obs_out:
+        for con in contrib_reads:
             _, obs_tab = preprocess.process_reads(contrib_reads[con], [],
                                                   args.min_mq, args.min_bq)
             haplogroup = "unassigned"
             if con in haplogroups:
                 haplogroup = haplogroups[con]
             write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroup))
+        if len(contrib_reads) > 1:
+            write_base_obs(obs_out, all_obs, "all\tmix")
     return
 

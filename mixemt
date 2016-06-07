@@ -244,7 +244,8 @@ def process_and_report(args):
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
     if args.stats_prefix:
-        stats.write_statistics(phylo, refseq, contribs, contrib_reads, args)
+        stats.write_statistics(phylo, refseq, base_obs,
+                               contribs, contrib_reads, args)
     if args.out_prefix:
         return assemble.write_haplotypes(bamfile, contrib_reads, args)
 
