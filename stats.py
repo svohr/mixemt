@@ -147,7 +147,7 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
     with open("%s.pos.tab" % (args.stats_prefix), 'w') as var_out:
         write_variants(var_out, phylo, ref, contribs)
     with open("%s.obs.tab" % (args.stats_prefix), 'w') as obs_out:
-        for con in contrib_reads:
+        for con in sorted(contrib_reads):
             _, obs_tab = preprocess.process_reads(contrib_reads[con], [],
                                                   args.min_mq, args.min_bq)
             haplogroup = "unassigned"
