@@ -1,0 +1,6 @@
+# Byte-compiled python
+*.pyc
+
+# Any indexes generated from reference sequences
+ref/RSRS.mtDNA.fa.*
+ref/rCRS.mtDNA.fa.*
