@@ -1,13 +1,27 @@
 #! /usr/bin/env Rscript
+#
+# This script generates a plot of the read coverage across the reference
+# genome for the complete mixture sample as well as the assembled contributor
+# haplotypes and any reads that were not assigned to a contributor. The count
+# of the majority base at each position is also plotted along with coverage
+# so that variant position can be identified by eye.
+#
+# Sam Vohr (svohr@soe.ucsc.edu)
+
 
 library(ggplot2)
 
+
 args <- commandArgs(trailingOnly=TRUE)
+
+if (length(args) < 1) {
+  stop("usage: plot_mix_coverage stat_file_prefix")
+}
 
 stats.prefix <- args[1]
 
-obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
 
+obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
 obs.tab <- read.table(obs.tab.fn)
 
 obs <- data.frame(Contributor=paste(obs.tab[,1], obs.tab[,2], sep=':'),
@@ -17,7 +31,6 @@ obs$agreement <- apply(obs.tab[,4:7], 1, max)
 
 # Remove coverage and agreement values at positions with no coverage.
 obs[obs$coverage == 0, c(3,4)] <- NA
-
 # Change the positions to 1-based for plotting.
 obs$position <- obs$position + 1
 
@@ -32,5 +45,6 @@ cov.plot <- ggplot(obs) +
 plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
 n.facets <- length(levels(obs$Contributor))
 
-ggsave(filename=plot.fn, plot=cov.plot, width=10, height=n.facets * 1, dpi=100)
+ggsave(filename=plot.fn, plot=cov.plot, width=10, height=n.facets, dpi=100)
 
+quit(save='no', status=0)
