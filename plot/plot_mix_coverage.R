@@ -24,13 +24,13 @@ stats.prefix <- args[1]
 obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
 obs.tab <- read.table(obs.tab.fn)
 
-obs <- data.frame(Contributor=paste(obs.tab[,1], obs.tab[,2], sep=':'),
-                  position=obs.tab[,3],
-                  coverage=obs.tab[,8])
-obs$agreement <- apply(obs.tab[,4:7], 1, max)
+obs <- data.frame(Contributor=paste(obs.tab[, 1], obs.tab[, 2], sep=':'),
+                  position=obs.tab[, 3],
+                  coverage=obs.tab[, 8])
+obs$agreement <- apply(obs.tab[, 4:7], 1, max)
 
 # Remove coverage and agreement values at positions with no coverage.
-obs[obs$coverage == 0, c(3,4)] <- NA
+obs[obs$coverage == 0, c(3, 4)] <- NA
 # Change the positions to 1-based for plotting.
 obs$position <- obs$position + 1
 
