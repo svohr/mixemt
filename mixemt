@@ -256,8 +256,9 @@ def main():
     """ Reads input filenames from command line args and processes input
         through the analysis steps """
     # TODO: Add argument groups to nicely format the help output.
-    parser = argparse.ArgumentParser("Estimates the number and proportions of "
-                                     "contributing haplotypes.")
+    parser = argparse.ArgumentParser(
+                description="Estimates the number and proportions of "
+                            "contributing haplotypes.")
     parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
                         help="FASTA file contain the reference sequence.")
     parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
@@ -265,85 +266,91 @@ def main():
     parser.add_argument("bam_fn", metavar="reads.bam", type=str,
                         help="Aligned reads in indexed BAM file.")
 
-    parser.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
-                        metavar='custom.tab', default=None,
-                        help="Custom haplotypes to be considered in addition "
-                             "haplogroups from Phylotree.")
-    parser.add_argument('-e', '--exclude_pos', dest='exclude_pos', type=str,
-                        metavar='SITES', default=None,
-                        help="A comma-separated list of 1-based positions or "
-                             "'start-end' ranges to be excluded from "
-                             "consideration.")
-
-    parser.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
-                        metavar="INT", default=30,
-                        help="Skip alignments with mapQ < INT")
-    parser.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
-                        metavar="INT", default=30,
-                        help="Skip bases with baseQ < INT")
-
-    parser.add_argument('-i', '--init', dest='init_alpha', type=float,
-                        default=1.0, metavar="ALPHA",
-                        help="Use parameter ALPHA to initialize haplogroup "
-                             "contributions from Dirichlet distribution.")
-    parser.add_argument('-C', '--converge', dest='tolerance', type=float,
-                        default=0.0001, metavar="TOLERANCE",
-                        help="Stop EM iteration when abs. difference between "
-                             "current and previous contribution estimates is "
-                             "< TOLERANCE.")
-    parser.add_argument('-m', '--max-em-iter', dest='max_iter', type=int,
-                        default=1000, metavar="N",
-                        help="Maximum of number of EM iterations to run.")
-    parser.add_argument('-M', '--multi-em', dest='n_multi', type=int,
-                        default=1, metavar="N",
-                        help="Runs EM until convergence multiple times and "
-                             "reports the results average over all runs.")
-
-    parser.add_argument('-l', '--load', dest='load', type=str,
-                        default=None, metavar='PREFIX',
-                        help="Skip EM step and load from a previous result "
-                             "(overrides -s).")
-    parser.add_argument('-s', '--save', dest='save', type=str,
-                        default=None, metavar='PREFIX',
-                        help="Save the EM results using this file prefix.")
-
-    parser.add_argument('-f', '--fold', dest='min_fold', type=float,
-                        default=2.0,
-                        help='Minimum fold difference in probability between '
-                             'best and next haplogroup required to assign '
-                             'read to a contributor.')
-    parser.add_argument('-r', '--min-reads', dest='min_reads', type=int,
-                        default=2, metavar='N',
-                        help="Haplogroup must have N reads to be considered "
-                             "a contributor.")
-    parser.add_argument('-V', '--no-var-check',
-                        dest='var_check', action="store_false",
-                        help="Disable requirement that the majority of "
-                             "contributors's unique defining variants are "
-                             "present in the sample")
-
-    parser.add_argument('-x', '--extend-assemblies',
-                        dest='extend', action="store_true",
-                        help='Attempt to extend haplotype assemblies '
-                             'iteratively by identifying novel variants from '
-                             'contributor consensus sequences assigning reads '
-                             'based off of them.')
-    parser.add_argument('-c', '--cons-cov', dest='cons_cov',
-                        default=2, metavar='N',
-                        help="When extending assemblies with -x, sets the "
-                             "depth of coverage required to call a base "
-                             "for a contributor.")
-
-    parser.add_argument('-o', '--out', dest='out_prefix', type=str,
-                        default=None, metavar='PREFIX',
-                        help="If set, write assigned reads to contributor-"
-                             "specific BAM files using this filename prefix")
-    parser.add_argument('-t', '--stats', dest='stats_prefix', type=str,
-                        default=None, metavar='PREFIX',
-                        help="If set, write stats tables to be used for "
-                             "plotting results later.")
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
+
+    cust_opts = parser.add_argument_group("customization options")
+    cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
+                           metavar='custom.tab', default=None,
+                           help="Custom haplotypes to be considered in "
+                                "addition haplogroups from Phylotree.")
+    cust_opts.add_argument('-e', '--exclude_pos', dest='exclude_pos', type=str,
+                           metavar='SITES', default=None,
+                           help="A comma-separated list of 1-based positions "
+                                "or 'start-end' ranges to be excluded from "
+                                "consideration.")
+
+    qual_opts = parser.add_argument_group("quality filters")
+    qual_opts.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
+                           metavar="INT", default=30,
+                           help="Skip alignments with mapQ < INT")
+    qual_opts.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
+                           metavar="INT", default=30,
+                           help="Skip bases with baseQ < INT")
+
+    em_opts = parser.add_argument_group("expectation-maximization")
+    em_opts.add_argument('-i', '--init', dest='init_alpha', type=float,
+                         default=1.0, metavar="ALPHA",
+                         help="Use parameter ALPHA to initialize haplogroup "
+                              "contributions from Dirichlet distribution.")
+    em_opts.add_argument('-C', '--converge', dest='tolerance', type=float,
+                         default=0.0001, metavar="TOLERANCE",
+                         help="Stop EM iteration when abs. difference between "
+                              "current and previous contribution estimates is "
+                              "< TOLERANCE.")
+    em_opts.add_argument('-m', '--max-em-iter', dest='max_iter', type=int,
+                         default=1000, metavar="N",
+                         help="Maximum of number of EM iterations to run.")
+    em_opts.add_argument('-M', '--multi-em', dest='n_multi', type=int,
+                         default=1, metavar="N",
+                         help="Runs EM until convergence multiple times and "
+                              "reports the results average over all runs.")
+
+    asm_opts = parser.add_argument_group("contributor detection and "
+                                         "assembly options")
+    asm_opts.add_argument('-a', '--assign-odds', dest='min_fold', type=float,
+                          default=2.0, metavar='ODDS',
+                          help='Minimum odds ratio (probability between '
+                               'best and next haplogroup) required to assign '
+                               'read to a contributor.')
+    asm_opts.add_argument('-r', '--min-reads', dest='min_reads', type=int,
+                          default=2, metavar='N',
+                          help="Haplogroup must have N reads to be considered "
+                               "a contributor.")
+    asm_opts.add_argument('-V', '--no-var-check',
+                          dest='var_check', action="store_false",
+                          help="Disable requirement that the majority of "
+                               "contributors's unique defining variants are "
+                               "present in the sample")
+    asm_opts.add_argument('-x', '--extend-assemblies',
+                          dest='extend', action="store_true",
+                          help='Attempt to extend haplotype assemblies '
+                               'iteratively by identifying novel variants '
+                               'from contributor consensus sequences '
+                               'assigning reads based off of them.')
+    asm_opts.add_argument('-c', '--cons-cov', dest='cons_cov',
+                          default=2, metavar='N',
+                          help="When extending assemblies with -x, sets the "
+                               "depth of coverage required to call a base "
+                               "for a contributor.")
+
+    out_opts = parser.add_argument_group("output options")
+    out_opts.add_argument('-s', '--save', dest='save', type=str,
+                          default=None, metavar='PREFIX',
+                          help="Save the EM results using this file prefix.")
+    out_opts.add_argument('-l', '--load', dest='load', type=str,
+                          default=None, metavar='PREFIX',
+                          help="Skip EM step and load from a previous result "
+                               "(overrides -s).")
+    out_opts.add_argument('-o', '--out', dest='out_prefix', type=str,
+                          default=None, metavar='PREFIX',
+                          help="If set, write assigned reads to contributor-"
+                               "specific BAM files using this filename prefix")
+    out_opts.add_argument('-t', '--stats', dest='stats_prefix', type=str,
+                          default=None, metavar='PREFIX',
+                          help="If set, write stats tables to be used for "
+                               "plotting results later.")
+
     args = parser.parse_args()
 
     if args.verbose:
