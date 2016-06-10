@@ -46,6 +46,6 @@ cov.plot <- ggplot(obs) +
 plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
 n.facets <- length(levels(obs$Contributor))
 
-ggsave(filename=plot.fn, plot=cov.plot, width=10, height=n.facets, dpi=100)
+ggsave(filename=plot.fn, plot=cov.plot, width=10, height=n.facets + 1, dpi=100)
 
 quit(save='no', status=0)
