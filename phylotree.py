@@ -18,13 +18,39 @@ class Phylotree(object):
     in the tree from a file based on the Phylotree mtDNA tree (phylotree.org),
     perform any filtering steps and produce a table of haplogroup IDs and
     the variants that define them.
+
+    Atributes:
+        root: The root node for the internal tree representation
+        nodes: tree nodes in a list for easy iteration
+        variants: A dictionary of counters tracking the mutations that have
+                  occurred according to phylotree for each variant position.
+        ignore: A set of reference positions that should be ignored
+        hap_var: A dictionary mapping haplogroup ID strings to lists of
+                 variants strings associated with each haplogroup
+        rm_unstable: Flag for whether unstable sites are ignored
+        rm_backmut: Flag for whether sites with backmutations are ignored.
     """
     class PhyloNode(object):
         """
         Class that represents a single node in the phylotree.
+
+        Attributes:
+            hap_id: Haplogroup ID for this node
+            parent: The parent node of this node (None if this is the root)
+            children: List of child nodes of this node
+            anon_child: Int counting number of anonymous children so far.
+            anon: True if this node did not have a Haplogroup ID.
         """
         def __init__(self, hap='', parent=None, variants=None):
-            """ Initialize new PhyloNode """
+            """
+            Initialize new PhyloNode
+
+            Args:
+                hap: Haplogroup ID (str)
+                parent: The parent node for this new node.
+                variants: a list of variant string for this node.
+            Returns: nothing
+            """
             self.hap_id = hap
             self.parent = parent
             self.children = list()
@@ -46,6 +72,10 @@ class Phylotree(object):
             that occur to the same position are masked by the most recent
             mutation (i.e. C152T will not be included if T152C occurs farther
             down in the tree).
+
+            Args: (self)
+            Returns:
+                a list of variant strings, sorted by position
             """
             summed_vars = dict()
             node = self
@@ -60,6 +90,12 @@ class Phylotree(object):
         def dump(self, out=sys.stderr, indent=0):
             """
             Dumps the contents of this node and its children recursively.
+
+            Args:
+                out: the destination output stream
+                indent: The number of space to indent before writing to
+                        indicate depth in the tree.
+            Returns: nothing
             """
             prefix = ' ' * indent
             out.write('%sNode: %s\n' % (prefix, self.hap_id))
@@ -77,7 +113,15 @@ class Phylotree(object):
             return "%s[%d]" % (self.hap_id, self.anon_child)
 
     def __init__(self, phy_in=None, rm_unstable=False, rm_backmut=False):
-        """ Initialize a blank Phylotree before reading from a file. """
+        """
+        Initialize a blank Phylotree before reading from a file.
+
+        Args:
+            phy_in: input stream of Phylotree in simplified CSV format.
+            rm_unstable: Ignore positions that have unstable variants
+            rm_backmut: Ignore positions that have backmutations
+        Returns: nothing
+        """
         self.root  = None
         self.nodes = list()
         self.variants = collections.defaultdict(collections.Counter)
@@ -91,7 +135,14 @@ class Phylotree(object):
             self.process_haplotypes()
 
     def read_csv(self, phy_in):
-        """ Reads tree structure and variants from input stream. """
+        """
+        Reads tree structure and variants from input stream. Builds an internal
+        representation of the tree.
+
+        Args:
+            phy_in: input stream of Phylotree in simplified CSV format.
+        Returns: nothing
+        """
         cur = -1
         node_stack = list([None])
         for line in phy_in:
@@ -114,6 +165,9 @@ class Phylotree(object):
         Builds a table of variant sites stored in Phylotree.variants after
         filtering based on phylotree annotation. This table keeps track of
         number of mutations and derived alleles as they occur.
+
+        Args: (self)
+        Returns: nothing
         """
         var_pos = set()
         for node in self.nodes:
@@ -142,6 +196,9 @@ class Phylotree(object):
         variants associated with that haplogroup, using the Phylotree
         information and variants after any filtering. Merges haplogroups with
         identical variants.
+
+        Args: (self)
+        Returns: nothing
         """
         haplotypes = collections.defaultdict(list)
         hap_tab = dict()
@@ -157,7 +214,11 @@ class Phylotree(object):
 
     def get_variant_pos(self):
         """
-        Returns a list of positions with variants after filtering.
+        Get a sorted list of all the variant positions this Phyotree object
+        keeps track of.
+
+        Args: (self)
+        Returns: a list of positions with variants after filtering.
         """
         return sorted(self.variants.keys())
 
@@ -166,6 +227,14 @@ class Phylotree(object):
         Adds a custom haplotype to the haplotype variant table. Does not add a
         node in the tree for this haplotype. Ignores positions that have been
         removed from consideration by process_variants().
+
+        Args:
+            hap_id: Haplogroup ID for this custom entry
+            variants: A list of variant strings
+        Returns:
+            nothing
+        Raises:
+            ValueError: if haplogroup name is already in use.
         """
         if hap_id in self.hap_var:
             raise ValueError("Custom haplogroup name '%s' already in use."
@@ -181,6 +250,11 @@ class Phylotree(object):
         rebuilds the variant and haplotype tables. site_str is a string that
         represents a comma-separated list of 1-based positions or 'start-end'
         ranges (inclusive).
+
+        Args:
+            site_str: a string representing positions and ranges of positions
+                      in the reference in 1-based coords.
+        Returns: nothing
         """
         sites = sites_str.split(',')
         for site in sites:
@@ -201,12 +275,18 @@ class Phylotree(object):
         Args:
             self: this Phylotree object
             haps: a list of haplogroup IDs
-        Returns: a list of positions in the reference.
+        Returns:
+            a list of positions in the reference.
         """
         def derived_diff(variants):
             """
             Takes a list of variants and returns True if they all result in the
             same derived base.
+
+            Args:
+                variants: A list of variant strings
+            Returns:
+                True if all result in the same derived base, False otherwise
             """
             der_bases = [der_allele(var) for var in variants]
             return not all([base == der_bases[0] for base in der_bases])
@@ -227,7 +307,14 @@ class Phylotree(object):
 
 
 def pos_from_var(var):
-    """ Returns the position of the variant """
+    """
+    Extracts the position of the SNP variant, converted to 0-base.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        The position of the variant as an int, converted from 1- to 0-base
+    """
     if var.startswith('('):
         var = var[1:-1]
     var = var.rstrip('!')
@@ -235,33 +322,68 @@ def pos_from_var(var):
 
 
 def der_allele(var):
-    """ Returns the derived allele of this variant. """
+    """
+    Returns the derived allele of this SNP variant.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        The derived base as uppercase
+    """
     var = var.rstrip(')!')
     return var[-1].upper()
 
 
 def anc_allele(var):
-    """ Returns the derived allele of this variant. """
+    """
+    Returns the ancestral allele of this SNP variant.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        The ancestral base as uppercase
+    """
     var = var.lstrip('(')
     return var[0].upper()
 
 
 def is_snp(var):
-    """ Returns true if var is a SNP or False if it is an indel """
+    """
+    Check if var is a SNP (not an indel)
+
+    Args:
+        var: A variant string
+    Returns:
+        True if var represents a SNP, False otherwise.
+    """
     if '.' in var or 'd' in var:
         return False # Variant is an indel
     return True
 
 
 def is_unstable(var):
-    """ Returns true if var is annotated as unstable. """
+    """
+    Check if SNP var is annotated as unstable.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        True if marked as unstable, False otherwise.
+    """
     if var[0] == '(':
         return True
     return False
 
 
 def is_backmutation(var):
-    """ Returns true if var is annotated as a backmutation. """
+    """
+    Check if SNP var is annotated as a backmutation.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        True if marked as a backmutation, False otherwise.
+    """
     if '!' in var:
         return True
     return False
@@ -270,6 +392,12 @@ def is_backmutation(var):
 def rm_snp_annot(var):
     """
     Returns the SNP variant string, nicely formatted with annotation stripped.
+    This includes ()'s, !, and lowercase bases.
+
+    Args:
+        var: A variant string representing a SNP
+    Returns:
+        The variant string with annotation removed.
     """
     if var.startswith('('):
         var = var[1:-1]
@@ -307,6 +435,14 @@ def _read_phy_line(line):
     indentation level, the haplogroup id, and variants. Importantly, some nodes
     do not have IDs, so we need to check that we do not accidentally grab the
     variant list instead of the blank id.
+
+    Args:
+        line: A string representing 1 line in CSV phylotree input
+    Returns:
+        level: The level of the node this line represents in the tree.
+               (the number of blank fields before the haplogroup ID)
+        hap_id: The haplogroup ID for this entry (can be '')
+        variants: List of variant strings for this node.
     """
     items = line.rstrip().split(',')
     level = 0
