@@ -255,7 +255,6 @@ def process_and_report(args):
 def main():
     """ Reads input filenames from command line args and processes input
         through the analysis steps """
-    # TODO: Add argument groups to nicely format the help output.
     parser = argparse.ArgumentParser(
                 description="Estimates the number and proportions of "
                             "contributing haplotypes.")
