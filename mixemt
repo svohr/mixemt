@@ -407,7 +407,11 @@ def main():
                           default=None, metavar='PREFIX',
                           help="If set, write stats tables to be used for "
                                "plotting results later.")
-
+    out_opts.add_argument('-b', '--cons-bases', dest='cons_prefix', type=str,
+                          default=None, metavar='PREFIX',
+                          help="Call consensus bases at every reference "
+                               "position for each contributor and write out "
+                               "sequences in FASTA format.")
     args = parser.parse_args()
 
     if args.verbose:
