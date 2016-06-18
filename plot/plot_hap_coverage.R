@@ -19,13 +19,19 @@ stats.prefix <- args[1]
 
 
 obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
-obs.tab <- read.table(obs.tab.fn)
-obs.tab <- obs.tab[obs.tab$V1 != 'all', ]
+orig.tab <- read.table(obs.tab.fn)
+obs.tab <- orig.tab[orig.tab$V1 != 'all' & orig.tab$V1 != 'unassigned', ]
 
 obs <- data.frame(Contributor=paste(obs.tab[, 1], obs.tab[, 2], sep=':'),
                   position=obs.tab[, 3],
                   coverage=obs.tab[, 8])
 obs$agreement <- apply(obs.tab[, 4:7], 1, max)
+
+unasn.tab <- orig.tab[orig.tab$V1 == 'unassigned', ]
+unasn <- data.frame(Contributor=unasn.tab[, 1],
+                    position=unasn.tab[, 3],
+                    coverage=unasn.tab[, 8])
+
 
 # Remove coverage and agreement values at positions with no coverage.
 obs[obs$coverage == 0, c(3, 4)] <- NA
@@ -33,8 +39,10 @@ obs[obs$coverage == 0, c(3, 4)] <- NA
 obs$position <- obs$position + 1
 
 
-cov.plot <- ggplot(obs, aes(x=position, y=coverage, color=Contributor))  +
-  geom_line(size=0.6) +
+cov.plot <- ggplot()  +
+  geom_area(data=unasn, aes(x=position, y=coverage), alpha=0.1) +
+  geom_line(data=obs,
+            aes(x=position, y=coverage, color=Contributor), size=0.6) +
   theme_minimal() +
   scale_x_continuous(breaks=c(1, 5000, 10000, 15000, 16569),
                      minor_breaks=seq(500, 16000, 500)) +
