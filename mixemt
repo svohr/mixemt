@@ -38,8 +38,7 @@ import stats
 def open_aln_file(bam_fn, args):
     """
     Opens the file specifed by the filename parameter and returns the
-    AlignmentFile object. If the file cannot be opened, and error is printed
-    and the program exits.
+    AlignmentFile object.
 
     Args:
         bam_fn: path to BAM file to open (str).
@@ -48,23 +47,18 @@ def open_aln_file(bam_fn, args):
     Returns:
         Pysam AlignmentFile object.
     """
-    try:
-        bamfile = pysam.AlignmentFile(bam_fn, 'rb')
-        if args.verbose:
-            sys.stderr.write('Read %d alignments from "%s".\n'
-                             % (bamfile.count(), bam_fn))
-        return bamfile
-    except (ValueError, IOError) as inst:
-        sys.stderr.write("Error: %s\n" % (inst))
-        sys.exit(1)
-    return
+    bamfile = pysam.AlignmentFile(bam_fn, 'rb')
+    if args.verbose:
+        sys.stderr.write('Read %d alignments from "%s".\n'
+                         % (bamfile.count(), bam_fn))
+    return bamfile
 
 
 def open_phylotree(phy_fn, args):
     """
     Opens the phylotree CSV file and uses the module "phylotree" to read in
     a list of variant positions and a table of haplogroups and associated
-    variants. Exits the program if an exception is raised.
+    variants.
 
     Args:
         phy_fn: path to Phylotree CSV file (str)
@@ -73,22 +67,17 @@ def open_phylotree(phy_fn, args):
     Returns:
         Phylotree object
     """
-    try:
-        with open(phy_fn, 'r') as phy_in:
-            phy = phylotree.Phylotree(phy_in)
-            if args.exclude_pos is not None:
-                phy.ignore_sites(args.exclude_pos)
-            if args.verbose:
-                sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
-                                 % (len(phy.variants), len(phy.hap_var)))
+    with open(phy_fn, 'r') as phy_in:
+        phy = phylotree.Phylotree(phy_in)
+        if args.exclude_pos is not None:
+            phy.ignore_sites(args.exclude_pos)
+        if args.verbose:
+            sys.stderr.write('Using %d variant sites from %d haplogroups.\n'
+                             % (len(phy.variants), len(phy.hap_var)))
 
-            if args.cust_hap_fn is not None:
-                open_custom_haplotypes(args.cust_hap_fn, phy, args)
-            return phy
-    except (ValueError, IOError) as inst:
-        sys.stderr.write("Error: %s\n" % (inst))
-        sys.exit(1)
-    return
+        if args.cust_hap_fn is not None:
+            open_custom_haplotypes(args.cust_hap_fn, phy, args)
+        return phy
 
 
 def open_custom_haplotypes(hap_fn, phylo, args):
@@ -104,8 +93,6 @@ def open_custom_haplotypes(hap_fn, phylo, args):
     i.e.
     "custom_hap1\tC152T,A2758G,C2885T,G7146A,T8468C\n"
 
-    Program exits if an exception is caught.
-
     Args:
         hap_fn: path to tab-delimited file describing custom haplotypes (str)
         phylo: Phylotree object to add custom haplotypes to.
@@ -114,29 +101,25 @@ def open_custom_haplotypes(hap_fn, phylo, args):
     Returns:
         nothing
     """
-    try:
-        with open(hap_fn, 'r') as hap_in:
-            n_haps = 0
-            for line in hap_in:
-                items = line.rstrip().split('\t')
-                hap_id = items[0]
-                variants = items[1].split(',')
-                phylo.add_custom_hap(hap_id, variants)
-                n_haps += 1
-            if args.verbose:
-                sys.stderr.write('%d custom haplotypes added from "%s"\n'
-                                  % (n_haps, hap_fn))
-    except (ValueError, IOError) as inst:
-        sys.stderr.write("Error: %s\n" % (inst))
-        sys.exit(1)
+    with open(hap_fn, 'r') as hap_in:
+        n_haps = 0
+        for line in hap_in:
+            items = line.rstrip().split('\t')
+            hap_id = items[0]
+            variants = items[1].split(',')
+            phylo.add_custom_hap(hap_id, variants)
+            n_haps += 1
+        if args.verbose:
+            sys.stderr.write('%d custom haplotypes added from "%s"\n'
+                              % (n_haps, hap_fn))
     return
 
 
 def open_refseq(fa_fn, args):
     """
     Opens the FASTA formatted file specified by the fa_fn parameter and returns
-    the sequence of the first entry as a string. If an error occurs an error
-    message is printed and the program exits.
+    the sequence of the first entry as a string. If the FASTA file is empty an
+    error message is printed and the program exits.
 
     Args:
         fa_fn: path to reference fasta file (str)
@@ -151,10 +134,7 @@ def open_refseq(fa_fn, args):
             sys.stderr.write('Read reference sequence "%s" from "%s".\n'
                              % (fafile.references[0], fa_fn))
         return fafile.fetch(fafile.references[0]).upper()
-    except (ValueError, IOError) as inst:
-        sys.stderr.write("Error: %s\n" % (inst))
-        sys.exit(1)
-    except IndexError as inst:
+    except IndexError:
         sys.stderr.write('Error: no records in "%s"\n' % (fa_fn))
         sys.exit(1)
     return
@@ -227,7 +207,7 @@ def dump_all(prefix, haps, reads, em_results):
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
     except (ValueError, IOError) as inst:
-        sys.stderr.write("Error:\n %s\n" % (inst))
+        sys.stderr.write("Warning: %s\n" % (inst))
     return
 
 
@@ -241,56 +221,53 @@ def process_and_report(args):
     Returns:
         0 if completes
     """
-    # Load up the data.
-    refseq = open_refseq(args.ref_fn, args)
-    bamfile = open_aln_file(args.bam_fn, args)
-    phylo = open_phylotree(args.phy_fn, args)
-
-    if args.load is not None:
-        # Just load the saved results instead of running everything again.
-        if args.verbose:
-            sys.stderr.write('\nLoading previous results from %s.*\n'
-                             % (args.load))
-        haplogroups, reads, wts, em_results = load_prev(args.load)
-
-        # Re-process the reads to get the reference base observation table.
-        bamfile.reset()
-        _, base_obs = preprocess.process_reads(bamfile, [], min_mq=args.min_mq,
-                                                            min_bq=args.min_bq)
-
-        if args.verbose:
-            sys.stderr.write('Considering %d fragments '
-                             '(%d distinct sub-haplotypes)\n\n'
-                             % (numpy.sum(wts), len(reads)))
-    else:
-        # Build input for EM step
-        em_mat, wts, haplogroups, reads, base_obs = \
-            preprocess.build_em_input(bamfile, refseq, phylo, args)
-
-        if args.verbose:
-            sys.stderr.write("\nTop 10 haplogroups "
-                             "by read probabilities before EM...\n")
-            stats.report_read_votes(haplogroups, em_mat, 10)
-            sys.stderr.write("\n")
-
-        # Run EM
-        em_results = em.run_em(em_mat, wts, args)
-
-        # Save the results if requested.
-        if args.save is not None:
-            if args.verbose:
-                sys.stderr.write('\nSaving results to %s.*\n\n' % (args.save))
-            dump_all(args.save, haplogroups, reads, em_results)
-
     try:
+        # Load up the data.
+        refseq = open_refseq(args.ref_fn, args)
+        bamfile = open_aln_file(args.bam_fn, args)
+        phylo = open_phylotree(args.phy_fn, args)
+
+        if args.load is not None:
+            # Just load the saved results instead of running everything again.
+            if args.verbose:
+                sys.stderr.write('\nLoading previous results from %s.*\n'
+                                 % (args.load))
+            haplogroups, reads, wts, em_results = load_prev(args.load)
+
+            # Re-process the reads to get the reference base observation table.
+            bamfile.reset()
+            _, base_obs = preprocess.process_reads(bamfile, [],
+                                                   min_mq=args.min_mq,
+                                                   min_bq=args.min_bq)
+
+            if args.verbose:
+                sys.stderr.write('Considering %d fragments '
+                                 '(%d distinct sub-haplotypes)\n\n'
+                                 % (numpy.sum(wts), len(reads)))
+        else:
+            # Build input for EM step
+            em_mat, wts, haplogroups, reads, base_obs = \
+                preprocess.build_em_input(bamfile, refseq, phylo, args)
+
+            # Run EM
+            em_results = em.run_em(em_mat, wts, args)
+
+            # Save the results if requested.
+            if args.save is not None:
+                if args.verbose:
+                    sys.stderr.write('\nSaving results to %s.*\n\n'
+                                     % (args.save))
+                dump_all(args.save, haplogroups, reads, em_results)
+
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              em_results, args)
-    except ValueError as inst:
-        sys.stderr.write('%s\n' % (inst))
-        return 1
 
-    contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
-                                          haplogroups, reads, args)
+        contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
+                                              haplogroups, reads, args)
+
+    except (ValueError, IOError) as inst:
+        sys.stderr.write("Error:\n %s\n" % (inst))
+        return 1
 
     # Report the results
     if args.verbose:
