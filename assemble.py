@@ -263,6 +263,22 @@ def write_haplotypes(bamfile, contrib_reads, args):
     return 0
 
 
+def write_consensus_seqs(contrib_reads, args):
+    """
+    Generates consensus sequences for each contributor from the assigned reads
+    for output in FASTA format and writes them out.
+
+    Args:
+        contrib_reads: A table mapping hap# IDs to lists of pysam
+                       AlignedSegments + an entry of unassigned.
+        args: The argument values from mixemt's argparse results.
+    Returns:
+        nothing
+    """
+    cons_unassigned = call_consensus(contrib_reads['unassigned'], args)
+    return
+
+
 def call_consensus(alns, args):
     """
     Generates a consensus sequence based on the list of AlignedSegments.
