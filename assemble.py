@@ -40,17 +40,48 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
 
     This function returns a list of hap numbers, haplogroup IDs and estimated
     contributions.
+
+    Args:
+        phylo: The Phylotree object used for this analysis
+        obs_tab: Table of base observations for positions in the reference.
+        haplogroups: List of haplogroups IDs in the order they appear as
+                     columns in the em_results matrix
+        em_results tuple: results from EM algorithm; includes...
+            props: Array of stimatated proportions of haplogroups
+            read_hap_mat: Conditional read/haplogroup probability matrix
+        args: arguments namespace from argparse.
+
+    Returns:
+        A list of lists, one for each contributor, containing:
+          - A friendly hap# ID assigned based on the proportion estimate.
+          - The haplogroup ID for the contributor.
+          - The proprotion estimate from EM.
+
+    Raises:
+        ValueError if user-specified haplogroup ID is not found.
     """
     props, read_hap_mat = em_results
 
     contributors = list()
-    vote_count = collections.Counter(numpy.argmax(read_hap_mat, 1))
-    contributors = [con for con in vote_count
-                    if vote_count[con] >= args.min_reads]
+    if not args.contributors:
+        vote_count = collections.Counter(numpy.argmax(read_hap_mat, 1))
+        contributors = [con for con in vote_count
+                        if vote_count[con] >= args.min_reads]
+    else:
+        # override contributor identification steps.
+        con_haps = args.contributors.split(',')
+        for con in con_haps:
+            try:
+                index = haplogroups.index(con)
+                contributors.append(index)
+            except ValueError:
+                raise ValueError("Unknown haplogroup '%s'" % (con))
+
+    # Extract contributor proportions
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
 
-    if args.var_check:
+    if args.var_check and not args.contributors:
         # Remove haplogroups with minimal variant support.
         contrib_prop = check_contrib_phy_vars(phylo, obs_tab,
                                               contrib_prop, args)

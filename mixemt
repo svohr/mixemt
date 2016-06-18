@@ -350,7 +350,7 @@ def main():
                          default=1.0, metavar="ALPHA",
                          help="Use parameter ALPHA to initialize haplogroup "
                               "contributions from Dirichlet distribution.")
-    em_opts.add_argument('-C', '--converge', dest='tolerance', type=float,
+    em_opts.add_argument('-T', '--converge', dest='tolerance', type=float,
                          default=0.0001, metavar="TOLERANCE",
                          help="Stop EM iteration when abs. difference between "
                               "current and previous contribution estimates is "
@@ -365,6 +365,11 @@ def main():
 
     asm_opts = parser.add_argument_group("contributor detection and "
                                          "assembly options")
+    asm_opts.add_argument('-C', '--contributors', dest='contributors',
+                          type=str, default=None, metavar='HAP1,HAP2,...,HAPN',
+                          help="Skip contributor detection step and use the "
+                               "specified comma-separated list of haplogroups "
+                               "instead.")
     asm_opts.add_argument('-a', '--assign-odds', dest='min_fold', type=float,
                           default=2.0, metavar='ODDS',
                           help='Minimum odds ratio (probability between '

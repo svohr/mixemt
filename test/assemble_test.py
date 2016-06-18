@@ -24,6 +24,7 @@ class TestContributors(unittest.TestCase):
         self.args.verbose = False
         self.args.min_reads = 1
         self.args.var_check = False
+        self.args.contributors = None
 
         phy_in = ['I, A1G ,,',
                   ',H, A3T A5T ,,',
@@ -91,6 +92,26 @@ class TestContributors(unittest.TestCase):
                                         self.em_results, self.args)
         exp = [['hap1', 'E', 0.60], ['hap2', 'A', 0.4]]
         self.assertEqual(res, exp)
+
+    def test_get_contributors_manual(self):
+        self.args.contributors = "A,E"
+        res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
+                                        self.em_results, self.args)
+        exp = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
+        self.assertEqual(res, exp)
+
+    def test_get_contributors_manual_weird_choice(self):
+        self.args.contributors = "E,F"
+        res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
+                                        self.em_results, self.args)
+        exp = [['hap1', 'E', 0.3], ['hap2', 'F', 0.01]]
+        self.assertEqual(res, exp)
+
+    def test_get_contributors_manual_bad_choice(self):
+        with self.assertRaises(ValueError):
+            self.args.contributors = "E,Z"
+            res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
+                                            self.em_results, self.args)
 
     def test_check_contrib_phy_vars_no_rm(self):
         res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
