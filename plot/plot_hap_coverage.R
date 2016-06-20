@@ -32,15 +32,20 @@ unasn <- data.frame(Contributor=unasn.tab[, 1],
                     position=unasn.tab[, 3],
                     coverage=unasn.tab[, 8])
 
-
 # Remove coverage and agreement values at positions with no coverage.
 obs[obs$coverage == 0, c(3, 4)] <- NA
 # Change the positions to 1-based for plotting.
 obs$position <- obs$position + 1
 
 
-cov.plot <- ggplot()  +
-  geom_area(data=unasn, aes(x=position, y=coverage), alpha=0.1) +
+cov.plot <- ggplot()
+
+if (nrow(unasn) > 0) {
+  cov.plot <- cov.plot +
+    geom_area(data=unasn, aes(x=position, y=coverage), alpha=0.1)
+}
+
+cov.plot <- cov.plot +
   geom_line(data=obs,
             aes(x=position, y=coverage, color=Contributor), size=0.6) +
   theme_minimal() +
