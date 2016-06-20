@@ -66,33 +66,22 @@ def report_contributors(out, contribs, contrib_reads):
     return
 
 
-def write_coverage(out, obs_tab):
-    """
-    Write the coverage at each position to the file handle.
-
-    Args:
-        out: File handle to write output to.
-        obs_tab: Table of base observations for positions in the reference.
-    Returns: nothing
-    """
-    for ref_pos in xrange(max(obs_tab) + 1):
-        cov = sum(obs_tab[ref_pos])
-        out.write('%d\t%d\n' % (ref_pos, cov))
-    return
-
-
-def write_base_obs(out, obs_tab, prefix=''):
+def write_base_obs(out, obs_tab, ref, prefix=''):
     """
     Write the counts of observed bases for each position to the file handle.
 
     Args:
         out: File handle to write output to.
         obs_tab: Table of base observations for positions in the reference.
+        ref: The reference sequence. Used to finding the number of positions
+             we must write.
+        prefix: string to write before each entry (i.e. an ID followed by a
+                tab character)
     Returns: nothing
     """
     if prefix:
         prefix += '\t'
-    for ref_pos in xrange(max(obs_tab) + 1):
+    for ref_pos in xrange(len(ref)):
         out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
                                       '\t'.join([str(obs_tab[ref_pos][base])
                                        for base in 'ACGT']),
@@ -153,7 +142,7 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
             haplogroup = "unassigned"
             if con in haplogroups:
                 haplogroup = haplogroups[con]
-            write_base_obs(obs_out, obs_tab, "%s\t%s" % (con, haplogroup))
+            write_base_obs(obs_out, obs_tab, ref, "%s\t%s" % (con, haplogroup))
         if len(contrib_reads) > 1:
             write_base_obs(obs_out, all_obs, "all\tmix")
     return
