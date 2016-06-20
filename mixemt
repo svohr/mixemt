@@ -373,7 +373,8 @@ def main():
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
                                "contributors's unique defining variants are "
-                               "present in the sample")
+                               "present in the sample. Use when coverage is "
+                               "very low and dropout is likely.")
     asm_opts.add_argument('-x', '--extend-assemblies',
                           dest='extend', action="store_true",
                           help='Attempt to extend haplotype assemblies '
