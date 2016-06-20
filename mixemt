@@ -325,28 +325,33 @@ def main():
     qual_opts = parser.add_argument_group("quality filters")
     qual_opts.add_argument('-q', '--min-MQ', dest='min_mq', type=int,
                            metavar="INT", default=30,
-                           help="Skip alignments with mapQ < INT")
+                           help="Skip alignments with mapQ < INT "
+                                "(default: %(default)s)")
     qual_opts.add_argument('-Q', '--min-BQ', dest='min_bq', type=int,
                            metavar="INT", default=30,
-                           help="Skip bases with baseQ < INT")
+                           help="Skip bases with baseQ < INT "
+                                "(default: %(default)s)")
 
     em_opts = parser.add_argument_group("expectation-maximization")
     em_opts.add_argument('-i', '--init', dest='init_alpha', type=float,
                          default=1.0, metavar="ALPHA",
                          help="Use parameter ALPHA to initialize haplogroup "
-                              "contributions from Dirichlet distribution.")
+                              "contributions from Dirichlet distribution "
+                              "(default: %(default)s)")
     em_opts.add_argument('-T', '--converge', dest='tolerance', type=float,
                          default=0.0001, metavar="TOLERANCE",
                          help="Stop EM iteration when abs. difference between "
                               "current and previous contribution estimates is "
-                              "< TOLERANCE.")
+                              "< TOLERANCE (default: %(default)s)")
     em_opts.add_argument('-m', '--max-em-iter', dest='max_iter', type=int,
                          default=1000, metavar="N",
-                         help="Maximum of number of EM iterations to run.")
+                         help="Maximum of number of EM iterations to run "
+                              "(default: %(default)s)")
     em_opts.add_argument('-M', '--multi-em', dest='n_multi', type=int,
                          default=1, metavar="N",
                          help="Runs EM until convergence multiple times and "
-                              "reports the results average over all runs.")
+                              "reports the results average over all runs "
+                              "(default: %(default)s)")
 
     asm_opts = parser.add_argument_group("contributor detection and "
                                          "assembly options")
@@ -359,11 +364,11 @@ def main():
                           default=2.0, metavar='ODDS',
                           help='Minimum odds ratio (probability between '
                                'best and next haplogroup) required to assign '
-                               'read to a contributor.')
+                               'read to a contributor (default: %(default)s)')
     asm_opts.add_argument('-r', '--min-reads', dest='min_reads', type=int,
                           default=2, metavar='N',
                           help="Haplogroup must have N reads to be considered "
-                               "a contributor.")
+                               "a contributor (default: %(default)s)")
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
@@ -379,7 +384,7 @@ def main():
                           default=2, metavar='N',
                           help="When extending assemblies with -x, sets the "
                                "depth of coverage required to call a base "
-                               "for a contributor.")
+                               "for a contributor (default: %(default)s)")
 
     out_opts = parser.add_argument_group("output options")
     out_opts.add_argument('-s', '--save', dest='save', type=str,
