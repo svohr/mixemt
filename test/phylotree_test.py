@@ -211,6 +211,37 @@ class TestPhylotreeSimple(unittest.TestCase):
         exp = [3, 4, 5, 6, 7, 8]
         self.assertEqual(res, exp)
 
+    def test_ignore_anonymous_haplogroups(self):
+        phy_in = ['I, A1G ,,',
+                  ',H, A3T A5T ,,',
+                  ',,, A6T ,,',
+                  ',,,B, A8T ,,',
+                  ',,,C, T5A! ,,',
+                  ',,G, A7T ,,',
+                  ',,,D, (A9T) ,,',
+                  ',,,E, A4t ,,',
+                  ',A, A2T a4t ,,']
+        phy = phylotree.Phylotree(phy_in, anon_haps=False)
+        self.assertFalse('F' in phy.hap_var)
+        self.assertTrue('B' in phy.hap_var)
+        self.assertTrue('C' in phy.hap_var)
+        self.assertEqual(self.phy.hap_var['B'], ['A1G', 'A3T', 'A5T',
+                                                'A6T', 'A8T'])
+        self.assertEqual(self.phy.hap_var['C'], ['A1G', 'A3T', 'T5A', 'A6T'])
+
+    def test_include_anonymous_haplogroups(self):
+        phy_in = ['I, A1G ,,',
+                  ',H, A3T A5T ,,',
+                  ',,, A6T ,,',
+                  ',,,B, A8T ,,',
+                  ',,,C, T5A! ,,',
+                  ',,G, A7T ,,',
+                  ',,,D, (A9T) ,,',
+                  ',,,E, A4t ,,',
+                  ',A, A2T a4t ,,']
+        phy = phylotree.Phylotree(phy_in, anon_haps=True)
+        self.assertTrue('H[1]' in phy.hap_var)
+
 
 if __name__ == '__main__':
     unittest.main()

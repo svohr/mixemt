@@ -318,6 +318,9 @@ def main():
                            help="A comma-separated list of 1-based positions "
                                 "or 'start-end' ranges to be excluded from "
                                 "consideration.")
+    cust_opts.add_argument('-A', "--anon-haps", dest="anon_haps",
+                           action="store_true", default=False,
+                           help="Consider Phylotree haplogroups without IDs")
 
     qual_opts = parser.add_argument_group("quality filters")
     qual_opts.add_argument('-q', '--min-MQ', dest='min_mq', type=int,

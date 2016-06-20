@@ -27,6 +27,8 @@ class Phylotree(object):
         ignore: A set of reference positions that should be ignored
         hap_var: A dictionary mapping haplogroup ID strings to lists of
                  variants strings associated with each haplogroup
+        anon_haps: Flag for whether anonymous haplogroups should be included
+                   in the table of haplogroups and variants (hap_var).
         rm_unstable: Flag for whether unstable sites are ignored
         rm_backmut: Flag for whether sites with backmutations are ignored.
     """
@@ -112,7 +114,8 @@ class Phylotree(object):
             self.anon_child += 1
             return "%s[%d]" % (self.hap_id, self.anon_child)
 
-    def __init__(self, phy_in=None, rm_unstable=False, rm_backmut=False):
+    def __init__(self, phy_in=None, anon_haps=False,
+                 rm_unstable=False, rm_backmut=False):
         """
         Initialize a blank Phylotree before reading from a file.
 
@@ -127,6 +130,7 @@ class Phylotree(object):
         self.variants = collections.defaultdict(collections.Counter)
         self.ignore = set()
         self.hap_var = None
+        self.anon_haps = anon_haps
         self.rm_unstable = rm_unstable
         self.rm_backmut = rm_backmut
         if phy_in is not None:
@@ -203,8 +207,9 @@ class Phylotree(object):
         haplotypes = collections.defaultdict(list)
         hap_tab = dict()
         for node in self.nodes:
-            var_str = ','.join(node.all_variants())
-            haplotypes[var_str].append(node)
+            if self.anon_haps or not node.anon:
+                var_str = ','.join(node.all_variants())
+                haplotypes[var_str].append(node)
         for var_str in haplotypes:
             variants = [var for var in var_str.split(',') if var != '']
             haplo_id = '/'.join([node.hap_id for node in haplotypes[var_str]])
