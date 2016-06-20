@@ -68,7 +68,7 @@ def open_phylotree(phy_fn, args):
         Phylotree object
     """
     with open(phy_fn, 'r') as phy_in:
-        phy = phylotree.Phylotree(phy_in)
+        phy = phylotree.Phylotree(phy_in, anon_haps=args.anon_haps)
         if args.exclude_pos is not None:
             phy.ignore_sites(args.exclude_pos)
         if args.verbose:
