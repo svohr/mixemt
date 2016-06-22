@@ -55,6 +55,6 @@ cov.plot <- cov.plot +
 
 plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
 
-ggsave(filename=plot.fn, plot=cov.plot, width=16, height=6, dpi=100)
+ggsave(filename=plot.fn, plot=cov.plot, width=15, height=5, dpi=100)
 
 quit(save='no', status=0)
