@@ -151,6 +151,12 @@ def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
                                  % (hap, found, len(uniq_vars)))
             ignore_haps.add(con)
         else:
+            if args.verbose:
+                sys.stderr.write("Keeping '%s': "
+                                 "%d/%d unique variant bases observed at "
+                                 "least %d times.\n"
+                                 % (hap, found, len(uniq_vars),
+                                    args.min_var_reads))
             # Looks good, these variants can't be used again.
             used_vars.update(uniq_vars)
 
