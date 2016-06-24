@@ -115,7 +115,7 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
         for var in uniq_vars:
             pos = phylotree.pos_from_var(var)
             der = phylotree.der_allele(var)
-            if obs_tab[pos][der] >= args.min_reads:
+            if obs_tab[pos][der] >= args.min_var_reads:
                 found += 1
         if uniq_vars and float(found) / len(uniq_vars) < 0.5:
             if args.verbose:

@@ -364,16 +364,21 @@ def main():
                           type=str, default=None, metavar='HAP1,HAP2,...,HAPN',
                           help="Skip contributor detection step and use the "
                                "specified comma-separated list of haplogroups "
-                               "instead.")
+                               "instead (be careful)")
     asm_opts.add_argument('-a', '--assign-odds', dest='min_fold', type=float,
                           default=2.0, metavar='ODDS',
                           help='Minimum odds ratio (probability between '
                                'best and next haplogroup) required to assign '
                                'read to a contributor (default: %(default)s)')
     asm_opts.add_argument('-r', '--min-reads', dest='min_reads', type=int,
-                          default=2, metavar='N',
+                          default=10, metavar='N',
                           help="Haplogroup must have N reads to be considered "
                                "a contributor (default: %(default)s)")
+    asm_opts.add_argument('-R', '--min-var-reads', dest='min_var_reads',
+                          type=int, default=2, metavar='N',
+                          help="Variant base must be found in N reads to be "
+                               "considered as present in sample "
+                               "(default: %(default)s)")
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
