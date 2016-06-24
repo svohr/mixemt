@@ -282,6 +282,8 @@ def process_and_report(args):
 
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
+    print base_obs
+
     if args.stats_prefix:
         stats.write_statistics(phylo, refseq, base_obs,
                                contribs, contrib_reads, args)

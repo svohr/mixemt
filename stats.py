@@ -144,6 +144,6 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
                 haplogroup = haplogroups[con]
             write_base_obs(obs_out, obs_tab, ref, "%s\t%s" % (con, haplogroup))
         if len(contrib_reads) > 1:
-            write_base_obs(obs_out, all_obs, "all\tmix")
+            write_base_obs(obs_out, all_obs, ref, "all\tmix")
     return
 
