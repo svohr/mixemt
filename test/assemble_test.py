@@ -23,6 +23,7 @@ class TestContributors(unittest.TestCase):
         self.args = parser.parse_args([])
         self.args.verbose = False
         self.args.min_reads = 1
+        self.args.min_var_reads = 1
         self.args.var_check = False
         self.args.contributors = None
 
@@ -37,7 +38,7 @@ class TestContributors(unittest.TestCase):
                   ',A, A2T A4T ,,']
         self.phy = phylotree.Phylotree(phy_in)
 
-        self.cons = [['A', 0.4], ['E', 0.3]]
+        self.cons = [0, 5]
         self.obs_tab = collections.defaultdict(collections.Counter)
         self.obs_tab[1]['T'] = 1
         self.obs_tab[3]['T'] = 2
@@ -46,6 +47,7 @@ class TestContributors(unittest.TestCase):
         self.obs_tab[2]['T'] = 1
         self.obs_tab[4]['T'] = 1
 
+        self.wts = numpy.array([1, 1, 1])
         self.haps = list('ABCDEFGHI')
         self.props = numpy.array([0.40, 0.01, 0.01, 0.01, 0.3,
                                   0.01, 0.01, 0.01, 0.01])
@@ -58,30 +60,32 @@ class TestContributors(unittest.TestCase):
     def test_get_contributors_no_phy_vars(self):
         self.args.var_check = False
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
         self.assertEqual(res, exp)
 
     def test_get_contributors_no_phy_vars_rm(self):
         self.args.var_check = False
         self.args.min_reads = 2
+        self.args.min_var_reads = 2
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'A', 0.40]]
         self.assertEqual(res, exp)
 
     def test_get_contributors_with_phy_vars(self):
         self.args.var_check = True
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
         self.assertEqual(res, exp)
 
     def test_get_contributors_with_phy_vars_rm(self):
         self.args.var_check = True
         self.args.min_reads = 2
+        self.args.min_var_reads = 2
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = []
         self.assertEqual(res, exp)
 
@@ -89,21 +93,21 @@ class TestContributors(unittest.TestCase):
         self.props[4] = 0.6
         self.args.var_check = False
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'E', 0.60], ['hap2', 'A', 0.4]]
         self.assertEqual(res, exp)
 
     def test_get_contributors_manual(self):
         self.args.contributors = "A,E"
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
         self.assertEqual(res, exp)
 
     def test_get_contributors_manual_weird_choice(self):
         self.args.contributors = "E,F"
         res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                        self.em_results, self.args)
+                                        self.wts, self.em_results, self.args)
         exp = [['hap1', 'E', 0.3], ['hap2', 'F', 0.01]]
         self.assertEqual(res, exp)
 
@@ -111,47 +115,72 @@ class TestContributors(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.args.contributors = "E,Z"
             res = assemble.get_contributors(self.phy, self.obs_tab, self.haps,
-                                            self.em_results, self.args)
+                                            self.wts, self.em_results,
+                                            self.args)
+
+    def test_find_contribs_from_reads_wts_all_one(self):
+        res = assemble._find_contribs_from_reads(self.mix_mat, self.wts,
+                                                 self.args)
+        exp = [0, 4]
+        self.assertEqual(res, exp)
+
+    def test_find_contribs_from_reads_wts_all_one_min_reads(self):
+        self.args.min_reads = 2
+        res = assemble._find_contribs_from_reads(self.mix_mat, self.wts,
+                                                 self.args)
+        exp = [0]
+        self.assertEqual(res, exp)
+
+    def test_find_contribs_from_reads_wts_save_min_reads(self):
+        self.args.min_reads = 2
+        self.wts = [1, 1, 2]
+        res = assemble._find_contribs_from_reads(self.mix_mat, self.wts,
+                                                 self.args)
+        exp = [0, 4]
+        self.assertEqual(res, exp)
 
     def test_check_contrib_phy_vars_no_rm(self):
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons,
+                                               self.args)
         self.assertEqual(self.cons, res)
 
     def test_check_contrib_phy_vars_rm_none(self):
-        self.cons.append(['C', 0.1])
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        self.cons.append(2)
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons,
+                                               self.args)
+
         self.assertNotEqual(self.cons, res)
         self.assertEqual(self.cons[0:2], res)
 
     def test_check_contrib_phy_vars_no_rm_one_base(self):
-        self.cons.append(['C', 0.1])
+        self.cons.append(2)
         self.obs_tab[4]['A'] = 1
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons, self.args)
         self.assertEqual(self.cons, res)
 
     def test_check_contrib_phy_vars_rm_shared(self):
         # Should remove E, A4T already seen in A, does not count for E.
         self.obs_tab[6]['T'] = 0
         self.obs_tab[2]['T'] = 0
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons, self.args)
         self.assertEqual(self.cons[0:1], res)
 
     def test_check_contrib_phy_vars_empty_obs(self):
         # no observations, no keepers.
         self.obs_tab = collections.defaultdict(collections.Counter)
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons, self.args)
         self.assertEqual([], res)
 
     def test_check_contrib_phy_vars_high_min_reads(self):
         # required number of reads too high.
-        self.args.min_reads = 10
-        res = assemble.check_contrib_phy_vars(self.phy, self.obs_tab,
-                                              self.cons, self.args)
+        self.args.min_var_reads = 10
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.haps, self.cons, self.args)
         self.assertEqual([], res)
 
 

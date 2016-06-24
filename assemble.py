@@ -19,12 +19,13 @@ import pysam
 import operator
 import collections
 import sys
+import itertools
 
 import phylotree
 import preprocess
 
 
-def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
+def get_contributors(phylo, obs_tab, haplogroups, wts, em_results, args):
     """
     Takes the haplogroup tree, table of observed bases by reference position,
     a list of haplogroup IDs and a tuple representing the results from EM
@@ -46,6 +47,8 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
         obs_tab: Table of base observations for positions in the reference.
         haplogroups: List of haplogroups IDs in the order they appear as
                      columns in the em_results matrix
+        wts: Vector of interger counts of the number of fragments where each
+             sub-haplotype in the matrix
         em_results tuple: results from EM algorithm; includes...
             props: Array of stimatated proportions of haplogroups
             read_hap_mat: Conditional read/haplogroup probability matrix
@@ -64,9 +67,14 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
 
     contributors = list()
     if not args.contributors:
-        vote_count = collections.Counter(numpy.argmax(read_hap_mat, 1))
-        contributors = [con for con in vote_count
-                        if vote_count[con] >= args.min_reads]
+        contributors = _find_contribs_from_reads(read_hap_mat, wts, args)
+
+        if args.var_check:
+            # Remove haplogroups with minimal variant support.
+            con_haps = [haplogroups[con] for con in contributors]
+            contributors = _check_contrib_phy_vars(phylo, obs_tab,
+                                                   haplogroups, contributors,
+                                                   args)
     else:
         # override contributor identification steps.
         con_haps = args.contributors.split(',')
@@ -81,11 +89,6 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
 
-    if args.var_check and not args.contributors:
-        # Remove haplogroups with minimal variant support.
-        contrib_prop = check_contrib_phy_vars(phylo, obs_tab,
-                                              contrib_prop, args)
-
     # Add a friendly name, not associated with a haplogroup
     name_fmt = "hap%%0%dd" % (len(str(len(contrib_prop) + 1)))
     hap_num = 1
@@ -96,7 +99,30 @@ def get_contributors(phylo, obs_tab, haplogroups, em_results, args):
     return contrib_prop
 
 
-def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
+def _find_contribs_from_reads(read_hap_mat, wts, args):
+    """
+    Returns a list of indexes to haplogroups that pass the minimum required
+    number of reads filters
+
+    Args:
+        read_hap_mat: The final conditional probability matrix from EM
+        wts: The vector of read counts for each distinct subhaplotype
+        args: arguments namespace from argparse.
+    Returns:
+        A list of column (haplogroup) indexes in read_hap_mat
+    """
+    best_haps = numpy.argmax(read_hap_mat, 1)
+    vote_count = collections.defaultdict(int)
+
+    for hap, read_count in itertools.izip(best_haps, wts):
+        vote_count[hap] += read_count
+
+    contributors = [con for con in vote_count
+                    if vote_count[con] >= args.min_reads]
+    return contributors
+
+
+def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
     """
     Checks if each candidate contributor from contribs passes our variant base
     check. The strategy for this is to start with the highest estimated
@@ -108,7 +134,8 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
     used_vars = set()
     ignore_haps = set()
 
-    for hap, _ in contribs:
+    for con in contribs:
+        hap = haplogroups[con]
         # get variant for this haplogroup
         uniq_vars = set(phylo.hap_var[hap]) - used_vars
         found = 0
@@ -122,12 +149,12 @@ def check_contrib_phy_vars(phylo, obs_tab, contribs, args):
                 sys.stderr.write("Ignoring '%s': "
                                  "only %d/%d unique variant bases observed.\n"
                                  % (hap, found, len(uniq_vars)))
-            ignore_haps.add(hap)
+            ignore_haps.add(con)
         else:
             # Looks good, these variants can't be used again.
             used_vars.update(uniq_vars)
 
-    pass_contribs = [con for con in contribs if con[0] not in ignore_haps]
+    pass_contribs = [con for con in contribs if con not in ignore_haps]
 
     return pass_contribs
 

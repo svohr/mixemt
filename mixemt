@@ -261,7 +261,7 @@ def process_and_report(args):
                 dump_all(args.save, haplogroups, reads, em_results)
 
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
-                                             em_results, args)
+                                             wts, em_results, args)
 
         contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
                                               haplogroups, reads, args)
