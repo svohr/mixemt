@@ -38,7 +38,7 @@ class TestContributors(unittest.TestCase):
                   ',A, A2T A4T ,,']
         self.phy = phylotree.Phylotree(phy_in)
 
-        self.cons = [0, 5]
+        self.cons = [['A', 0.4], ['E', 0.3]]
         self.obs_tab = collections.defaultdict(collections.Counter)
         self.obs_tab[1]['T'] = 1
         self.obs_tab[3]['T'] = 2
@@ -141,24 +141,22 @@ class TestContributors(unittest.TestCase):
 
     def test_check_contrib_phy_vars_no_rm(self):
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons,
-                                               self.args)
+                                               self.cons, self.args)
         self.assertEqual(self.cons, res)
 
     def test_check_contrib_phy_vars_rm_none(self):
-        self.cons.append(2)
+        self.cons.append(['C', 0.1])
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons,
-                                               self.args)
+                                               self.cons, self.args)
 
         self.assertNotEqual(self.cons, res)
         self.assertEqual(self.cons[0:2], res)
 
     def test_check_contrib_phy_vars_no_rm_one_base(self):
-        self.cons.append(2)
+        self.cons.append(['C', 0.1])
         self.obs_tab[4]['A'] = 1
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons, self.args)
+                                               self.cons, self.args)
         self.assertEqual(self.cons, res)
 
     def test_check_contrib_phy_vars_rm_shared(self):
@@ -166,21 +164,21 @@ class TestContributors(unittest.TestCase):
         self.obs_tab[6]['T'] = 0
         self.obs_tab[2]['T'] = 0
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons, self.args)
+                                               self.cons, self.args)
         self.assertEqual(self.cons[0:1], res)
 
     def test_check_contrib_phy_vars_empty_obs(self):
         # no observations, no keepers.
         self.obs_tab = collections.defaultdict(collections.Counter)
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons, self.args)
+                                               self.cons, self.args)
         self.assertEqual([], res)
 
     def test_check_contrib_phy_vars_high_min_reads(self):
         # required number of reads too high.
         self.args.min_var_reads = 10
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
-                                               self.haps, self.cons, self.args)
+                                               self.cons, self.args)
         self.assertEqual([], res)
 
 

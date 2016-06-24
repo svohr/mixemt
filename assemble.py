@@ -68,13 +68,6 @@ def get_contributors(phylo, obs_tab, haplogroups, wts, em_results, args):
     contributors = list()
     if not args.contributors:
         contributors = _find_contribs_from_reads(read_hap_mat, wts, args)
-
-        if args.var_check:
-            # Remove haplogroups with minimal variant support.
-            con_haps = [haplogroups[con] for con in contributors]
-            contributors = _check_contrib_phy_vars(phylo, obs_tab,
-                                                   haplogroups, contributors,
-                                                   args)
     else:
         # override contributor identification steps.
         con_haps = args.contributors.split(',')
@@ -88,6 +81,11 @@ def get_contributors(phylo, obs_tab, haplogroups, wts, em_results, args):
     # Extract contributor proportions
     contrib_prop = [[haplogroups[con], props[con]] for con in contributors]
     contrib_prop.sort(key=operator.itemgetter(1), reverse=True)
+
+    if args.var_check and not args.contributors:
+        # Remove haplogroups with minimal variant support.
+        contrib_prop = _check_contrib_phy_vars(phylo, obs_tab,
+                                               contrib_prop, args)
 
     # Add a friendly name, not associated with a haplogroup
     name_fmt = "hap%%0%dd" % (len(str(len(contrib_prop) + 1)))
@@ -122,7 +120,7 @@ def _find_contribs_from_reads(read_hap_mat, wts, args):
     return contributors
 
 
-def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
+def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
     """
     Checks if each candidate contributor from contribs passes our variant base
     check. The strategy for this is to start with the highest estimated
@@ -134,8 +132,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
     used_vars = set()
     ignore_haps = set()
 
-    for con in contribs:
-        hap = haplogroups[con]
+    for hap, _ in contrib_prop:
         # get variant for this haplogroup
         uniq_vars = set(phylo.hap_var[hap]) - used_vars
         found = 0
@@ -149,7 +146,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
                 sys.stderr.write("Ignoring '%s': "
                                  "only %d/%d unique variant bases observed.\n"
                                  % (hap, found, len(uniq_vars)))
-            ignore_haps.add(con)
+            ignore_haps.add(hap)
         else:
             if args.verbose:
                 sys.stderr.write("Keeping '%s': "
@@ -160,7 +157,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, haplogroups, contribs, args):
             # Looks good, these variants can't be used again.
             used_vars.update(uniq_vars)
 
-    pass_contribs = [con for con in contribs if con not in ignore_haps]
+    pass_contribs = [con for con in contrib_prop if con[0] not in ignore_haps]
 
     return pass_contribs
 
