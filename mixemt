@@ -375,7 +375,7 @@ def main():
                           help="Haplogroup must have N reads to be considered "
                                "a contributor (default: %(default)s)")
     asm_opts.add_argument('-R', '--min-var-reads', dest='min_var_reads',
-                          type=int, default=2, metavar='N',
+                          type=int, default=3, metavar='N',
                           help="Variant base must be found in N reads to be "
                                "considered as present in sample "
                                "(default: %(default)s)")
