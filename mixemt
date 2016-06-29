@@ -277,7 +277,7 @@ def process_and_report(args):
         stats.report_read_votes(haplogroups, em_results[1], 10)
         sys.stderr.write("\n")
 
-    if args.extend:
+    if args.extend and len(contribs) > 1:
         contrib_reads = assemble.extend_assemblies(contrib_reads, args)
 
     stats.report_contributors(sys.stdout, contribs, contrib_reads)

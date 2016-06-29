@@ -329,6 +329,8 @@ def write_consensus_seqs(contrib_reads, args):
     Generates consensus sequences for each contributor from the assigned reads
     for output in FASTA format and writes them out.
 
+    TODO(svohr): figure out how to implement this.
+
     Args:
         contrib_reads: A table mapping hap# IDs to lists of pysam
                        AlignedSegments + an entry of unassigned.
