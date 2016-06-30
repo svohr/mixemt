@@ -379,6 +379,11 @@ def main():
                           help="Variant base must be found in N reads to be "
                                "considered as present in sample "
                                "(default: %(default)s)")
+    asm_opts.add_argument('-f', '--var-fraction', dest='var_fraction',
+                          type=float, default=0.5, metavar='F',
+                          help="Fraction of unique defining variants that "
+                               "must be observed to call a haplogroup "
+                               "present (default: %(default)s)")
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
