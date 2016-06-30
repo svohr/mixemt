@@ -128,6 +128,25 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
     we identify the variant bases that are unique from the previous candidates.
     We check the observation table to verify that those bases are observed in
     the sample.
+
+    Args:
+        phylo: the phylotree object that holds the variant information for
+               these haplogroups
+        obs_tab: Table of base observations for positions in the reference.
+        contrib_prop: A list of lists, one for each contributor, containing:
+          - The haplogroup ID for the contributor.
+          - The proprotion estimate from EM
+        args: argparse Namespace with user specified values for:
+            min_var_reads: The minimum number of observations required to call
+                           a base as present in the mixture sample (int)
+            min_fraction: The minimum fraction of defining variants required
+                          to be observed to call a haplogroup a contributor
+                          (float)
+            min_count: Call a haplogroup a contributor if there the number of
+                       observed variants is equal or greater than min_count
+                       (int)
+    Returns:
+        contrib_prop, with haplogroups that do not pass filters removed.
     """
     used_vars = set()
     ignore_haps = set()
@@ -141,14 +160,9 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
             der = phylotree.der_allele(var)
             if obs_tab[pos][der] >= args.min_var_reads:
                 found += 1
-        if (found < args.var_count or
-          (uniq_vars and float(found) / len(uniq_vars) < args.var_fraction)):
-            if args.verbose:
-                sys.stderr.write("Ignoring '%s': "
-                                 "only %d/%d unique variant bases observed.\n"
-                                 % (hap, found, len(uniq_vars)))
-            ignore_haps.add(hap)
-        else:
+        if ((len(uniq_vars) == 0) or
+           (args.var_count is not None and found >= args.var_count) or
+           (uniq_vars and float(found) / len(uniq_vars) >= args.var_fraction)):
             if args.verbose:
                 sys.stderr.write("Keeping '%s': "
                                  "%d/%d unique variant bases observed at "
@@ -157,6 +171,12 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
                                     args.min_var_reads))
             # Looks good, these variants can't be used again.
             used_vars.update(uniq_vars)
+        else:
+            if args.verbose:
+                sys.stderr.write("Ignoring '%s': "
+                                 "only %d/%d unique variant bases observed.\n"
+                                 % (hap, found, len(uniq_vars)))
+            ignore_haps.add(hap)
 
     pass_contribs = [con for con in contrib_prop if con[0] not in ignore_haps]
 

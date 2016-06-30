@@ -385,11 +385,12 @@ def main():
                                "must be observed to call a haplogroup "
                                "present (default: %(default)s)")
     asm_opts.add_argument('-n', '--var-count', dest='var_count',
-                          type=int, default=0, metavar='N',
-                          help="Minimum number of unique variants required "
-                               "to be observed for a haplogroup to be "
-                               "considered a distinct contributor "
-                               "(default: %(default)s).")
+                          type=int, default=None, metavar='N',
+                          help="Call haplogroup a contributor if it has at "
+                               "least N unique variants observed in the "
+                               "sample, regardless of total number of "
+                               "defining variants. Use when allelic dropout "
+                               "is likely. (default: %(default)s).")
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
