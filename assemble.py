@@ -141,7 +141,8 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
             der = phylotree.der_allele(var)
             if obs_tab[pos][der] >= args.min_var_reads:
                 found += 1
-        if uniq_vars and float(found) / len(uniq_vars) < 0.5:
+        if (found < args.var_count or
+          (uniq_vars and float(found) / len(uniq_vars) < args.var_fraction)):
             if args.verbose:
                 sys.stderr.write("Ignoring '%s': "
                                  "only %d/%d unique variant bases observed.\n"

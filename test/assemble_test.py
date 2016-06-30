@@ -24,6 +24,8 @@ class TestContributors(unittest.TestCase):
         self.args.verbose = False
         self.args.min_reads = 1
         self.args.min_var_reads = 1
+        self.args.var_fraction = 0.5
+        self.args.var_count = 0
         self.args.var_check = False
         self.args.contributors = None
 
@@ -180,6 +182,21 @@ class TestContributors(unittest.TestCase):
         res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
                                                self.cons, self.args)
         self.assertEqual([], res)
+
+    def test_check_contrib_phy_vars_high_var_count_requirement(self):
+        # required number of variants too high.
+        self.args.var_count = 10
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.cons, self.args)
+        self.assertEqual([], res)
+
+    def test_check_contrib_phy_vars_high_min_fraction_requirement(self):
+        self.args.var_fraction = 0.9
+        self.cons.append(['C', 0.1])
+        self.obs_tab[4]['A'] = 1
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs_tab,
+                                               self.cons, self.args)
+        self.assertEqual(self.cons[0:2], res)
 
 
 class TestAssignReads(unittest.TestCase):
