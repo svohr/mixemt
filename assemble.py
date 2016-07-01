@@ -359,7 +359,9 @@ def write_consensus_seqs(contrib_reads, args):
     Returns:
         nothing
     """
-    cons_unassigned = call_consensus(contrib_reads['unassigned'], args)
+    with open("%s.fa" % (args.cons_prefix), 'w') as fa_out:
+        for con in contrib_reads:
+            seq = call_consensus(contrib_reads[con], args)
     return
 
 
@@ -442,7 +444,6 @@ def assign_reads_from_new_vars(contrib_reads, new_variants, args):
     Returns:
         Updated version of contrib_reads.
     """
-    # TODO: Add insort to maintain sorted list of AlignedSegments
     temp_assigns = collections.defaultdict(set)
 
     for aln in contrib_reads['unassigned']:
