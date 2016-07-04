@@ -13,6 +13,7 @@ import sys
 import numpy
 import collections
 
+import observe
 import preprocess
 
 
@@ -72,7 +73,7 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
 
     Args:
         out: File handle to write output to.
-        obs_tab: Table of base observations for positions in the reference.
+        obs_tab: ObservedBases object of observations per reference position.
         ref: The reference sequence. Used to finding the number of positions
              we must write.
         prefix: string to write before each entry (i.e. an ID followed by a
@@ -83,9 +84,8 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
         prefix += '\t'
     for ref_pos in xrange(len(ref)):
         out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
-                                      '\t'.join([str(obs_tab[ref_pos][base])
-                                       for base in 'ACGT']),
-                                      sum(obs_tab[ref_pos].values())))
+            '\t'.join([str(obs_tab.obs_at(ref_pos, base)) for base in 'ACGT']),
+            sum(obs_tab.obs_tab[ref_pos].values())))
     return
 
 
@@ -123,8 +123,7 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
     Args:
         phylo: The phylotree object these assignments are based on.
         ref: The reference sequence.
-        all_obs: The table of single base per reference position for the
-                 entire sample.
+        all_obs: ObservedBases object of observations per reference position.
         contribs: The contributor table returned by assembly.get_contributors,
                   a list of (hap#, haplogroup, proportion) tuples.
         contrib_reads: a dictionary mapping hap#s to list of pysam
@@ -137,8 +136,8 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
         write_variants(var_out, phylo, ref, contribs)
     with open("%s.obs.tab" % (args.stats_prefix), 'w') as obs_out:
         for con in sorted(contrib_reads):
-            _, obs_tab = preprocess.process_reads(contrib_reads[con], [],
-                                                  args.min_mq, args.min_bq)
+            obs_tab = observe.ObservedBases(contrib_reads[con],
+                                            args.min_mq, args.min_bq)
             haplogroup = "unassigned"
             if con in haplogroups:
                 haplogroup = haplogroups[con]

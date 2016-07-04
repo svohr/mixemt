@@ -23,6 +23,7 @@ import itertools
 
 import phylotree
 import preprocess
+import observe
 
 
 def get_contributors(phylo, obs_tab, haplogroups, wts, em_results, args):
@@ -158,7 +159,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
         for var in uniq_vars:
             pos = phylotree.pos_from_var(var)
             der = phylotree.der_allele(var)
-            if obs_tab[pos][der] >= args.min_var_reads:
+            if obs_tab.obs_at(pos, der) >= args.min_var_reads:
                 found += 1
         if ((len(uniq_vars) == 0) or
            (args.var_count is not None and found >= args.var_count) or
@@ -374,6 +375,7 @@ def call_consensus(alns, args):
         args: The argument values from mixemt's argparse results.
     Returns: A string representing the consensus of the alignments in alns
     """
+    #TODO(svohr): Need a new way to call consensus from ObservedBases
     def consensus_base(base_counts):
         """
         Given a Counter for a reference position, return the base that
@@ -391,9 +393,9 @@ def call_consensus(alns, args):
     if not alns:
         # Sometimes alns can be empty.
         return ""
-    _, obs_tab = preprocess.process_reads(alns, [], args.min_mq, args.min_bq)
-    cons_bases = [consensus_base(obs_tab[pos])
-                  for pos in xrange(max(obs_tab) + 1)]
+    obs_tab = observe.ObservedBases(alns, args.min_mq, args.min_bq)
+    cons_bases = [consensus_base(obs_tab.obs_at(pos))
+                  for pos in xrange(max(obs_tab.obs_tab) + 1)]
     return str(''.join(cons_bases))
 
 

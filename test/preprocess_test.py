@@ -121,18 +121,18 @@ class TestProcessReads(unittest.TestCase):
         self.alns = [aln1, aln2, aln3]
 
     def test_process_reads_read_obs_simple(self):
-        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 20, 10)
+        res = preprocess.process_reads(self.alns, [15, 20, 25], 20, 10)
         exp = {'read1':{15:'T', 20:'T', 25:'T'},
                'read2':{15:'G', 20:'G', 25:'G'}}
         self.assertEqual(res, exp)
 
     def test_process_reads_read_obs_min_map_quality(self):
-        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 25, 10)
+        res = preprocess.process_reads(self.alns, [15, 20, 25], 25, 10)
         exp = {'read1':{15:'T', 20:'T', 25:'T'}}
         self.assertEqual(res, exp)
 
     def test_process_reads_read_obs_min_base_quality(self):
-        res, _ = preprocess.process_reads(self.alns, [15, 20, 25], 20, 30)
+        res = preprocess.process_reads(self.alns, [15, 20, 25], 20, 30)
         exp = {'read1':{15:'T', 20:'T', 25:'T'},
                'read2':{20:'G', 25:'G'}}
         self.assertEqual(res, exp)
@@ -149,7 +149,7 @@ class TestProcessReads(unittest.TestCase):
 
         var_pos = [15, 20, 25, 35, 40]
 
-        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        res = preprocess.process_reads(self.alns, var_pos, 20, 10)
         exp = {'read1':{15:'T', 20:'T', 25:'T', 35:'C', 40:'C'},
                'read2':{15:'G', 20:'G', 25:'G'}}
         self.assertEqual(res, exp)
@@ -166,7 +166,7 @@ class TestProcessReads(unittest.TestCase):
 
         var_pos = [15, 20, 25, 35]
 
-        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        res = preprocess.process_reads(self.alns, var_pos, 20, 10)
         exp = {'read1':{15:'T', 25:'T', 35:'T'},
                'read2':{15:'G', 20:'G', 25:'G'}}
         self.assertEqual(res, exp)
@@ -185,29 +185,9 @@ class TestProcessReads(unittest.TestCase):
 
         var_pos = [15, 20, 25, 35]
 
-        res, _ = preprocess.process_reads(self.alns, var_pos, 20, 10)
+        res = preprocess.process_reads(self.alns, var_pos, 20, 10)
         exp = {'read1':{15:'T', 20:'T', 25:'T', 35:'C'},
                'read2':{15:'G', 20:'G', 25:'G'}}
-        self.assertEqual(res, exp)
-
-    def test_process_reads_base_obs_simple(self):
-        _, res = preprocess.process_reads(self.alns, [15, 20, 25], 20, 10)
-        exp = {10:{'A':1},
-               11:{'A':1},
-               12:{'A':2},
-               13:{'A':2},
-               14:{'A':2},
-               15:{'G':1, 'T':1},
-               16:{'A':2},
-               17:{'A':1},
-               18:{'A':1},
-               19:{'A':2},
-               20:{'G':1, 'T':1},
-               21:{'A':2},
-               22:{'A':2},
-               23:{'A':2},
-               24:{'A':2},
-               25:{'G':1, 'T':1}}
         self.assertEqual(res, exp)
 
 

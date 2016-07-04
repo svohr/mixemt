@@ -31,6 +31,7 @@ import numpy
 import phylotree
 import preprocess
 import em
+import observe
 import assemble
 import stats
 
@@ -235,19 +236,13 @@ def process_and_report(args):
                                  % (args.load))
             haplogroups, reads, wts, em_results = load_prev(args.load)
 
-            # Re-process the reads to get the reference base observation table.
-            bamfile.reset()
-            _, base_obs = preprocess.process_reads(bamfile, [],
-                                                   min_mq=args.min_mq,
-                                                   min_bq=args.min_bq)
-
             if args.verbose:
                 sys.stderr.write('Considering %d fragments '
                                  '(%d distinct sub-haplotypes)\n\n'
                                  % (numpy.sum(wts), len(reads)))
         else:
             # Build input for EM step
-            em_mat, wts, haplogroups, reads, base_obs = \
+            em_mat, wts, haplogroups, reads = \
                 preprocess.build_em_input(bamfile, refseq, phylo, args)
 
             # Run EM
@@ -259,6 +254,12 @@ def process_and_report(args):
                     sys.stderr.write('\nSaving results to %s.*\n\n'
                                      % (args.save))
                 dump_all(args.save, haplogroups, reads, em_results)
+
+        # build observation table for assembly steps
+        # Re-process the reads to get the reference base observation table.
+        base_obs = observe.ObservedBases(bamfile.fetch(),
+                                         mapq=args.min_mq,
+                                         baseq=args.min_bq)
 
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              wts, em_results, args)
