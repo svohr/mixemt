@@ -14,7 +14,6 @@ import numpy
 import collections
 
 import observe
-import preprocess
 
 
 def report_top_props(haplogroups, props, top_n=10):
