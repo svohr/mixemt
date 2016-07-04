@@ -193,7 +193,6 @@ class TestContributors(unittest.TestCase):
 
     def test_check_contrib_phy_vars_high_var_count_requirement(self):
         # required number of variants too high.
-        self.args.verbose = True
         self.args.var_count = 1
         self.args.var_fraction = 0.9
         self.cons.append(['C', 0.1])
