@@ -107,8 +107,15 @@ class TestObservedBases(unittest.TestCase):
         self.alns[1].is_reverse = True
         res = observe.ObservedBases(self.alns, 20, 10)
         self.assertEqual(res.obs_at(10), {'A':1})
-        self.assertEqual(res.obs_at(14), {'A':1, 'a':1})
-        self.assertEqual(res.obs_at(17), {'A':1, '+':1})
+        self.assertEqual(res.obs_at(14), {'A':2})
+        self.assertEqual(res.obs_at(17), {'A':1, '-':1})
+
+    def test_observed_bases_obs_at_basic_no_base_stranded(self):
+        self.alns[1].is_reverse = True
+        res = observe.ObservedBases(self.alns, 20, 10)
+        self.assertEqual(res.obs_at(10, stranded=True), {'A':1})
+        self.assertEqual(res.obs_at(14, stranded=True), {'A':1, 'a':1})
+        self.assertEqual(res.obs_at(17, stranded=True), {'A':1, '+':1})
 
     def test_observed_bases_obs_at_with_base(self):
         self.alns[1].is_reverse = True

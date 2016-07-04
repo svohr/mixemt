@@ -97,14 +97,28 @@ class ObservedBases(object):
             stranded: A flag for whether the total base count should be
                       returned or a tuple with (for, rev) counts
         Returns:
-            A counter if base is None
-            An int count if stranded is False
-            A tuple of 2 ints if stranded is True
+            A counter if base is None containing...
+                original table values if stranded is True ('ACGTN-acgtn+')
+                counts summarized by collapsing strand info if stranded is
+                    false ('ACGTN-')
+            *or*
+            An int count if base is set and stranded is False
+            *or*
+            A tuple of 2 ints if base is set and stranded is True
         Raises:
             ValueError if base is not one of 'ACGTN-acgtn+'
         """
         if base is None:
-            return self.obs_tab[pos]
+            if stranded:
+                return collections.Counter(self.obs_tab[pos])
+            else:
+                pos_obs = collections.Counter()
+                for base in self.obs_tab[pos]:
+                    for_obs = base.upper()
+                    if base == '+':
+                        for_obs = '-'
+                    pos_obs[for_obs] += self.obs_tab[pos][base]
+                return pos_obs
         if base.upper() in 'ACGTN':
             for_count = self.obs_tab[pos][base.upper()]
             rev_count = self.obs_tab[pos][base.lower()]

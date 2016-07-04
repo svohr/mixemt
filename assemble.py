@@ -374,7 +374,6 @@ def call_consensus(alns, args):
         args: The argument values from mixemt's argparse results.
     Returns: A string representing the consensus of the alignments in alns
     """
-    #TODO(svohr): Need a new way to call consensus from ObservedBases
     def consensus_base(base_counts):
         """
         Given a Counter for a reference position, return the base that
@@ -382,10 +381,14 @@ def call_consensus(alns, args):
         N if coverage requirement is not met or if bases disagree
         or the observed base if all observations agree.
         """
+        base_counts['N'] = 0 # first, ignore an missing observations
         total_obs = sum(base_counts.values())
         if total_obs < args.cons_cov:
             return 'N'
         base, count = base_counts.most_common(1)[0]
+        if base == '-':
+            # a gap is not a base we can call.
+            return 'N'
         if count == total_obs:
             return base
         return 'N'
