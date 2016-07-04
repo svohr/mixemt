@@ -69,7 +69,7 @@ class ObservedBases(object):
                     continue
                 rpos = int(rpos)
                 obs = ' '
-                if qpos:
+                if qpos is not None:
                     if (aln.query_qualities is None
                       or aln.query_qualities[qpos] >= self.min_base_qual):
                         qpos = int(qpos)
@@ -85,7 +85,7 @@ class ObservedBases(object):
                 self.obs_tab[rpos][obs] += 1
         return
 
-    def obs_at_pos(self, pos, base=None, stranded=False):
+    def obs_at(self, pos, base=None, stranded=False):
         """
         Returns the total number of times the base (on both strands) was
         observed at this position in the reference.
@@ -103,14 +103,14 @@ class ObservedBases(object):
         Raises:
             ValueError if base is not one of 'ACGTN-acgtn+'
         """
-        if base is not None:
+        if base is None:
             return self.obs_tab[pos]
         if base.upper() in 'ACGTN':
-            for_count = self.obs_tab[pos][base].upper()
-            rev_count = self.obs_tab[pos][base].lower()
+            for_count = self.obs_tab[pos][base.upper()]
+            rev_count = self.obs_tab[pos][base.lower()]
         elif base in '-+':
-            for_count = self.obs_tab[pos]['-'].upper()
-            rev_count = self.obs_tab[pos]['+'].lower()
+            for_count = self.obs_tab[pos]['-']
+            rev_count = self.obs_tab[pos]['+']
         else:
             raise ValueError("Bad base: %s" % (base))
         if stranded:
