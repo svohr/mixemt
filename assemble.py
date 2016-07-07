@@ -386,9 +386,6 @@ def call_consensus(alns, args):
         if total_obs < args.cons_cov:
             return 'N'
         base, count = base_counts.most_common(1)[0]
-        if base == '-':
-            # a gap is not a base we can call.
-            return 'N'
         if count == total_obs:
             return base
         return 'N'
@@ -421,7 +418,8 @@ def find_new_variants(contrib_reads, args):
 
     min_cons_len = min([len(contrib_cons[cons]) for cons in contrib_cons])
     for pos in xrange(min_cons_len):
-        if any([cons[pos] == 'N' for cons in contrib_cons.values()]):
+        if any([cons[pos] in 'N-' for cons in contrib_cons.values()]):
+            # skip Ns or reference position skips
             continue
         # base observed in all consensus sequences
         for hap in contrib_cons:
