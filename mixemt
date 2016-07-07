@@ -286,6 +286,8 @@ def process_and_report(args):
     if args.stats_prefix:
         stats.write_statistics(phylo, refseq, base_obs,
                                contribs, contrib_reads, args)
+    if args.cons_prefix:
+        assemble.write_consensus_seqs(refseq, contribs, contrib_reads, args)
     if args.out_prefix:
         return assemble.write_haplotypes(bamfile, contrib_reads, args)
 
