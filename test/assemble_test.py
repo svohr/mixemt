@@ -272,6 +272,7 @@ class TestAssignReads(unittest.TestCase):
 class TestExtendAssemblies(unittest.TestCase):
     def setUp(self):
         parser = argparse.ArgumentParser()
+        self.ref = 'AAAAAAAAAAAAAAAAAAAA'
         self.args = parser.parse_args([])
         self.args.min_mq = 30
         self.args.min_bq = 30
@@ -300,61 +301,75 @@ class TestExtendAssemblies(unittest.TestCase):
         return
 
     def test_call_consensus_no_aligned_sequences(self):
-        res = assemble.call_consensus([], self.args)
+        res = assemble.call_consensus(self.ref, [], self.args.cons_cov,
+                                      self.args, strict=True)
         exp = ''
         self.assertEqual(res, exp)
 
     def test_call_consensus_simple(self):
-        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
-        exp = 'NNNNNNNNNNNNNAANNN'
+        res = assemble.call_consensus(self.ref, [self.aln1, self.aln2],
+                                      self.args.cons_cov, self.args,
+                                      strict=True)
+        exp = 'NNNNNNNNNNNNNAANNNNN'
         self.assertEqual(res, exp)
 
     def test_call_consensus_high_coverage_requirement(self):
         self.args.cons_cov = 3
-        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
-        exp = 'NNNNNNNNNNNNNNNNNN'
+        res = assemble.call_consensus(self.ref, [self.aln1, self.aln2],
+                                      self.args.cons_cov, self.args,
+                                      strict=True)
+        exp = 'NNNNNNNNNNNNNNNNNNNN'
         self.assertEqual(res, exp)
 
     def test_call_consensus_low_coverage_requirement(self):
         self.args.cons_cov = 1
-        res = assemble.call_consensus([self.aln1, self.aln2], self.args)
-        exp = 'NNNNNNNNNNAAAAAAAA'
+        res = assemble.call_consensus(self.ref, [self.aln1, self.aln2],
+                                      self.args.cons_cov, self.args,
+                                      strict=True)
+        exp = 'NNNNNNNNNNAAAAAAAANN'
         self.assertEqual(res, exp)
 
     def test_call_consensus_disagreement_low_coverage_requirement(self):
         self.args.cons_cov = 1
-        res = assemble.call_consensus([self.aln1, self.aln2, self.aln3],
-                                      self.args)
+        res = assemble.call_consensus(self.ref,
+                                      [self.aln1, self.aln2, self.aln3],
+                                      self.args.cons_cov, self.args,
+                                      strict=True)
         exp = 'NNNNNNNNNNAAAAANAAAA'
         self.assertEqual(res, exp)
 
     def test_call_consensus_disagreement_coverage_requirement(self):
-        res = assemble.call_consensus([self.aln1, self.aln2, self.aln3],
-                                      self.args)
+        res = assemble.call_consensus(self.ref,
+                                      [self.aln1, self.aln2, self.aln3],
+                                      self.args.cons_cov, self.args,
+                                      strict=True)
         exp = 'NNNNNNNNNNNNNAANAANN'
         self.assertEqual(res, exp)
 
     def test_find_new_variants_empty_input(self):
-        res = assemble.find_new_variants({}, self.args)
+        res = assemble.find_new_variants(self.ref, {}, self.args)
         exp = {}
         self.assertEqual(res, exp)
 
     def test_find_new_variants_none_to_find(self):
-        res = assemble.find_new_variants({'A':[self.aln1, self.aln2],
+        res = assemble.find_new_variants(self.ref,
+                                         {'A':[self.aln1, self.aln2],
                                           'B':[self.aln1, self.aln1],
                                           'unassigned':[self.aln3]}, self.args)
         exp = {}
         self.assertEqual(res, exp)
 
     def test_find_new_variants_one_diff_two_contributors(self):
-        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+        res = assemble.find_new_variants(self.ref,
+                                         {'A':[self.aln2, self.aln2],
                                           'B':[self.aln3, self.aln3],
                                           'unassigned':[self.aln1]}, self.args)
         exp = {(15, 'A'):'A', (15, 'T'):'B'}
         self.assertEqual(res, exp)
 
     def test_find_new_variants_one_diff_three_contributors(self):
-        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+        res = assemble.find_new_variants(self.ref,
+                                         {'A':[self.aln2, self.aln2],
                                           'B':[self.aln3, self.aln3],
                                           'C':[self.aln2, self.aln2],
                                           'unassigned':[self.aln1]}, self.args)
@@ -365,7 +380,8 @@ class TestExtendAssemblies(unittest.TestCase):
 
     def test_find_new_variants_two_diff_missing_cov_three_contributors(self):
         self.aln1.query_sequence = "AAGAA"
-        res = assemble.find_new_variants({'A':[self.aln2, self.aln2],
+        res = assemble.find_new_variants(self.ref,
+                                         {'A':[self.aln2, self.aln2],
                                           'B':[self.aln3, self.aln3],
                                           'C':[self.aln1, self.aln2,
                                                self.aln2],
@@ -375,7 +391,8 @@ class TestExtendAssemblies(unittest.TestCase):
         self.assertEqual(res, exp)
 
     def test_find_new_variants_one_diff_cant_assign(self):
-        res = assemble.find_new_variants({'A':[self.aln2, self.aln3],
+        res = assemble.find_new_variants(self.ref,
+                                         {'A':[self.aln2, self.aln3],
                                           'B':[self.aln2, self.aln3],
                                           'unassigned':[self.aln1]}, self.args)
         exp = {}

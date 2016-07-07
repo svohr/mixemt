@@ -20,6 +20,7 @@ import operator
 import collections
 import sys
 import itertools
+from Bio import SeqIO
 
 import phylotree
 import observe
@@ -345,14 +346,17 @@ def write_haplotypes(bamfile, contrib_reads, args):
     return 0
 
 
-def write_consensus_seqs(contrib_reads, args):
+def write_consensus_seqs(refseq, contrib_props, contrib_reads, args):
     """
     Generates consensus sequences for each contributor from the assigned reads
     for output in FASTA format and writes them out.
 
-    TODO(svohr): figure out how to implement this.
-
     Args:
+        refseq: The reference sequence to which the fragments were aligned.
+        contrib_props: A list of lists containing for each contributor
+                       - contributor ID (hap#)
+                       - haplogroup
+                       - proportion in mixture (not used).
         contrib_reads: A table mapping hap# IDs to lists of pysam
                        AlignedSegments + an entry of unassigned.
         args: The argument values from mixemt's argparse results.
@@ -360,19 +364,33 @@ def write_consensus_seqs(contrib_reads, args):
         nothing
     """
     with open("%s.fa" % (args.cons_prefix), 'w') as fa_out:
-        for con in contrib_reads:
-            seq = call_consensus(contrib_reads[con], args)
+        seqs_to_write = list()
+        for con, hap, _ in contrib_props:
+            seq = call_consensus(refseq, contrib_reads[con],
+                                 1, args, strict=False)
+            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id=con, name=hap)
+            seqs_to_write.append(rec)
+        if 'unassigned' in contrib_props:
+            seq = call_consensus(refseq, contrib_reads['unassigned'],
+                                 1, args, strict=False)
+            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id='unassigned')
+            seqs_to_write.append(rec)
+        SeqIO.write(seqs_to_write, fa_out, 'fasta')
     return
 
 
-def call_consensus(alns, args):
+def call_consensus(refseq, alns, min_cov, args, strict=True):
     """
     Generates a consensus sequence based on the list of AlignedSegments.
 
     Args:
+        refseq: The reference sequence to which the fragments were aligned.
         alns: A list of pysam AlignedSegments
+        min_cov: minimum coverage required to call a base.
         args: The argument values from mixemt's argparse results.
-    Returns: A string representing the consensus of the alignments in alns
+        strict: Whether to call a strict consensus or a majority base
+    Returns:
+        A string representing the consensus of the alignments in alns
     """
     def consensus_base(base_counts):
         """
@@ -383,27 +401,29 @@ def call_consensus(alns, args):
         """
         base_counts['N'] = 0 # first, ignore an missing observations
         total_obs = sum(base_counts.values())
-        if total_obs < args.cons_cov:
+        if total_obs < min_cov:
             return 'N'
         base, count = base_counts.most_common(1)[0]
-        if count == total_obs:
+        if strict and count != total_obs:
+            return 'N'
+        else:
             return base
-        return 'N'
     if not alns:
         # Sometimes alns can be empty.
         return ""
     obs_tab = observe.ObservedBases(alns, args.min_mq, args.min_bq)
     cons_bases = [consensus_base(obs_tab.obs_at(pos))
-                  for pos in xrange(max(obs_tab.obs_tab) + 1)]
+                  for pos in xrange(len(refseq))]
     return str(''.join(cons_bases))
 
 
-def find_new_variants(contrib_reads, args):
+def find_new_variants(refseq, contrib_reads, args):
     """
     Produces a dictionary that maps reference positions and base tuples to the
     contributing haplotype with which it is associated.
 
     Args:
+        refseq: The reference sequence to which the fragments were aligned.
         contrib_reads: dictionary mapping hapN ids to lists of pysam
                        AlignedSegments
         args: The argument values from mixemt's argparse results.
@@ -411,7 +431,8 @@ def find_new_variants(contrib_reads, args):
         A dictionary mapping (ref pos., base) to a contributor hapN id.
     """
     new_vars = dict()
-    contrib_cons = {con:call_consensus(contrib_reads[con], args)
+    contrib_cons = {con:call_consensus(refseq, contrib_reads[con],
+                                       args.cons_cov, args, strict=True)
                     for con in contrib_reads if con != 'unassigned'}
     if not contrib_cons:
         return {} # no contributors, no new variants.
@@ -476,7 +497,7 @@ def assign_reads_from_new_vars(contrib_reads, new_variants, args):
     return contrib_reads
 
 
-def extend_assemblies(contrib_reads, args):
+def extend_assemblies(refseq, contrib_reads, args):
     """
     Iteratively tries to extend current assemblies by discovering novel
     variants from haplotype assembly consensus sequences, assigning reads to
@@ -497,7 +518,7 @@ def extend_assemblies(contrib_reads, args):
         sys.stderr.write('\nAssembly extension step...\n')
 
     while last_unassigned != unassigned:
-        new_variants = find_new_variants(contrib_reads, args)
+        new_variants = find_new_variants(refseq, contrib_reads, args)
         contrib_reads = assign_reads_from_new_vars(contrib_reads,
                                                    new_variants, args)
         last_unassigned = unassigned
