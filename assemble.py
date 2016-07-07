@@ -368,12 +368,13 @@ def write_consensus_seqs(refseq, contrib_props, contrib_reads, args):
         for con, hap, _ in contrib_props:
             seq = call_consensus(refseq, contrib_reads[con],
                                  1, args, strict=False)
-            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id=con, name=hap)
+            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id=con, description=hap)
             seqs_to_write.append(rec)
-        if 'unassigned' in contrib_props:
+        if 'unassigned' in contrib_reads:
             seq = call_consensus(refseq, contrib_reads['unassigned'],
                                  1, args, strict=False)
-            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id='unassigned')
+            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), 
+                                  id='unassigned', description='')
             seqs_to_write.append(rec)
         SeqIO.write(seqs_to_write, fa_out, 'fasta')
     return
