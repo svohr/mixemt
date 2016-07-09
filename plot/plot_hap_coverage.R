@@ -36,7 +36,7 @@ unasn <- data.frame(Contributor=unasn.tab[, 1],
 obs[obs$coverage == 0, c(3, 4)] <- NA
 # Change the positions to 1-based for plotting.
 obs$position <- obs$position + 1
-
+unasn$position <- unasn$position + 1
 
 cov.plot <- ggplot()
 
