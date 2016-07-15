@@ -9,6 +9,28 @@
 library(ggplot2)
 
 
+set_zero_to_empty <- function(x) {
+  # sets the 0 values of vector X to NA unless it is the first or last in a
+  # run of 0's.
+  v <- x
+  for (i in 1:length(x)) {
+    if (v[i] == 0) {
+      if (i > 1 && !is.na(v[i - 1]) && v[i-1] > 0) {
+        v[i] <- 0
+      }
+      else if (i < length(v) && !is.na(v[i + 1]) && v[i + 1] > 0) {
+        v[i] <- 0
+      }
+      else {
+        v[i] <- NA
+      }
+    }
+  }
+  return(v)
+}
+
+
+# Check the command-line argument
 args <- commandArgs(trailingOnly=TRUE)
 
 if (length(args) < 1) {
@@ -33,7 +55,9 @@ unasn <- data.frame(Contributor=unasn.tab[, 1],
                     coverage=unasn.tab[, 8])
 
 # Remove coverage and agreement values at positions with no coverage.
-obs[obs$coverage == 0, c(3, 4)] <- NA
+obs[obs$coverage == 0, 4] <- NA
+obs$coverage <- set_zero_to_empty(obs$coverage)
+
 # Change the positions to 1-based for plotting.
 obs$position <- obs$position + 1
 unasn$position <- unasn$position + 1
@@ -55,6 +79,7 @@ cov.plot <- cov.plot +
 
 plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
 
-ggsave(filename=plot.fn, plot=cov.plot, width=15, height=5, dpi=100)
+ggsave(filename=plot.fn, plot=cov.plot, width=15, height=4, dpi=100)
 
 quit(save='no', status=0)
+
