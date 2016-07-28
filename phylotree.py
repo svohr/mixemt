@@ -20,6 +20,7 @@ class Phylotree(object):
     the variants that define them.
 
     Atributes:
+        refseq: The reference sequence upon which this tree is bases (RSRS)
         root: The root node for the internal tree representation
         nodes: tree nodes in a list for easy iteration
         variants: A dictionary of counters tracking the mutations that have
@@ -114,7 +115,7 @@ class Phylotree(object):
             self.anon_child += 1
             return "%s[%d]" % (self.hap_id, self.anon_child)
 
-    def __init__(self, phy_in=None, anon_haps=False,
+    def __init__(self, phy_in=None, refseq=None, anon_haps=False,
                  rm_unstable=False, rm_backmut=False):
         """
         Initialize a blank Phylotree before reading from a file.
@@ -130,6 +131,7 @@ class Phylotree(object):
         self.variants = collections.defaultdict(collections.Counter)
         self.ignore = set()
         self.hap_var = None
+        self.refseq = refseq
         self.anon_haps = anon_haps
         self.rm_unstable = rm_unstable
         self.rm_backmut = rm_backmut
@@ -310,6 +312,24 @@ class Phylotree(object):
                     or derived_diff(var_tab[pos])]
         return poly
 
+    def get_ancestral(self, hap_id):
+        """
+        Find the variant positions that have not been affected by a mutation
+        in this haplogroup and return a list of positions (int, 0-based) and
+        base tuples.
+
+        Args:
+            self: this Phylotree object
+            hap_id: a haplogroup ID
+        Returns:
+            a list of (position (0-based), base) tuples
+        """
+        ancestral_bases = {pos:self.refseq[pos]
+                           for pos in self.get_variant_pos()}
+        for var in self.hap_var[hap_id]:
+            pos = pos_from_var(var)
+            del ancestral_bases[pos]
+        return ancestral_bases.items()
 
 def pos_from_var(var):
     """
