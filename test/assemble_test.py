@@ -39,7 +39,8 @@ class TestContributors(unittest.TestCase):
                   ',,,D, A9T ,,',
                   ',,,E, A4T ,,',
                   ',A, A2T A4T ,,']
-        self.phy = phylotree.Phylotree(phy_in)
+        self.ref = "AAAAAAAAA"
+        self.phy = phylotree.Phylotree(phy_in, refseq=self.ref)
 
         self.cons = [['A', 0.4], ['E', 0.3]]
         self.obs = observe.ObservedBases()
@@ -157,7 +158,7 @@ class TestContributors(unittest.TestCase):
 
     def test_check_contrib_phy_vars_no_rm_one_base(self):
         self.cons.append(['C', 0.1])
-        self.obs.obs_tab[4]['A'] = 1
+        self.obs.obs_tab[5]['T'] = 1
         res = assemble._check_contrib_phy_vars(self.phy, self.obs,
                                                self.cons, self.args)
         self.assertEqual(self.cons, res)
@@ -197,6 +198,24 @@ class TestContributors(unittest.TestCase):
         self.args.var_count = 1
         self.args.var_fraction = 0.9
         self.cons.append(['C', 0.1])
+        self.obs.obs_tab[5]['T'] = 1
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs,
+                                               self.cons, self.args)
+        self.assertEqual(self.cons, res)
+
+    def test_check_contrib_phy_vars_check_ancestral(self):
+        # should pass if A isn't present than 4 can be ancestral evidence
+        self.cons.append(['C', 0.1])
+        self.obs.obs_tab[4]['A'] = 1
+        self.obs.obs_tab[1]['T'] = 0
+        self.obs.obs_tab[3]['T'] = 0
+        res = assemble._check_contrib_phy_vars(self.phy, self.obs,
+                                               self.cons, self.args)
+        self.assertEqual(self.cons[1:], res)
+
+    def test_check_contrib_phy_vars_ignore_ancestral(self):
+        # should not find C, T5A is explained by 'A'
+        # self.cons.append(['C', 0.1])
         self.obs.obs_tab[4]['A'] = 1
         res = assemble._check_contrib_phy_vars(self.phy, self.obs,
                                                self.cons, self.args)

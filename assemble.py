@@ -154,29 +154,35 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
 
     for hap, _ in contrib_prop:
         # get variant for this haplogroup
-        uniq_vars = set(phylo.hap_var[hap]) - used_vars
-        found = 0
-        for var in uniq_vars:
-            pos = phylotree.pos_from_var(var)
-            der = phylotree.der_allele(var)
+        uniq_vars = set([(phylotree.pos_from_var(var),
+                          phylotree.der_allele(var))
+                         for var in phylo.hap_var[hap]])
+        uniq_vars -= used_vars
+        found_vars = set()
+        for pos, der in uniq_vars:
             if obs_tab.obs_at(pos, der) >= args.min_var_reads:
-                found += 1
-        if ((len(uniq_vars) == 0) or
-           (args.var_count is not None and found >= args.var_count) or
-           (uniq_vars and float(found) / len(uniq_vars) >= args.var_fraction)):
+                found_vars.add((pos, der))
+        if ((len(uniq_vars) == 0)
+            or (args.var_count is not None
+                and len(found_vars) >= args.var_count)
+            or (float(len(found_vars)) / len(uniq_vars)
+                >= args.var_fraction)):
             if args.verbose:
                 sys.stderr.write("Keeping '%s': "
                                  "%d/%d unique variant bases observed at "
                                  "least %d times.\n"
-                                 % (hap, found, len(uniq_vars),
+                                 % (hap, len(found_vars), len(uniq_vars),
                                     args.min_var_reads))
             # Looks good, these variants can't be used again.
-            used_vars.update(uniq_vars)
+            used_vars.update(found_vars)
+            # Also add the ancestral bases for this haplogroup so we do not
+            # mistake backmutations in another haplogroup as a novel allele.
+            used_vars.update(phylo.get_ancestral(hap))
         else:
             if args.verbose:
                 sys.stderr.write("Ignoring '%s': "
                                  "only %d/%d unique variant bases observed.\n"
-                                 % (hap, found, len(uniq_vars)))
+                                 % (hap, len(found_vars), len(uniq_vars)))
             ignore_haps.add(hap)
 
     pass_contribs = [con for con in contrib_prop if con[0] not in ignore_haps]
