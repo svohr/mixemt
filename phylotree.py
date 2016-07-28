@@ -466,7 +466,7 @@ def main():
     if len(sys.argv) > 1:
         phy_fn = sys.argv[1]
         with open(phy_fn, 'r') as phy_in:
-            phy = Phylotree(phy_in)
+            phy = Phylotree(phy_in, anon_haps=True)
             for hap in phy.hap_var:
                 print hap, ','.join(phy.hap_var[hap])
     else:

@@ -352,7 +352,7 @@ def main():
                               "current and previous contribution estimates is "
                               "< TOLERANCE (default: %(default)s)")
     em_opts.add_argument('-m', '--max-em-iter', dest='max_iter', type=int,
-                         default=1000, metavar="N",
+                         default=10000, metavar="N",
                          help="Maximum of number of EM iterations to run "
                               "(default: %(default)s)")
     em_opts.add_argument('-M', '--multi-em', dest='n_multi', type=int,
