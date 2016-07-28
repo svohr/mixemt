@@ -88,7 +88,7 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
     return
 
 
-def write_variants(out, phylo, ref, contribs):
+def write_variants(out, phylo, contribs):
     """
     Write a table of the variants used in this analysis and note whether the
     position is expected to be polymorphic in the sample given the set of
@@ -102,7 +102,7 @@ def write_variants(out, phylo, ref, contribs):
     Returns: nothing
     """
     haplogroups = [con[1] for con in contribs]
-    polymorphic = set(phylo.polymorphic_sites(haplogroups, ref))
+    polymorphic = set(phylo.polymorphic_sites(haplogroups))
     for var in phylo.get_variant_pos():
         status = "fixed"
         if var in polymorphic:
@@ -111,7 +111,7 @@ def write_variants(out, phylo, ref, contribs):
     return
 
 
-def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
+def write_statistics(phylo, all_obs, contribs, contrib_reads, args):
     """
     Write a bunch of files to use for plotting the results of our EM and
     assembly steps. These will include 1) base observations for each
@@ -132,7 +132,7 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
     """
     haplogroups = {con[0]:con[1] for con in contribs}
     with open("%s.pos.tab" % (args.stats_prefix), 'w') as var_out:
-        write_variants(var_out, phylo, ref, contribs)
+        write_variants(var_out, phylo, contribs)
     with open("%s.obs.tab" % (args.stats_prefix), 'w') as obs_out:
         for con in sorted(contrib_reads):
             obs_tab = observe.ObservedBases(contrib_reads[con],
@@ -140,8 +140,9 @@ def write_statistics(phylo, ref, all_obs, contribs, contrib_reads, args):
             haplogroup = "unassigned"
             if con in haplogroups:
                 haplogroup = haplogroups[con]
-            write_base_obs(obs_out, obs_tab, ref, "%s\t%s" % (con, haplogroup))
+            write_base_obs(obs_out, obs_tab, phylo.refseq,
+                           "%s\t%s" % (con, haplogroup))
         if len(contrib_reads) > 1:
-            write_base_obs(obs_out, all_obs, ref, "all\tmix")
+            write_base_obs(obs_out, all_obs, phylo.refseq, "all\tmix")
     return
 

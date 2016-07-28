@@ -274,7 +274,7 @@ class Phylotree(object):
         self.process_haplotypes()
         return
 
-    def polymorphic_sites(self, haps, ref):
+    def polymorphic_sites(self, haps, ref=None):
         """
         Takes a list of haplogroups and returns the sites that are expected to
         be polymorphic within the sample.
@@ -282,6 +282,7 @@ class Phylotree(object):
         Args:
             self: this Phylotree object
             haps: a list of haplogroup IDs
+            ref: the reference sequence to use when checking for backmutations
         Returns:
             a list of positions in the reference.
         """
@@ -298,6 +299,8 @@ class Phylotree(object):
             der_bases = [der_allele(var) for var in variants]
             return not all([base == der_bases[0] for base in der_bases])
 
+        if ref is None:
+            ref = self.refseq
         var_tab = collections.defaultdict(list)
         for hap in haps:
             for var in self.hap_var[hap]:

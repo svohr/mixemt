@@ -92,8 +92,8 @@ class TestPhylotreeSimple(unittest.TestCase):
                   ',,,D, (A9T) ,,',
                   ',,,E, A4t ,,',
                   ',A, A2T a4t ,,']
-        self.phy = phylotree.Phylotree(phy_in)
         self.ref = "AAAAAAAAA"
+        self.phy = phylotree.Phylotree(phy_in, refseq=self.ref)
 
     def test_phylonode_get_anon_name(self):
         node = phylotree.Phylotree.PhyloNode('A')
@@ -241,6 +241,20 @@ class TestPhylotreeSimple(unittest.TestCase):
                   ',A, A2T a4t ,,']
         phy = phylotree.Phylotree(phy_in, anon_haps=True)
         self.assertTrue('H[1]' in phy.hap_var)
+
+    def test_get_ancestral_basic(self):
+        res = set(self.phy.get_ancestral('I'))
+        exp = set([(pos, 'A') for pos in xrange(1,9)])
+        self.assertEqual(res, exp)
+
+    def test_get_ancestral_basic(self):
+        res = set(self.phy.get_ancestral('C'))
+        exp = set([(pos, 'A') for pos in [1,3,6,7,8]])
+        self.assertEqual(res, exp)
+
+    def test_get_ancestral_bad_hap(self):
+        with self.assertRaises(KeyError):
+            self.phy.get_ancestral('X')
 
 
 if __name__ == '__main__':

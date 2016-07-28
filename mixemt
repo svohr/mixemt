@@ -55,7 +55,7 @@ def open_aln_file(bam_fn, args):
     return bamfile
 
 
-def open_phylotree(phy_fn, args):
+def open_phylotree(phy_fn, refseq, args):
     """
     Opens the phylotree CSV file and uses the module "phylotree" to read in
     a list of variant positions and a table of haplogroups and associated
@@ -63,13 +63,16 @@ def open_phylotree(phy_fn, args):
 
     Args:
         phy_fn: path to Phylotree CSV file (str)
+        refseq: the reference sequence that is used to define the mutations
+                in the tree (usualy RSRS)
         args: argparse arguments namespace for relevant options.
 
     Returns:
         Phylotree object
     """
     with open(phy_fn, 'r') as phy_in:
-        phy = phylotree.Phylotree(phy_in, anon_haps=args.anon_haps,
+        phy = phylotree.Phylotree(phy_in, refseq=refseq,
+                                          anon_haps=args.anon_haps,
                                           rm_unstable=args.rm_unstable)
         if args.exclude_pos is not None:
             phy.ignore_sites(args.exclude_pos)
@@ -227,7 +230,7 @@ def process_and_report(args):
         # Load up the data.
         refseq = open_refseq(args.ref_fn, args)
         bamfile = open_aln_file(args.bam_fn, args)
-        phylo = open_phylotree(args.phy_fn, args)
+        phylo = open_phylotree(args.phy_fn, refseq, args)
 
         if args.load is not None:
             # Just load the saved results instead of running everything again.
@@ -284,8 +287,7 @@ def process_and_report(args):
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
     if args.stats_prefix:
-        stats.write_statistics(phylo, refseq, base_obs,
-                               contribs, contrib_reads, args)
+        stats.write_statistics(phylo, base_obs, contribs, contrib_reads, args)
     if args.cons_prefix:
         assemble.write_consensus_seqs(refseq, contribs, contrib_reads, args)
     if args.out_prefix:
