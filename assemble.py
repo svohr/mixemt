@@ -140,10 +140,10 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
         args: argparse Namespace with user specified values for:
             min_var_reads: The minimum number of observations required to call
                            a base as present in the mixture sample (int)
-            min_fraction: The minimum fraction of defining variants required
+            var_fraction: The minimum fraction of defining variants required
                           to be observed to call a haplogroup a contributor
                           (float)
-            min_count: Call a haplogroup a contributor if there the number of
+            var_count: Call a haplogroup a contributor if there the number of
                        observed variants is equal or greater than min_count
                        (int)
     Returns:
