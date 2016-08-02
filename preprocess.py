@@ -65,6 +65,7 @@ class HapVarBaseMatrix(object):
         this haplogroup, given the dictionary that describes the derived
         alleles of this haplogroup.
         """
+        # TODO: Precompute this and see if we see any speed up.
         mut_prob = min(self.mut_wt * sum(self.phylo.variants[pos].values()),
                        self.mut_max)
         if pos in hap_pos:
