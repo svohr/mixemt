@@ -334,6 +334,7 @@ class Phylotree(object):
             del ancestral_bases[pos]
         return ancestral_bases.items()
 
+
 def pos_from_var(var):
     """
     Extracts the position of the SNP variant, converted to 0-base.
