@@ -43,6 +43,12 @@ class HapVarBaseMatrix(object):
         self.mut_max = mut_max
         self.markers = dict()
 
+        self.mut_prob = dict()
+        for pos in self.phylo.variants:
+            self.mut_prob[pos] = min(self.mut_wt *
+                                       sum(self.phylo.variants[pos].values()),
+                                     self.mut_max)
+
         self.add_hap_markers(phylo.hap_var)
         return
 
@@ -65,18 +71,16 @@ class HapVarBaseMatrix(object):
         this haplogroup, given the dictionary that describes the derived
         alleles of this haplogroup.
         """
-        mut_prob = min(self.mut_wt * sum(self.phylo.variants[pos].values()),
-                       self.mut_max)
         if pos in hap_pos:
             # Does this haplogroup carry a derived base?
             if hap_pos[pos] == base:
                 # Is it the one we observed?
-                return 1.0 - mut_prob
+                return 1.0 - self.mut_prob[pos]
         else:
             # No derived base at this position, does our observed match ref.
             if self.refseq[pos] == base:
-                return 1.0 - mut_prob
-        return mut_prob / 3.0
+                return 1.0 - self.mut_prob[pos]
+        return self.mut_prob[pos] / 3.0
 
     def prob_for_vars(self, hap, pos_obs):
         """
