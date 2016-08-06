@@ -40,6 +40,7 @@ cov.plot <- ggplot(obs) +
   geom_line(aes(x=position, y=coverage), size=0.6) +
   facet_wrap(~Contributor, ncol=1) +
   theme_minimal() +
+  expand_limits(y = 0) +
   scale_x_continuous(breaks=c(1, 5000, 10000, 15000, 16569),
                      minor_breaks=seq(500, 16000, 500)) +
   labs(y="Coverage", x="RSRS Reference Position")
