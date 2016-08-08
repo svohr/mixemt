@@ -360,7 +360,7 @@ def main():
     em_opts.add_argument('-M', '--multi-em', dest='n_multi', type=int,
                          default=1, metavar="N",
                          help="Runs EM until convergence multiple times and "
-                              "reports the results average over all runs "
+                              "reports the results averaged over all runs "
                               "(default: %(default)s)")
 
     asm_opts = parser.add_argument_group("contributor detection and "
