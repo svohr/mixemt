@@ -152,14 +152,25 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
     used_vars = set()
     ignore_haps = set()
 
+    if args.verbose:
+        sys.stderr.write("Checking diagnostic variants:\n")
+
     for hap, _ in contrib_prop:
         # get variant for this haplogroup
         uniq_vars = set([(phylotree.pos_from_var(var),
                           phylotree.der_allele(var))
                          for var in phylo.hap_var[hap]])
         uniq_vars -= used_vars
+        if args.verbose:
+            sys.stderr.write("%s (%d unique variants)\n"
+                              % (hap, len(uniq_vars)))
+
         found_vars = set()
         for pos, der in uniq_vars:
+            if args.verbose:
+                sys.stderr.write("  %d%s: %d/%d\n" % (pos + 1, der,
+                                                      obs_tab.obs_at(pos, der),
+                                                      obs_tab.total_obs(pos)))
             if obs_tab.obs_at(pos, der) >= args.min_var_reads:
                 found_vars.add((pos, der))
         if ((len(uniq_vars) == 0)

@@ -130,3 +130,17 @@ class ObservedBases(object):
         if stranded:
             return (for_count, rev_count)
         return for_count + rev_count
+
+    def total_obs(self, pos):
+        """
+        Get the total number of base observations (i.e. ACGT not N or gap) for
+        a given position.
+
+        Args:
+            pos: A reference position in 0-based coordinates
+        Returns:
+            The total number of base observations for the given position.
+        """
+        obs = self.obs_at(pos)
+        return sum([obs[base] for base in 'ACGT'])
+
