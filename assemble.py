@@ -166,9 +166,10 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
                               % (hap, len(uniq_vars)))
 
         found_vars = set()
-        for pos, der in uniq_vars:
+        for pos, der in sorted(uniq_vars):
             if args.verbose:
-                sys.stderr.write("  %d%s: %d/%d\n" % (pos + 1, der,
+                var = "%d%s" % (pos + 1, der)
+                sys.stderr.write("  %s: %d/%d\n" % (var.rjust(6),
                                                       obs_tab.obs_at(pos, der),
                                                       obs_tab.total_obs(pos)))
             if obs_tab.obs_at(pos, der) >= args.min_var_reads:
