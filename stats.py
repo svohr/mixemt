@@ -14,6 +14,7 @@ import numpy
 import collections
 
 import observe
+import phylotree
 
 
 def report_top_props(haplogroups, props, top_n=10):
@@ -88,7 +89,7 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
     return
 
 
-def write_variants(out, phylo, contribs):
+def write_variants(out, phylo, contribs, obs_tab, args):
     """
     Write a table of the variants used in this analysis and note whether the
     position is expected to be polymorphic in the sample given the set of
@@ -99,15 +100,31 @@ def write_variants(out, phylo, contribs):
         phylo: The Phylotree object used in EM analysis
         contribs: Table of identified contributors with fields  hap#,
                   haplogroup, fraction
+        args: The argparse namespace
     Returns: nothing
     """
     haplogroups = [con[1] for con in contribs]
+    variants = collections.defaultdict(list)
+    for hap in haplogroups:
+        for var in phylo.hap_var[hap]:
+            pos = phylotree.pos_from_var(var)
+            variants[pos].append("%s:%s" % (hap, var))
+
     polymorphic = set(phylo.polymorphic_sites(haplogroups))
-    for var in phylo.get_variant_pos():
-        status = "fixed"
-        if var in polymorphic:
-            status = "polymorphic"
-        out.write("%d\t%s\n" % (var, status))
+    for ref_pos in xrange(len(phylo.refseq)):
+        obs = obs_tab.obs_at(ref_pos)
+
+        samp_status = "sample_fixed"
+        if sum([obs[base] >= args.min_var_reads for base in 'ACGT']) > 1:
+            samp_status = "variant"
+
+        phy_status = "fixed"
+        if ref_pos in polymorphic:
+            phy_status = "polymorphic"
+
+        out.write("%d\t%s\t%s\t%s\t%s\n" % (ref_pos + 1,
+            '\t'.join([str(obs[base]) for base in 'ACGT']),
+            phy_status, samp_status, ','.join(variants[ref_pos])))
     return
 
 
@@ -132,7 +149,7 @@ def write_statistics(phylo, all_obs, contribs, contrib_reads, args):
     """
     haplogroups = {con[0]:con[1] for con in contribs}
     with open("%s.pos.tab" % (args.stats_prefix), 'w') as var_out:
-        write_variants(var_out, phylo, contribs)
+        write_variants(var_out, phylo, contribs, all_obs, args)
     with open("%s.obs.tab" % (args.stats_prefix), 'w') as obs_out:
         for con in sorted(contrib_reads):
             obs_tab = observe.ObservedBases(contrib_reads[con],
