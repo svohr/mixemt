@@ -267,6 +267,12 @@ def process_and_report(args):
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              wts, em_results, args)
 
+        # refine contribution estimates
+        em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat, haplogroups,
+                                                          contribs)
+        em_results = em.run_em(em_mat, wts, args)
+        contribs = assemble.update_contribs(contribs, em_results, haplogroups)
+
         contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
                                               haplogroups, reads, args)
 

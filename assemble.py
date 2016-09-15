@@ -201,6 +201,27 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
 
     return pass_contribs
 
+def update_contribs(contribs, em_results, haps):
+    """
+    Takes an existing contributor table and appends the refined proportion
+    estimates to the end of each entry.
+
+    Args:
+        contribs: The table of contributors as returned by get_contributors()
+        em_results: A tuple containing the final mixture proportion vector and
+                    the read/haplogroup conditional probabilities from the
+                    second round of EM.
+        haps: A list haplogroup IDs/label for each column in the matrix.
+    Returns:
+        The update contributor table
+    """
+    props, _ = em_results
+    props_by_hap = {haps[i]:props[i] for i in xrange(len(haps))}
+    for con in contribs:
+        haplogroup = con[1]
+        con.append(props_by_hap[haplogroup])
+    return contribs
+
 
 def assign_reads(bamfile, contribs, em_results, haps, reads, args):
     """
@@ -283,7 +304,7 @@ def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
     contrib_reads = collections.defaultdict(set)
 
     index_to_hap = dict([(haps.index(group), hap_n)
-                        for hap_n, group, _ in contribs])
+                        for hap_n, group, _, _ in contribs])
     con_indexes = set(index_to_hap.keys())
     for read_i in xrange(len(reads)):
         if len(contribs) > 1:
