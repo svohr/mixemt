@@ -38,8 +38,10 @@ def report_read_votes(haplogroups, read_hap_mat, top_n=10):
     """
     votes = numpy.argmax(read_hap_mat, 1)
     vote_count = collections.Counter(votes)
+    sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
     for hap_i, count in vote_count.most_common(top_n):
         sys.stderr.write("%s\t%d\n" % (haplogroups[hap_i], count))
+    sys.stderr.write('\n')
     return
 
 
@@ -55,10 +57,12 @@ def report_contributors(out, contribs, contrib_reads):
     for hap_id, haplogroup, init_prop, prop  in contribs:
         total_reads = len(contrib_reads[hap_id])
         if out.isatty():
+            init_prop_str = '%.4f' % (prop)
             prop_str = '%.4f' % (prop)
             read_str = '%d' % (total_reads)
             out.write('%s %s %s %s\n' % (hap_id.ljust(6),
                                          haplogroup.ljust(15),
+                                         init_prop_str.rjust(12),
                                          prop_str.rjust(12),
                                          read_str.rjust(7)))
         else:

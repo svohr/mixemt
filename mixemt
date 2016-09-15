@@ -267,6 +267,12 @@ def process_and_report(args):
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              wts, em_results, args)
 
+        # Report initial results.
+        if args.verbose:
+            stats.report_top_props(haplogroups, em_results[0], 10)
+            stats.report_read_votes(haplogroups, em_results[1], 10)
+            sys.stderr.write("\n")
+
         # refine contribution estimates
         em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat, haplogroups,
                                                           contribs)
@@ -280,16 +286,10 @@ def process_and_report(args):
         sys.stderr.write("Error:\n %s\n" % (inst))
         return 1
 
-    # Report the results
-    if args.verbose:
-        stats.report_top_props(haplogroups, em_results[0], 10)
-        sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
-        stats.report_read_votes(haplogroups, em_results[1], 10)
-        sys.stderr.write("\n")
-
     if args.extend and len(contribs) > 1:
         contrib_reads = assemble.extend_assemblies(refseq, contrib_reads, args)
 
+    # Report the results
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
     if args.stats_prefix:
