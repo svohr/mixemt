@@ -54,20 +54,18 @@ def report_contributors(out, contribs, contrib_reads):
     if out.isatty():
         out.write("hap#   Haplogroup      Contribution   Reads\n")
         out.write("-------------------------------------------\n")
-    for hap_id, haplogroup, init_prop, prop  in contribs:
+    for hap_id, haplogroup, _, prop  in contribs:
         total_reads = len(contrib_reads[hap_id])
         if out.isatty():
-            init_prop_str = '%.4f' % (prop)
             prop_str = '%.4f' % (prop)
             read_str = '%d' % (total_reads)
             out.write('%s %s %s %s\n' % (hap_id.ljust(6),
                                          haplogroup.ljust(15),
-                                         init_prop_str.rjust(12),
                                          prop_str.rjust(12),
                                          read_str.rjust(7)))
         else:
-            out.write('%s\t%s\t%.4f\t%d\n' % (hap_id, haplogroup,
-                                              prop, total_reads))
+            out.write('%s\t%s\t%.4f\t%d\n'
+                       % (hap_id, haplogroup, prop, total_reads))
     return
 
 
