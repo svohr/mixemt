@@ -274,6 +274,8 @@ def process_and_report(args):
             sys.stderr.write("\n")
 
         # refine contribution estimates
+        if args.verbose:
+            sys.stderr.write("Refining contribution estimates...\n")
         em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat, haplogroups,
                                                           contribs)
         em_results = em.run_em(em_mat, wts, args)

@@ -201,6 +201,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
 
     return pass_contribs
 
+
 def update_contribs(contribs, em_results, haps):
     """
     Takes an existing contributor table and appends the refined proportion
@@ -219,7 +220,7 @@ def update_contribs(contribs, em_results, haps):
     props_by_hap = {haps[i]:props[i] for i in xrange(len(haps))}
     for con in contribs:
         haplogroup = con[1]
-        con.append(props_by_hap[haplogroup])
+        con[2] = props_by_hap[haplogroup]
     return contribs
 
 
@@ -303,8 +304,7 @@ def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
     props, read_hap_mat = em_results
     contrib_reads = collections.defaultdict(set)
 
-    index_to_hap = dict([(haps.index(group), hap_n)
-                        for hap_n, group, _, _ in contribs])
+    index_to_hap = {haps.index(group):hap_n for hap_n, group, _ in contribs}
     con_indexes = set(index_to_hap.keys())
     for read_i in xrange(len(reads)):
         if len(contribs) > 1:
@@ -412,7 +412,7 @@ def write_consensus_seqs(refseq, contrib_props, contrib_reads, args):
         if 'unassigned' in contrib_reads:
             seq = call_consensus(refseq, contrib_reads['unassigned'],
                                  1, args, strict=False)
-            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), 
+            rec = SeqIO.SeqRecord(SeqIO.Seq(seq),
                                   id='unassigned', description='')
             seqs_to_write.append(rec)
         SeqIO.write(seqs_to_write, fa_out, 'fasta')
