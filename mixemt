@@ -157,6 +157,7 @@ def load_prev(prefix):
         reads: list of lists for reads IDs (strings)
         wts: Array of weights (integer counts) for reads that represent each
              subhaplotype.
+        init_mat: input matrix for EM.
         em_results tuple: results from EM algorithm; includes...
             props: Array of stimatated proportions of haplogroups
             read_hap_mat: Conditional read/haplogroup probability matrix
@@ -174,17 +175,18 @@ def load_prev(prefix):
                 read_ids = items[1:]
                 reads.append(read_ids)
                 read_wts.append(len(read_ids))
+        init_mat = numpy.load("%s.em.npy" % (prefix))
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
         wts = numpy.array(read_wts)
-        return haps, reads, wts, (props, read_hap_mat)
+        return haps, reads, wts, init_mat, (props, read_hap_mat)
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
     return
 
 
-def dump_all(prefix, haps, reads, em_results):
+def dump_all(prefix, haps, reads, em_mat, em_results):
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
@@ -194,6 +196,7 @@ def dump_all(prefix, haps, reads, em_results):
         prefix: prefix for files to be written out (string)
         haps: list of Haplogroups IDs (strings)
         reads: List of lists of reads IDs (strings)
+        em_mat: input matrix for the EM algorithm.
         em_results tuple: results from EM algorithm; includes...
             props: Array of stimatated proportions of haplogroups
             read_hap_mat: Conditional read/haplogroup probability matrix
@@ -209,6 +212,7 @@ def dump_all(prefix, haps, reads, em_results):
             for i in xrange(len(reads)):
                 read_out.write('%d\t%s\n' % (i, '\t'.join(reads[i])))
         props, read_hap_mat = em_results
+        numpy.save("%s.em" % (prefix), em_mat)
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
     except (ValueError, IOError) as inst:
@@ -237,7 +241,7 @@ def process_and_report(args):
             if args.verbose:
                 sys.stderr.write('\nLoading previous results from %s.*\n'
                                  % (args.load))
-            haplogroups, reads, wts, em_results = load_prev(args.load)
+            haplogroups, reads, wts, em_mat, em_results = load_prev(args.load)
 
             if args.verbose:
                 sys.stderr.write('Considering %d fragments '
@@ -256,7 +260,7 @@ def process_and_report(args):
                 if args.verbose:
                     sys.stderr.write('\nSaving results to %s.*\n\n'
                                      % (args.save))
-                dump_all(args.save, haplogroups, reads, em_results)
+                dump_all(args.save, haplogroups, reads, em_mat, em_results)
 
         # build observation table for assembly steps
         # Re-process the reads to get the reference base observation table.
