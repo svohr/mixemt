@@ -331,7 +331,8 @@ class Phylotree(object):
                            for pos in self.get_variant_pos()}
         for var in self.hap_var[hap_id]:
             pos = pos_from_var(var)
-            del ancestral_bases[pos]
+            if pos in ancestral_bases:
+                del ancestral_bases[pos]
         return ancestral_bases.items()
 
 
