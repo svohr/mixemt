@@ -157,6 +157,7 @@ def load_prev(prefix):
         reads: list of lists for reads IDs (strings)
         wts: Array of weights (integer counts) for reads that represent each
              subhaplotype.
+        init_mat: input matrix for EM.
         em_results tuple: results from EM algorithm; includes...
             props: Array of stimatated proportions of haplogroups
             read_hap_mat: Conditional read/haplogroup probability matrix
@@ -177,14 +178,20 @@ def load_prev(prefix):
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
         wts = numpy.array(read_wts)
-        return haps, reads, wts, (props, read_hap_mat)
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
-    return
+    # Load the initial matrix if it was saved.
+    try:
+        init_mat = numpy.load("%s.em.npy" % (prefix))
+    except IOError as inst:
+        sys.stderr.write("Error loading previous EM input:\n%s\n" % (inst))
+        sys.stderr.write("Contribution estimate refinement will be skipped\n")
+        init_mat = None
+    return haps, reads, wts, init_mat, (props, read_hap_mat)
 
 
-def dump_all(prefix, haps, reads, em_results):
+def dump_all(prefix, haps, reads, em_mat, em_results):
     """
     Writes the results of the EM step to a series of files that can be loaded
     later on. Used to skip the matrix building and convergence steps when
@@ -194,6 +201,7 @@ def dump_all(prefix, haps, reads, em_results):
         prefix: prefix for files to be written out (string)
         haps: list of Haplogroups IDs (strings)
         reads: List of lists of reads IDs (strings)
+        em_mat: input matrix for the EM algorithm.
         em_results tuple: results from EM algorithm; includes...
             props: Array of stimatated proportions of haplogroups
             read_hap_mat: Conditional read/haplogroup probability matrix
@@ -209,6 +217,7 @@ def dump_all(prefix, haps, reads, em_results):
             for i in xrange(len(reads)):
                 read_out.write('%d\t%s\n' % (i, '\t'.join(reads[i])))
         props, read_hap_mat = em_results
+        numpy.save("%s.em" % (prefix), em_mat)
         numpy.save("%s.mat" % (prefix), read_hap_mat)
         numpy.save("%s.prop" % (prefix), props)
     except (ValueError, IOError) as inst:
@@ -237,7 +246,7 @@ def process_and_report(args):
             if args.verbose:
                 sys.stderr.write('\nLoading previous results from %s.*\n'
                                  % (args.load))
-            haplogroups, reads, wts, em_results = load_prev(args.load)
+            haplogroups, reads, wts, em_mat, em_results = load_prev(args.load)
 
             if args.verbose:
                 sys.stderr.write('Considering %d fragments '
@@ -256,7 +265,7 @@ def process_and_report(args):
                 if args.verbose:
                     sys.stderr.write('\nSaving results to %s.*\n\n'
                                      % (args.save))
-                dump_all(args.save, haplogroups, reads, em_results)
+                dump_all(args.save, haplogroups, reads, em_mat, em_results)
 
         # build observation table for assembly steps
         # Re-process the reads to get the reference base observation table.
@@ -267,6 +276,24 @@ def process_and_report(args):
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              wts, em_results, args)
 
+        # Report initial results.
+        if args.verbose:
+            stats.report_top_props(haplogroups, em_results[0], 10)
+            stats.report_read_votes(haplogroups, em_results[1], 10)
+            sys.stderr.write("\n")
+
+        # refine contribution estimates
+        if args.refine_ests and em_mat is not None:
+            if args.verbose:
+                sys.stderr.write("Refining contribution estimates...\n")
+
+            em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat,
+                                                              haplogroups,
+                                                              contribs)
+            em_results = em.run_em(em_mat, wts, args)
+            contribs = assemble.update_contribs(contribs, em_results,
+                                                haplogroups)
+
         contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
                                               haplogroups, reads, args)
 
@@ -274,16 +301,10 @@ def process_and_report(args):
         sys.stderr.write("Error:\n %s\n" % (inst))
         return 1
 
-    # Report the results
-    if args.verbose:
-        stats.report_top_props(haplogroups, em_results[0], 10)
-        sys.stderr.write("\nTop 10 haplogroups by read probabilities...\n")
-        stats.report_read_votes(haplogroups, em_results[1], 10)
-        sys.stderr.write("\n")
-
     if args.extend and len(contribs) > 1:
         contrib_reads = assemble.extend_assemblies(refseq, contrib_reads, args)
 
+    # Report the results
     stats.report_contributors(sys.stdout, contribs, contrib_reads)
 
     if args.stats_prefix:
@@ -413,6 +434,10 @@ def main():
                           help="When extending assemblies with -x, sets the "
                                "depth of coverage required to call a base "
                                "for a contributor (default: %(default)s)")
+    asm_opts.add_argument('-E', dest='refine_ests', default=True,
+                          action="store_false",
+                          help="Skip contribution estimate refinement and "
+                               "report proportions from intial EM run.")
 
     out_opts = parser.add_argument_group("output options")
     out_opts.add_argument('-s', '--save', dest='save', type=str,

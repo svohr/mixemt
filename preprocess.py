@@ -226,6 +226,30 @@ def build_em_input(bamfile, refseq, phylo, args):
     return em_matrix, weights, haplogroups, read_ids
 
 
+def reduce_em_matrix(em_mat, haplogroups, contrib_props):
+    """
+    Takes the matrix used by the EM algorithm, the column haplogroup labels,
+    and the table of identified contributors and returns a new matrix made
+    up of only the haplogroups that have passed the contributor filtering
+    steps.
+
+    Args:
+        em_mat: a numpy matrix
+        haplogroups: a list of strings for every column in em_mat
+        contrib_props: a list of lists for each identified contributor
+                       containing the hap#, haplogroup and initial proportion
+                       estimate for each contributor.
+    Returns:
+        A new matrix made up of only the columns listed in contrib_props and
+        a new list of labels for the simplified matrix.
+    """
+    haps_to_keep = {con[1] for con in contrib_props}
+    indexes = [i for i in xrange(len(haplogroups))
+                 if haplogroups[i] in haps_to_keep]
+    new_haps = [haplogroups[i] for i in indexes]
+    return em_mat[:, indexes], new_haps
+
+
 def main():
     """ Main function for simple testing. """
 #   args = {'min_mq':30, 'min_bq':30, 'verbose':True}
