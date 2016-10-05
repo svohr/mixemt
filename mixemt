@@ -175,15 +175,20 @@ def load_prev(prefix):
                 read_ids = items[1:]
                 reads.append(read_ids)
                 read_wts.append(len(read_ids))
-        init_mat = numpy.load("%s.em.npy" % (prefix))
         read_hap_mat = numpy.load("%s.mat.npy" % (prefix))
         props = numpy.load("%s.prop.npy" % (prefix))
         wts = numpy.array(read_wts)
-        return haps, reads, wts, init_mat, (props, read_hap_mat)
     except (ValueError, IOError) as inst:
         sys.stderr.write("Error loading previous results:\n%s\n" % (inst))
         sys.exit(1)
-    return
+    # Load the initial matrix if it was saved.
+    try:
+        init_mat = numpy.load("%s.em.npy" % (prefix))
+    except IOError as inst:
+        sys.stderr.write("Error loading previous EM input:\n%s\n" % (inst))
+        sys.stderr.write("Contribution estimate refinement will be skipped\n")
+        init_mat = None
+    return haps, reads, wts, init_mat, (props, read_hap_mat)
 
 
 def dump_all(prefix, haps, reads, em_mat, em_results):
@@ -278,12 +283,16 @@ def process_and_report(args):
             sys.stderr.write("\n")
 
         # refine contribution estimates
-        if args.verbose:
-            sys.stderr.write("Refining contribution estimates...\n")
-        em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat, haplogroups,
-                                                          contribs)
-        em_results = em.run_em(em_mat, wts, args)
-        contribs = assemble.update_contribs(contribs, em_results, haplogroups)
+        if args.refine_ests and em_mat is not None:
+            if args.verbose:
+                sys.stderr.write("Refining contribution estimates...\n")
+
+            em_mat, haplogroups = preprocess.reduce_em_matrix(em_mat,
+                                                              haplogroups,
+                                                              contribs)
+            em_results = em.run_em(em_mat, wts, args)
+            contribs = assemble.update_contribs(contribs, em_results,
+                                                haplogroups)
 
         contrib_reads = assemble.assign_reads(bamfile, contribs, em_results,
                                               haplogroups, reads, args)
@@ -425,6 +434,10 @@ def main():
                           help="When extending assemblies with -x, sets the "
                                "depth of coverage required to call a base "
                                "for a contributor (default: %(default)s)")
+    asm_opts.add_argument('-E', dest='refine_ests', default=True,
+                          action="store_false",
+                          help="Skip contribution estimate refinement and "
+                               "report proportions from intial EM run.")
 
     out_opts = parser.add_argument_group("output options")
     out_opts.add_argument('-s', '--save', dest='save', type=str,
