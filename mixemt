@@ -275,6 +275,9 @@ def process_and_report(args):
 
         contribs = assemble.get_contributors(phylo, base_obs, haplogroups,
                                              wts, em_results, args)
+        if len(contribs) == 0:
+            sys.stderr.write("\n0 contributors passed filtering steps.\n")
+            return 1
 
         # Report initial results.
         if args.verbose:
