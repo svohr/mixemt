@@ -16,7 +16,7 @@ BAM files of input fragments partitioned by the most likely contributor of
 origin, tab-delimited files containing statistics for each reference position,
 and verbose output detailing the results from each step.
 
-# Requirements
+## Requirements
 
 `mixemt` is written in Python and requires a few additional packages:
 
@@ -27,13 +27,13 @@ and verbose output detailing the results from each step.
 R and ggplot2 are required to use the plotting scripts included in the
 directory `plot/`.
 
-# Usage
+## Usage
 
 ```
 mixemt [options] <ref_seq.fa> <phylotree.csv> <reads.bam>
 ```
 
-# Preparing input sequences
+## Preparing input sequences
 
 `mixemt` takes as input a reference sequence (`ref/`), a representation of
 the phylogeny from Phylotree (`phylotree/`), and a BAM file containing
@@ -57,5 +57,5 @@ these steps can be found in the repository
 [circ\_aln](https://github.com/svohr/circ_aln).
 
 
-# Options
+## Options
 
