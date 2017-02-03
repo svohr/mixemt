@@ -2,10 +2,11 @@
 Unit Tests for preprocess module.
 """
 
-import unittest
 import sys
-import numpy
+import math
+import unittest
 import argparse
+import numpy
 import pysam
 
 import phylotree
@@ -76,20 +77,22 @@ class TestHapVarBaseMatrix(unittest.TestCase):
         mut_wt, mut_max = 0.10, 0.10
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
         obs_I = zip(range(9), "GAAAAAAAA")
-        self.assertEqual(str(hvb.prob_for_vars('I', obs_I)), str(0.9 ** 9))
+        self.assertEqual(str(hvb.prob_for_vars('I', obs_I)),
+                         str(math.log(0.9 ** 9)))
         self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),
-                         str((0.9 ** 7) * ((0.1 / 3) ** 2)))
+                         str(math.log((0.9 ** 7) * ((0.1 / 3) ** 2))))
         self.assertEqual(str(hvb.prob_for_vars('D', obs_I)),
-                         str((0.9 ** 5) * ((0.1 / 3) ** 4)))
+                         str(math.log((0.9 ** 5) * ((0.1 / 3) ** 4))))
 
     def test_probs_for_vars_mut_wts(self):
         mut_wt, mut_max = 0.10, 0.50
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
         obs_I = zip(range(9), "GAAAAAAAA")
         self.assertEqual(str(hvb.prob_for_vars('I', obs_I)),
-                         str((0.9 ** 7) * (0.8 ** 2)))
+                         str(math.log((0.9 ** 7) * (0.8 ** 2))))
         self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),
-                         str((0.9 ** 5) * (0.8 ** 2) * ((0.1 / 3) ** 2)))
+                         str(math.log((0.9 ** 5) * (0.8 ** 2) *
+                                      ((0.1 / 3) ** 2))))
 
 
 class TestProcessReads(unittest.TestCase):
@@ -276,7 +279,7 @@ class TestBuildEMMatrix(unittest.TestCase):
               [(0.02/3) * (0.02/3)])
         r4 = ([0.99 * (0.02/3)] + [(0.01/3) * (0.98)] + [(0.01/3) * (0.02/3)] +
               ([(0.01/3) * (0.98)] * 5) + [0.99 * (0.02/3)])
-        res_mat = numpy.array([r1, r2, r3, r4])
+        res_mat = numpy.log(numpy.array([r1, r2, r3, r4]))
         self.assertEqual(in_mat.shape, (len(reads), len(self.haps)))
         self.assertTrue(numpy.allclose(in_mat, res_mat))
 

@@ -13,8 +13,9 @@ Wed Apr  6 10:48:21 PDT 2016
 """
 
 import sys
-import numpy
+import math
 import collections
+import numpy
 
 import phylotree
 
@@ -88,10 +89,10 @@ class HapVarBaseMatrix(object):
         haplotype by calculating the product of the probability of all
         hap, pos, base tuples it represents.
         """
-        total = 1
+        total = 0
         hap_pos = self.markers[hap]
         for pos, obs in pos_obs:
-            total *= self._prob(hap_pos, pos, obs)
+            total += math.log(self._prob(hap_pos, pos, obs))
         return total
 
 
