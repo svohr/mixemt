@@ -14,6 +14,7 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
+import scipy
 
 import preprocess
 import phylotree
@@ -36,7 +37,7 @@ def converged(prop, last_prop, tolerance=0.0001):
     return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
 
 
-def em_step(read_hap_mat, weights, props, read_mix_mat, new_props):
+def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
     """
     Runs a single iteration of the EM algorithm given:
     1. The original input read-hap probability matrix (read_hap_mat)
@@ -51,14 +52,14 @@ def em_step(read_hap_mat, weights, props, read_mix_mat, new_props):
     # Set z_j,g - probablilty that read j originates from haplogroup g
     # given this proportion in the mixture..
     for i in xrange(read_hap_mat.shape[0]):
-        prop_read = props * read_hap_mat[i, ]
-        read_mix_mat[i, ] = prop_read / numpy.sum(prop_read)
+        prop_read = ln_props + read_hap_mat[i, ]
+        read_mix_mat[i, ] = prop_read - scipy.logsumexp(prop_read)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
     for i in xrange(read_hap_mat.shape[1]):
-        new_props[i] = numpy.sum(read_mix_mat[:, i] * weights)
-    new_props /= numpy.sum(new_props)
+        new_props[i] = scipy.logsumexp(read_mix_mat[:, i], b=weights)
+    new_props -= scipy.logsumexp(new_props)
 
     return read_mix_mat, new_props
 
