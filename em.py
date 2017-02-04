@@ -14,7 +14,7 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
-import scipy
+import scipy.misc
 
 import preprocess
 import phylotree
@@ -34,7 +34,8 @@ def converged(prop, last_prop, tolerance=0.0001):
     difference between the this and the previous iteration is within a
     fixed tolerance value.
     """
-    return numpy.sum(numpy.abs(prop - last_prop)) < tolerance
+    return numpy.sum(numpy.abs(numpy.exp(prop)
+                     - numpy.exp(last_prop))) < tolerance
 
 
 def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
@@ -53,13 +54,13 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
     # given this proportion in the mixture..
     for i in xrange(read_hap_mat.shape[0]):
         prop_read = ln_props + read_hap_mat[i, ]
-        read_mix_mat[i, ] = prop_read - scipy.logsumexp(prop_read)
+        read_mix_mat[i, ] = prop_read - scipy.misc.logsumexp(prop_read)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
     for i in xrange(read_hap_mat.shape[1]):
-        new_props[i] = scipy.logsumexp(read_mix_mat[:, i], b=weights)
-    new_props -= scipy.logsumexp(new_props)
+        new_props[i] = scipy.misc.logsumexp(read_mix_mat[:, i], b=weights)
+    new_props -= scipy.misc.logsumexp(new_props)
 
     return read_mix_mat, new_props
 
@@ -82,7 +83,8 @@ def run_em(read_hap_mat, weights, args):
             sys.stderr.write("Starting EM run %d...\n" % (i + 1))
 
         # initialize haplogroup proportions
-        props = init_props(read_hap_mat.shape[1], alpha=args.init_alpha)
+        props = numpy.log(init_props(read_hap_mat.shape[1],
+                          alpha=args.init_alpha))
 
         for iter_round in xrange(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
@@ -146,7 +148,7 @@ def main():
         input_mat = preprocess.build_em_matrix(ref, phy, reads, haps, args)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
-        print props
+        print numpy.exp(props)
         print read_mix
     return 0
 
