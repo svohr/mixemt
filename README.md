@@ -20,12 +20,12 @@ and verbose output detailing the results from each step.
 
 `mixemt` is written in Python and requires a few additional packages:
 
-* Numpy
-* Biopython
-* pysam
+* [NumPy/SciPy](http://scipy.org/)
+* [Biopython](http://biopython.org/)
+* [pysam](https://github.com/pysam-developers/pysam)
 
-R and ggplot2 are required to use the plotting scripts included in the
-directory `plot/`.
+[R](https://www.r-project.org/) and [ggplot2](http://ggplot2.org/) are required
+to use the plotting scripts included in the directory `plot/`.
 
 ## Usage
 
@@ -59,3 +59,4 @@ these steps can be found in the repository
 
 ## Options
 
+## Output
