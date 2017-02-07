@@ -14,12 +14,12 @@ Wed Apr 13 10:57:39 PDT 2016
 
 """
 
-import numpy
-import pysam
+import sys
 import operator
 import collections
-import sys
 import itertools
+import numpy
+import pysam
 from Bio import SeqIO
 
 import phylotree
@@ -304,17 +304,20 @@ def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
     props, read_hap_mat = em_results
     contrib_reads = collections.defaultdict(set)
 
+    # move mixture proportions and odds ratio cutoff into log, just once.
+    min_fold = numpy.log(min_fold)
+    log_props = numpy.log(props)
+
     index_to_hap = {haps.index(group):hap_n for hap_n, group, _ in contribs}
     con_indexes = set(index_to_hap.keys())
     for read_i in xrange(len(reads)):
         if len(contribs) > 1:
-            read_probs = read_hap_mat[read_i, ]
+            read_probs = read_hap_mat[read_i, ] - log_props
             best_hap, next_hap = _find_best_n_for_read(read_probs,
                                                        con_indexes,
                                                        top_n=2)
-            rel_prob = ((read_probs[best_hap] / props[best_hap]) /
-                        (read_probs[next_hap] / props[next_hap]))
-            if rel_prob >= min_fold:
+
+            if read_probs[best_hap] - read_probs[next_hap] >= min_fold:
                 contrib_reads[index_to_hap[best_hap]].add(read_i)
             else:
                 contrib_reads['unassigned'].add(read_i)

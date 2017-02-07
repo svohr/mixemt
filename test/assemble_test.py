@@ -227,11 +227,11 @@ class TestAssignReads(unittest.TestCase):
         self.haps = list('ABCDEFGHI')
         self.props = numpy.array([0.40, 0.01, 0.01, 0.01, 0.3,
                                   0.01, 0.01, 0.01, 0.01])
-        self.mix_mat = numpy.array([
+        self.mix_mat = numpy.log(numpy.array([
             [0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
             [0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
             [0.30, 0.01, 0.01, 0.01, 0.40, 0.01, 0.01, 0.01, 0.01],
-            [0.01, 0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01]])
+            [0.01, 0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01]]))
         self.em_results = (self.props, self.mix_mat)
         self.cons = [['hap1', 'A', 0.40], ['hap2', 'E', 0.3]]
         self.reads = [['A', 'B'], ['C'], ['D'], ['E', 'F', 'G']]
