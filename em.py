@@ -123,6 +123,8 @@ def run_em(read_hap_mat, weights, args):
         res_props /= args.n_multi
         res_read_mix /= args.n_multi
 
+    res_props = numpy.exp(res_props)
+
     return res_props, res_read_mix
 
 
@@ -148,7 +150,7 @@ def main():
         input_mat = preprocess.build_em_matrix(ref, phy, reads, haps, args)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
-        print numpy.exp(props)
+        print props
         print read_mix
     return 0
 

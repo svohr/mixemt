@@ -170,8 +170,8 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
             if args.verbose:
                 var = "%d%s" % (pos + 1, der)
                 sys.stderr.write("  %s: %d/%d\n" % (var.rjust(6),
-                                                      obs_tab.obs_at(pos, der),
-                                                      obs_tab.total_obs(pos)))
+                                                    obs_tab.obs_at(pos, der),
+                                                    obs_tab.total_obs(pos)))
             if obs_tab.obs_at(pos, der) >= args.min_var_reads:
                 found_vars.add((pos, der))
         if ((len(uniq_vars) == 0)
