@@ -24,6 +24,12 @@ def init_props(nhaps, alpha=1.0):
     """
     Initializes haplogroup proportions by random draw from Dirichlet with
     a uniform alpha parameter.
+
+    Args:
+        nhaps: number of haplogroups and length of the array to produce
+        alpha: alpha parameter for dirichlet distribution
+    Returns:
+        a numpy array of random values that sum to 1.0
     """
     return numpy.random.dirichlet([alpha] * nhaps)
 
@@ -33,6 +39,14 @@ def converged(prop, last_prop, tolerance=0.0001):
     Check if our proportion parameters has converged, i.e. the absolute
     difference between the this and the previous iteration is within a
     fixed tolerance value.
+
+    Args:
+        prop, last_prop: two proportion results from em steps
+        tolerance: an absolute tolerance value to use when checking for
+                   convergence.
+    Returns:
+        True if sum of absolute differences between proportions is within
+        tolerance value, False otherwise.
     """
     return numpy.sum(numpy.abs(numpy.exp(prop)
                      - numpy.exp(last_prop))) < tolerance
@@ -48,6 +62,16 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
        with the conditional probabililies (read_mix_mat)
     5. A vector of the same size as 'props' that will be filled by the new
        haplogroup proportion estimates.
+
+    Args:
+        read_hap_mat: starting read/haplogroup conditional prob. matrix
+        weights: arrray containing the number of times each sub-haplotype
+                 was found in the reads (same length as read_map_hat height)
+        ln_props: starting mixture proportion array, log transformed
+        read_mix_mat: destination for updated conditional probability matrix
+        new_props: destination for updated mixture proportions (log)
+    Returns:
+        Updated conditional probability matrix and mixture proportions array
     """
     # E-Step:
     # Set z_j,g - probablilty that read j originates from haplogroup g
@@ -69,6 +93,17 @@ def run_em(read_hap_mat, weights, args):
     """
     Runs the EM algorithm on the input read-haplogroup probability matrix and
     weights, using the arguments read from the command line.
+
+    Args:
+        read_hap_mat: input matrix containing probability of each haplogroup
+                      producing each unique fragment.
+        weights: arrray containing the number of times each sub-haplotype
+                 was found in the reads (same length as read_map_hat height)
+        args: arguments namespace from argparse.
+    Returns:
+        res_props: final estimated mixture proportions (linear)
+        res_read_mix: final estimated read/haplogroup conditional probability
+                      matrix (log)
     """
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
