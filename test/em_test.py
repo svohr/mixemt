@@ -40,14 +40,12 @@ class TestEMHelpers(unittest.TestCase):
         wts = numpy.array([1, 1, 1])
         props = numpy.log(numpy.array([0.6, 0.2, 0.2]))
         mix_mat = numpy.empty_like(in_mat)
-        new_props = numpy.empty_like(props)
 
-        res_mat, res_props = em.em_step(in_mat, wts, props, mix_mat, new_props)
+        res_mat, res_props = em.em_step(in_mat, wts, props, mix_mat)
         self.assertTrue(numpy.all(res_mat == mix_mat))
-        self.assertTrue(numpy.all(res_props == new_props))
 
         self.assertTrue(numpy.all(in_mat == mix_mat))
-        self.assertTrue(numpy.all(new_props ==
+        self.assertTrue(numpy.all(res_props ==
                                   numpy.log(numpy.array([1.0,1.0,1.0]) / 3.0)))
 
     def test_em_step_weights(self):
@@ -60,10 +58,10 @@ class TestEMHelpers(unittest.TestCase):
         mix_mat = numpy.empty_like(in_mat)
         new_props = numpy.empty_like(props)
 
-        res_mat, res_props = em.em_step(in_mat, wts, props, mix_mat, new_props)
+        res_mat, res_props = em.em_step(in_mat, wts, props, mix_mat)
 
         self.assertTrue(numpy.all(in_mat == mix_mat))
-        self.assertTrue(numpy.all(new_props ==
+        self.assertTrue(numpy.all(res_props ==
                                   numpy.log(numpy.array([2.0,1.0,1.0]) / 4.0)))
 
 

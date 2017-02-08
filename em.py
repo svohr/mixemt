@@ -52,7 +52,7 @@ def converged(prop, last_prop, tolerance=0.0001):
                      - numpy.exp(last_prop))) < tolerance
 
 
-def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
+def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     """
     Runs a single iteration of the EM algorithm given:
     1. The original input read-hap probability matrix (read_hap_mat)
@@ -69,21 +69,21 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat, new_props):
                  was found in the reads (same length as read_map_hat height)
         ln_props: starting mixture proportion array, log transformed
         read_mix_mat: destination for updated conditional probability matrix
-        new_props: destination for updated mixture proportions (log)
     Returns:
         Updated conditional probability matrix and mixture proportions array
     """
     # E-Step:
     # Set z_j,g - probablilty that read j originates from haplogroup g
-    # given this proportion in the mixture..
-    for i in xrange(read_hap_mat.shape[0]):
-        prop_read = ln_props + read_hap_mat[i, ]
-        read_mix_mat[i, ] = prop_read - scipy.misc.logsumexp(prop_read)
+    # given this proportion in the mixture.
+    numpy.add(ln_props, read_hap_mat, read_mix_mat)
+    numpy.subtract(read_mix_mat,
+                   scipy.misc.logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   read_mix_mat)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    for i in xrange(read_hap_mat.shape[1]):
-        new_props[i] = scipy.misc.logsumexp(read_mix_mat[:, i], b=weights)
+    new_props = scipy.misc.logsumexp(read_mix_mat, axis=0,
+                                     b=weights.reshape((-1, 1)))
     new_props -= scipy.misc.logsumexp(new_props)
 
     return read_mix_mat, new_props
@@ -125,8 +125,8 @@ def run_em(read_hap_mat, weights, args):
             if args.verbose and (iter_round + 1) % 10 == 0:
                 sys.stderr.write('.')
             # Run a single step of EM
-            read_mix_mat, new_props = em_step(read_hap_mat, weights, props,
-                                              read_mix_mat, new_props)
+            read_mix_mat, new_props = em_step(read_hap_mat, weights,
+                                              props, read_mix_mat)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
