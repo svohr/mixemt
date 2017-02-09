@@ -151,7 +151,7 @@ def run_em(read_hap_mat, weights, args):
         else:
             # Nth iteration, add the new results to the running total.
             res_props += new_props
-            res_read_mix = numpy.logaddexp(res_read_mix, read_mix_mat)
+            numpy.logaddexp(res_read_mix, read_mix_mat, res_read_mix)
 
     if args.n_multi > 1:
         # Take the average if this is a multi-run.
