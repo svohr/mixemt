@@ -49,7 +49,7 @@ def converged(prop, last_prop, tolerance=0.0001):
         tolerance value, False otherwise.
     """
     return numpy.sum(numpy.abs(numpy.exp(prop)
-                     - numpy.exp(last_prop))) < tolerance
+                               - numpy.exp(last_prop))) < tolerance
 
 
 def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
@@ -107,7 +107,7 @@ def run_em(read_hap_mat, weights, args):
     """
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
-    new_props    = numpy.empty(read_hap_mat.shape[1])
+    new_props = numpy.empty(read_hap_mat.shape[1])
 
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
@@ -119,7 +119,7 @@ def run_em(read_hap_mat, weights, args):
 
         # initialize haplogroup proportions
         props = numpy.log(init_props(read_hap_mat.shape[1],
-                          alpha=args.init_alpha))
+                                     alpha=args.init_alpha))
 
         for iter_round in xrange(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
@@ -169,10 +169,10 @@ def main():
         parser = argparse.ArgumentParser()
         args = parser.parse_args()
         args.init_alpha = 1.0
-        args.tolerance  = 0.0001
-        args.max_iter   = 1000
-        args.n_multi    = 1
-        args.verbose    = True
+        args.tolerance = 0.0001
+        args.max_iter = 1000
+        args.n_multi = 1
+        args.verbose = True
 
         phy = phylotree.example()
 
@@ -192,4 +192,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

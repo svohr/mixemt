@@ -71,7 +71,7 @@ class ObservedBases(object):
                 obs = ' '
                 if qpos is not None:
                     if (aln.query_qualities is None
-                      or aln.query_qualities[qpos] >= self.min_base_qual):
+                            or aln.query_qualities[qpos] >= self.min_base_qual):
                         qpos = int(qpos)
                         obs = aln.query_sequence[qpos].upper()
                     else:
@@ -143,4 +143,3 @@ class ObservedBases(object):
         """
         obs = self.obs_at(pos)
         return sum([obs[base] for base in 'ACGT'])
-

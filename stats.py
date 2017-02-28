@@ -65,7 +65,7 @@ def report_contributors(out, contribs, contrib_reads):
                                          read_str.rjust(7)))
         else:
             out.write('%s\t%s\t%.4f\t%d\n'
-                       % (hap_id, haplogroup, prop, total_reads))
+                      % (hap_id, haplogroup, prop, total_reads))
     return
 
 
@@ -85,9 +85,11 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
     if prefix:
         prefix += '\t'
     for ref_pos in xrange(len(ref)):
-        out.write("%s%d\t%s\t%d\n" % (prefix, ref_pos,
-            '\t'.join([str(obs_tab.obs_at(ref_pos, base)) for base in 'ACGT']),
-            sum(obs_tab.obs_tab[ref_pos].values())))
+        out.write(
+            "%s%d\t%s\t%d\n" % (prefix, ref_pos,
+                                '\t'.join([str(obs_tab.obs_at(ref_pos, base))
+                                           for base in 'ACGT']),
+                                sum(obs_tab.obs_tab[ref_pos].values())))
     return
 
 
@@ -125,8 +127,10 @@ def write_variants(out, phylo, contribs, obs_tab, args):
             phy_status = "polymorphic"
 
         out.write("%d\t%s\t%s\t%s\t%s\n" % (ref_pos + 1,
-            '\t'.join([str(obs[base]) for base in 'ACGT']),
-            phy_status, samp_status, ','.join(variants[ref_pos])))
+                                            '\t'.join([str(obs[base])
+                                                       for base in 'ACGT']),
+                                            phy_status, samp_status,
+                                            ','.join(variants[ref_pos])))
     return
 
 
@@ -164,4 +168,3 @@ def write_statistics(phylo, all_obs, contribs, contrib_reads, args):
         if len(contrib_reads) > 1:
             write_base_obs(obs_out, all_obs, phylo.refseq, "all\tmix")
     return
-

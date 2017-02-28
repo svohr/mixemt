@@ -163,7 +163,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
         uniq_vars -= used_vars
         if args.verbose:
             sys.stderr.write("%s (%d unique variants)\n"
-                              % (hap, len(uniq_vars)))
+                             % (hap, len(uniq_vars)))
 
         found_vars = set()
         for pos, der in sorted(uniq_vars):
@@ -175,10 +175,10 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
             if obs_tab.obs_at(pos, der) >= args.min_var_reads:
                 found_vars.add((pos, der))
         if ((len(uniq_vars) == 0)
-            or (args.var_count is not None
-                and len(found_vars) >= args.var_count)
-            or (float(len(found_vars)) / len(uniq_vars)
-                >= args.var_fraction)):
+                or (args.var_count is not None
+                    and len(found_vars) >= args.var_count)
+                or (float(len(found_vars)) / len(uniq_vars)
+                    >= args.var_fraction)):
             if args.verbose:
                 sys.stderr.write("Keeping '%s': "
                                  "%d/%d unique variant bases observed at "
@@ -315,7 +315,7 @@ def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
             read_probs = read_hap_mat[read_i, ] - log_props
             best_hap, next_hap = _find_best_n_for_read(read_probs,
                                                        con_indexes,
-                                                       top_n=2)
+                                                       top_n=2)[0:2]
 
             if read_probs[best_hap] - read_probs[next_hap] >= min_fold:
                 contrib_reads[index_to_hap[best_hap]].add(read_i)
@@ -489,7 +489,7 @@ def find_new_variants(refseq, contrib_reads, args):
         for hap in contrib_cons:
             base = contrib_cons[hap][pos]
             base_is_uniq = all([contrib_cons[con][pos] != base
-                               for con in contrib_cons if con != hap])
+                                for con in contrib_cons if con != hap])
             if base_is_uniq:
                 new_vars[pos, base] = hap
     return new_vars
@@ -517,8 +517,8 @@ def assign_reads_from_new_vars(contrib_reads, new_variants, args):
             for qpos, rpos in aln.get_aligned_pairs(matches_only=True):
                 qpos = int(qpos)
                 rpos = int(rpos)
-                if (not aln.query_qualities or
-                    aln.query_qualities[qpos] >= args.min_bq):
+                if (aln.query_qualities is None or
+                        aln.query_qualities[qpos] >= args.min_bq):
                     base = aln.query_sequence[qpos].upper()
                     if (rpos, base) in new_variants:
                         contrib = new_variants[(rpos, base)]
@@ -569,12 +569,11 @@ def extend_assemblies(refseq, contrib_reads, args):
         if args.verbose:
             sys.stderr.write(
                 "  %d: %d/%d reads assigned using %d variants\n"
-                    % (run, last_unassigned - unassigned, last_unassigned,
-                       len(new_variants)))
+                % (run, last_unassigned - unassigned, last_unassigned,
+                   len(new_variants)))
         run += 1
 
     if args.verbose:
         sys.stderr.write('\n')
 
     return contrib_reads
-

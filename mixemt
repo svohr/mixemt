@@ -72,8 +72,8 @@ def open_phylotree(phy_fn, refseq, args):
     """
     with open(phy_fn, 'r') as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
-                                          anon_haps=args.anon_haps,
-                                          rm_unstable=args.rm_unstable)
+                                  anon_haps=args.anon_haps,
+                                  rm_unstable=args.rm_unstable)
         if args.exclude_pos is not None:
             phy.ignore_sites(args.exclude_pos)
         if args.verbose:
@@ -116,7 +116,7 @@ def open_custom_haplotypes(hap_fn, phylo, args):
             n_haps += 1
         if args.verbose:
             sys.stderr.write('%d custom haplotypes added from "%s"\n'
-                              % (n_haps, hap_fn))
+                             % (n_haps, hap_fn))
     return
 
 
@@ -163,9 +163,9 @@ def load_prev(prefix):
             read_hap_mat: Conditional read/haplogroup probability matrix
     """
     try:
-        haps  = list()
+        haps = list()
         reads = list()
-        read_wts  = list()
+        read_wts = list()
         with open("%s.haps" % (prefix), 'r') as hap_in:
             for line in hap_in:
                 haps.append(line.rstrip())
@@ -326,8 +326,8 @@ def main():
     through the analysis steps
     """
     parser = argparse.ArgumentParser(
-                description="Estimates the number and proportions of "
-                            "contributing haplotypes.")
+        description="Estimates the number and proportions "
+                    "of contributing haplotypes.")
     parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
                         help="FASTA file contain the reference sequence.")
     parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,

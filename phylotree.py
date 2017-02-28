@@ -126,7 +126,7 @@ class Phylotree(object):
             rm_backmut: Ignore positions that have backmutations
         Returns: nothing
         """
-        self.root  = None
+        self.root = None
         self.nodes = list()
         self.variants = collections.defaultdict(collections.Counter)
         self.ignore = set()
@@ -161,9 +161,8 @@ class Phylotree(object):
             self.nodes.append(new_node)
             node_stack.append(new_node)
             cur += 1
-        else:
-            # Set the root for the tree. First item on node_stack is None.
-            self.root = node_stack[1]
+        # Set the root for the tree. First item on node_stack is None.
+        self.root = node_stack[1]
         return
 
     def process_variants(self):
@@ -311,8 +310,8 @@ class Phylotree(object):
         # Position is polymorphic if not all contributors have a non reference
         # allele or if any derived alleles differ.
         poly = [pos for pos in sorted(var_tab)
-                if (len(var_tab[pos]) < len(haps))
-                    or derived_diff(var_tab[pos])]
+                if (len(var_tab[pos]) < len(haps)
+                    or derived_diff(var_tab[pos]))]
         return poly
 
     def get_ancestral(self, hap_id):

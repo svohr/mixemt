@@ -39,16 +39,16 @@ class HapVarBaseMatrix(object):
     def __init__(self, refseq, phylo, mut_wt=0.01, mut_max=0.5):
         """ Initialzes the HapVarBaseMatrix. """
         self.refseq = refseq
-        self.phylo  = phylo
+        self.phylo = phylo
         self.mut_wt = mut_wt
         self.mut_max = mut_max
         self.markers = dict()
 
         self.mut_prob = dict()
         for pos in self.phylo.variants:
-            self.mut_prob[pos] = min(self.mut_wt *
-                                       sum(self.phylo.variants[pos].values()),
-                                     self.mut_max)
+            self.mut_prob[pos] = min(self.mut_max,
+                                     self.mut_wt
+                                     * sum(self.phylo.variants[pos].values()))
 
         self.add_hap_markers(phylo.hap_var)
         return
@@ -122,7 +122,7 @@ def process_reads(alns, var_pos, min_mq, min_bq):
                 qpos = int(qpos)
                 rpos = int(rpos)
                 if (aln.query_qualities is None
-                  or aln.query_qualities[qpos] >= min_bq):
+                        or aln.query_qualities[qpos] >= min_bq):
                     if rpos in var_pos:
                         obs = aln.query_sequence[qpos].upper()
                         # Add this to the list, if this is a known var site.
@@ -212,7 +212,7 @@ def build_em_input(bamfile, refseq, phylo, args):
     if args.verbose:
         sys.stderr.write('Using %d aligned fragments (MQ>=%d) '
                          '(%d distinct sub-haplotypes)\n\n'
-                           % (len(read_obs), args.min_mq, len(read_sigs)))
+                         % (len(read_obs), args.min_mq, len(read_sigs)))
 
     # This is now the order we will be using for the matrix.
     haplogroups = sorted(phylo.hap_var)
@@ -246,7 +246,7 @@ def reduce_em_matrix(em_mat, haplogroups, contrib_props):
     """
     haps_to_keep = {con[1] for con in contrib_props}
     indexes = [i for i in xrange(len(haplogroups))
-                 if haplogroups[i] in haps_to_keep]
+               if haplogroups[i] in haps_to_keep]
     new_haps = [haplogroups[i] for i in indexes]
     return em_mat[:, indexes], new_haps
 
