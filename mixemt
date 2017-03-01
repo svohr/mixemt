@@ -254,8 +254,10 @@ def process_and_report(args):
                                  % (numpy.sum(wts), len(reads)))
         else:
             # Build input for EM step
-            em_mat, wts, haplogroups, reads = \
-                preprocess.build_em_input(bamfile, refseq, phylo, args)
+            (em_mat,
+             wts,
+             haplogroups,
+             reads) = preprocess.build_em_input(bamfile, refseq, phylo, args)
 
             # Run EM
             em_results = em.run_em(em_mat, wts, args)
