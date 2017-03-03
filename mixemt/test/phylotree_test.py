@@ -5,7 +5,7 @@ Unit Tests for Phylotree module.
 import unittest
 import sys
 
-import phylotree
+from mixemt import phylotree
 
 
 class TestVariantMethods(unittest.TestCase):

@@ -8,9 +8,9 @@ import argparse
 import math
 import numpy
 
-import phylotree
-import preprocess
-import em
+from mixemt import phylotree
+from mixemt import preprocess
+from mixemt import em
 
 
 class TestEMHelpers(unittest.TestCase):

@@ -9,10 +9,10 @@ import argparse
 import collections
 import pysam
 
-import observe
-import assemble
-import phylotree
-import preprocess
+from mixemt import observe
+from mixemt import assemble
+from mixemt import phylotree
+from mixemt import preprocess
 
 # TODO: Write tests for the follwing functions.
 # write_haplotypes(samfile, contrib_reads, reads, read_sigs, prefix, verbose)
