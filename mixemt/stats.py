@@ -10,8 +10,8 @@ Fri May 20 14:04:02 PDT 2016
 
 
 import sys
-import numpy
 import collections
+import numpy
 
 from mixemt import observe
 from mixemt import phylotree
