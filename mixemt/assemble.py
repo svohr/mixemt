@@ -22,8 +22,8 @@ import numpy
 import pysam
 from Bio import SeqIO
 
-import phylotree
-import observe
+from mixemt import phylotree
+from mixemt import observe
 
 
 def get_contributors(phylo, obs_tab, haplogroups, wts, em_results, args):

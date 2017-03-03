@@ -13,8 +13,8 @@ import sys
 import numpy
 import collections
 
-import observe
-import phylotree
+from mixemt import observe
+from mixemt import phylotree
 
 
 def report_top_props(haplogroups, props, top_n=10):
