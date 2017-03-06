@@ -3,7 +3,8 @@ from setuptools import setup
 setup(
     name='mixemt',
     version='0.1',
-    description='',
+    description='A tool for the phylogenetic interpretation of '
+                'human mtDNA sequence mixtures',
     url='http://github.com/svohr/mixemt',
     author='Samuel H. Vohr',
     author_email='svohr@soe.ucsc.edu',
