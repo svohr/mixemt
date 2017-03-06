@@ -1,7 +1,5 @@
 #! /bin/bash
 
-PYTHONPATH=`pwd`:${PYTHONPATH}
+pylint bin/mixemt mixemt/*.py
 
-pylint mixemt phylotree.py preprocess.py em.py observe.py assemble.py stats.py
-
-python -m unittest discover -s test -p "*_test.py"
+pytest
