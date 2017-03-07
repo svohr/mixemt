@@ -6,7 +6,7 @@ import unittest
 import sys
 import pysam
 
-import observe
+from mixemt import observe
 
 
 class TestObservedBases(unittest.TestCase):

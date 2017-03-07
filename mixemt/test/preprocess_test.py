@@ -9,8 +9,8 @@ import argparse
 import numpy
 import pysam
 
-import phylotree
-import preprocess
+from mixemt import phylotree
+from mixemt import preprocess
 
 # TODO: Stuff to test:
 # def process_reads(samfile, var_pos, min_mq, min_bq):

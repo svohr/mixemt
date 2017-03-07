@@ -16,8 +16,8 @@ import argparse
 import numpy
 import scipy.misc
 
-import preprocess
-import phylotree
+from mixemt import preprocess
+from mixemt import phylotree
 
 
 def init_props(nhaps, alpha=1.0):

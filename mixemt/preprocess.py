@@ -17,7 +17,7 @@ import math
 import collections
 import numpy
 
-import phylotree
+from mixemt import phylotree
 
 
 class HapVarBaseMatrix(object):
