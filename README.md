@@ -1,6 +1,8 @@
 `mixemt` - Deconvolving mtDNA Mixtures by Expectation Maximization
 ==================================================================
 
+[![Build Status](https://travis-ci.org/svohr/mixemt.svg?branch=master)](https://travis-ci.org/svohr/mixemt)
+
 `mixemt` is a program for making sense of mixtures of human mitochondrial
 sequences. It takes as input a reference sequence, a representation of the
 mitochondrial haplogroup phylogeny from
