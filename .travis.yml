@@ -8,7 +8,9 @@ os:
   - osx
 
 # command to install dependencies
-install: "pip install ."
+install:
+  - "pip install --only-binary=numpy,scipy numpy scipy"
+  - "pip install ."
 
 # command to run tests
 script: pytest
