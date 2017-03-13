@@ -25,6 +25,7 @@ haplotypes from phylotree.
 
 import sys
 import argparse
+import pkg_resources
 import pysam
 import numpy
 
@@ -134,6 +135,9 @@ def open_refseq(fa_fn, args):
         string representing reference sequence.
     """
     try:
+        if fa_fn is None:
+            fa_fn = pkg_resources.resource_filename('mixemt',
+                                                    'ref/RSRS.mtDNA.fa')
         fafile = pysam.FastaFile(fa_fn)
         if args.verbose:
             sys.stderr.write('Read reference sequence "%s" from "%s".\n'
@@ -330,15 +334,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="Estimates the number and proportions "
                     "of contributing haplotypes.")
-    parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
-                        help="FASTA file contain the reference sequence.")
-    parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
-                        help="Phylotree CSV file")
     parser.add_argument("bam_fn", metavar="reads.bam", type=str,
                         help="Aligned reads in indexed BAM file.")
 
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
+    parser.add_argument("--ref", dest="ref_fn",
+                        metavar="ref.fasta", type=str, default=None,
+                        help="FASTA file containing reference sequence "
+                             "(must match Phylotree input).")
+    parser.add_argument("--phy", dest="phy_fn",
+                        metavar="phylotree.csv", type=str, default=None,
+                        help="Phylotree CSV file (Default: Build 17).")
 
     cust_opts = parser.add_argument_group("customization options")
     cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
