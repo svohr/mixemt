@@ -58,12 +58,13 @@ def open_aln_file(bam_fn, args):
 
 def open_phylotree(phy_fn, refseq, args):
     """
-    Opens the phylotree CSV file and uses the module "phylotree" to read in
+    Opens the phylotree CSV file or the default phylotree file from the mixemt
+    package if phy_fn is None and uses the module "phylotree" to read in
     a list of variant positions and a table of haplogroups and associated
     variants.
 
     Args:
-        phy_fn: path to Phylotree CSV file (str)
+        phy_fn: path to Phylotree CSV file (str) or None
         refseq: the reference sequence that is used to define the mutations
                 in the tree (usualy RSRS)
         args: argparse arguments namespace for relevant options.
@@ -71,7 +72,14 @@ def open_phylotree(phy_fn, refseq, args):
     Returns:
         Phylotree object
     """
-    with open(phy_fn, 'r') as phy_in:
+    def open_phylotree_resource(phy_fn):
+        """ Opens phylotree from package or from file. """
+        if phy_fn is None:
+            return pkg_resources.resource_stream(
+                'mixemt', 'phylotree/mtDNA_tree_Build_17.csv')
+        else:
+            return open(phy_fn, 'r')
+    with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
                                   anon_haps=args.anon_haps,
                                   rm_unstable=args.rm_unstable)
@@ -123,12 +131,13 @@ def open_custom_haplotypes(hap_fn, phylo, args):
 
 def open_refseq(fa_fn, args):
     """
-    Opens the FASTA formatted file specified by the fa_fn parameter and returns
+    Opens the FASTA formatted file specified by the fa_fn parameter or the
+    default reference file from the mixemt package if fa_fn is None and returns
     the sequence of the first entry as a string. If the FASTA file is empty an
     error message is printed and the program exits.
 
     Args:
-        fa_fn: path to reference fasta file (str)
+        fa_fn: path to reference fasta file (str) or None
         args: argparse arguments namespace for relevant options.
 
     Returns:
