@@ -4,19 +4,21 @@
 [![Build Status](https://travis-ci.org/svohr/mixemt.svg?branch=master)](https://travis-ci.org/svohr/mixemt)
 
 `mixemt` is a program for making sense of mixtures of human mitochondrial
-sequences. It takes as input a reference sequence, a representation of the
-mitochondrial haplogroup phylogeny from
-[Phylotree.org](http://www.phylotree.org/), and a BAM file containing reads
-mapped to the reference sequence. `mixemt` scans each mapped read for variants
-described in Phylotree and estimates the probability of the read originating
-from each candidate haplotype (haplogroup). This information is used to
-estimate the mixture proportions for the sample and to identify the most likely
-haplogroups contributing to the sample. The program produces as output a table,
-written to standard output, that describes the detected haplogroups and their
-estimated percent contribution to the sample. The program can also produce new
-BAM files of input fragments partitioned by the most likely contributor of
-origin, tab-delimited files containing statistics for each reference position,
-and verbose output detailing the results from each step.
+sequences. It takes as input a BAM file containing reads mapped to the human
+mitochondrial reference sequence and uses a representation of the
+mitochondrial haplogroup phylogeny from [Phylotree.org](http://www.phylotree.org/)
+to infer the haplogroups present in the mixture. `mixemt` scans each mapped
+read for variants described in Phylotree and estimates the probability of the
+read originating from each candidate haplotype (haplogroup). This information
+is used to estimate the mixture proportions for the sample and to identify the
+most likely haplogroups contributing to the sample. The program produces as
+output a table, written to standard output, that describes the detected
+haplogroups and their estimated percent contribution to the sample. The program
+can also produce new BAM files of input fragments partitioned by the most
+likely contributor of origin, tab-delimited files containing statistics for
+each reference position, and verbose output detailing the results from each
+step.
+
 
 ## Requirements
 
@@ -29,23 +31,37 @@ and verbose output detailing the results from each step.
 [R](https://www.r-project.org/) and [ggplot2](http://ggplot2.org/) are required
 to use the plotting scripts included in the directory `plot/`.
 
+
+## Installation
+
+`mixemt` can be installed from this repository using [pip](https://pip.pypa.io/).
+
+```
+git clone https://github.com/svohr/mixemt.git
+cd mixemt
+pip install .
+```
+
+Missing requirements will be automatically downloaded and installed as well.
+
+
 ## Usage
 
 ```
-mixemt [options] <ref_seq.fa> <phylotree.csv> <reads.bam>
+mixemt [options] <reads.bam>
 ```
+
 
 ## Preparing input sequences
 
-`mixemt` takes as input a reference sequence (`ref/`), a representation of
-the phylogeny from Phylotree (`phylotree/`), and a BAM file containing
-alignments of sequences to the reference. The Reconstructed Sapiens Reference
-Sequence (RSRS) is used the reference sequence, although reads may be mapped to
-the Revised Cambridge Reference Sequence (rCRS) as both share a common
-coordinate system.
+`mixemt` takes as input a BAM file containing alignments of sequences to a
+reference sequence. The Reconstructed Sapiens Reference Sequence (RSRS) is
+typically used the reference sequence, although reads may be mapped to the
+Revised Cambridge Reference Sequence (rCRS) as both share a common coordinate
+system.
 
 Aligned sequences are provided to `mixemt` as a BAM file. Alignments should be
-filtered prior to input using `samtools` or a similar program.  Internally,
+filtered prior to input using `samtools` or a similar program. Internally,
 `mixemt` treats alignments sharing the same query template name as a single
 fragment and does not check read pairs for orientation, insert size, unaligned
 segments, or secondary alignments. The options `-q` and `-Q` allow for basic
@@ -60,5 +76,7 @@ these steps can be found in the repository
 
 
 ## Options
+
+
 
 ## Output
