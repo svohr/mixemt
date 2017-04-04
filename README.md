@@ -105,10 +105,10 @@ haplotypes. Each line contains a distinct haplotype identifier, a tab
 character, and a comma-separated list of variants in the form
 `[Ancestral/Reference Base][position][Derived/Variant Base]`.
 
-'''
+```
 custom_hap1	C152T,A2758G,C2885T,G7146A,T8468C
 custom_hap2	C4670T,A5282G,C9007T,G12192A,T15604C
-'''
+```
 
 Positions that do not appear in the variant list are assumed to contain the
 reference base and positions that have been excluded from analysis are not used.
