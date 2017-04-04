@@ -77,6 +77,24 @@ these steps can be found in the repository
 
 ## Options
 
+### Basic options
+
+#### `-h, --help`
+Print help message describing usage and options.
+
+#### `-v, --verbose`
+Print detailed status with useful information while running.
+
+#### `--ref ref.fasta`
+Specify a FASTA file containing the reference sequence. The first sequence in
+the file will be used. The reference sequence must match the variants
+contained in the Phylotree input to avoid unexpected behavior. The
+Recontructed Sapiens Reference Sequence (RSRS) contained in
+`mixemt/ref/RSRS.mtDNA.fa` is used by default.
+
+#### `--phy phylotree.csv`
+Specify a Phylotree CSV file to use. By default, the file for Phylotree
+Build 17 (`mixemt/phylotree/mtDNA_tree_Build_17.csv`) is used.
 
 
 ## Output
