@@ -96,5 +96,47 @@ Recontructed Sapiens Reference Sequence (RSRS) contained in
 Specify a Phylotree CSV file to use. By default, the file for Phylotree
 Build 17 (`mixemt/phylotree/mtDNA_tree_Build_17.csv`) is used.
 
+### Customization options
+
+#### `-H custom.tab, --haps custom.tab`
+Use the haplotypes described in the specified file alonge with the
+haplogroups from Phylotree. A haplotype file consists of lines representing
+haplotypes. Each line contains a distinct haplotype identifier, a tab
+character, and a comma-separated list of variants in the form
+`[Ancestral/Reference Base][position][Derived/Variant Base]`.
+
+'''
+custom_hap1	C152T,A2758G,C2885T,G7146A,T8468C
+custom_hap2	C4670T,A5282G,C9007T,G12192A,T15604C
+'''
+
+Positions that do not appear in the variant list are assumed to contain the
+reference base and positions that have been excluded from analysis are not used.
+Variants that appear at novel positions (i.e., no known variants in Phylotree)
+can be used, but it is assumed that all Phylotree haplogroups carry the
+reference base.
+
+#### `-e SITES, --exclude_pos SITES`
+Specify a comma-separated list of 1-based positions or 'start-end' ranges to be
+excluded from consideration.
+
+#### `-A, --anon-haps`
+Ignore Phylotree haplogroups without IDs. By default, a placeholder name is
+generated for these haplogroups using the parent haplogroup's ID and an integer
+number (e.g., `H1[2]` is a unnamed subgroup of haplogroup `H1`).
+
+#### `-U, --unstable`
+Ignore sites with variants listed as unstable in Phylotree.
+
+### Quality filters
+These options provide basic filtering of mapped sequences and base
+observations.
+
+#### `-q INT, --min-MQ INT`
+Ignore alignments with mapping quality less than `INT` (default: 30).
+
+#### `-Q INT, --min-BQ INT`
+Ignore bases with base quality scores less than `INT` (default: 30).
+
 
 ## Output
