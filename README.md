@@ -138,5 +138,26 @@ Ignore alignments with mapping quality less than `INT` (default: 30).
 #### `-Q INT, --min-BQ INT`
 Ignore bases with base quality scores less than `INT` (default: 30).
 
+### Expectation-Maximization
+Options for setting the parameters used during the expectation-maximization
+step where the mixture proportions are inferred. The default values should
+work well most of the time, but adjusting these values may be useful in
+some situtations.
+
+#### `-i ALPHA, --init ALPHA`
+Use parameter `ALPHA` to initialize haplogroup contributions from Dirichlet
+distribution (default: 1.0)
+
+#### `-T TOLERANCE, --converge TOLERANCE`
+Stop EM iteration when absolute difference between current and previous
+contribution estimates is less than `TOLERANCE` (default: 0.0001)
+
+#### `-m N, --max-em-iter N`
+Maximum of number of EM iterations to run (default: 10000)
+
+#### `-M N, --multi-em N`
+Run EM until convergence multiple times and report the results averaged
+over all runs (default: 1)
+
 
 ## Output
