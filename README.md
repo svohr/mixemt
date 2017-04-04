@@ -138,7 +138,7 @@ Ignore alignments with mapping quality less than `INT` (default: 30).
 #### `-Q INT, --min-BQ INT`
 Ignore bases with base quality scores less than `INT` (default: 30).
 
-### Expectation-Maximization
+### Expectation-maximization
 Options for setting the parameters used during the expectation-maximization
 step where the mixture proportions are inferred. The default values should
 work well most of the time, but adjusting these values may be useful in
@@ -158,6 +158,64 @@ Maximum of number of EM iterations to run (default: 10000)
 #### `-M N, --multi-em N`
 Run EM until convergence multiple times and report the results averaged
 over all runs (default: 1)
+
+### Contributor detection options
+Once the mixture proportions have been inferred, two filtering steps are
+applied to narrow the field of contributing to haplotypes to only the
+strongest candidates. First, we examine the read/haplogroup probablities
+to find the haplogroup associated with the highest probablilty for each
+read. Haplogroups that have no or little read support are removed from
+consideration (see `-r` option). Second, using the haplogroups that pass
+the previous filter, we verify that the variants that define each contributor
+are in fact present in the mixture. This step removes haplotype signals
+that are most likely driven by one or two private mutations.
+
+#### `-C HAP1,HAP2,...,HAPN, --contributors HAP1,HAP2,...,HAPN`
+Skip contributor detection step and use the specified comma-separated list of
+haplogroups instead (be careful)
+
+#### `-r N, --min-reads N`
+Haplogroup must have N reads to be considered a contributor (default: 10). This
+value should be adjusted when coverage is high to avoid signals caused by
+sequencing errors and when coverage is low and allelic dropout may be likely.
+
+#### `-R N, --var-min-reads N`
+Variant base must be found in `N` reads to be considered as present in sample
+(default: 3). This value should be above the expected number of base errors
+given the sequence coverage.
+
+#### `-f F, --var-fraction F`
+Fraction of unique defining variants that must be observed to call a haplogroup
+present (default: 0.5). This value should be adjusted based on the likelihood
+of allelic dropout and the number of variant differences between contributors.
+
+#### `-n N, --var-count N`
+Call haplogroup a contributor if it has at least N unique variants observed in
+the sample, regardless of total number of defining variants. Use when allelic
+dropout is likely. (default: None).
+
+#### `-V, --no-var-check`
+Disable requirement that the majority of contributors's unique defining
+variants are present in the sample. Use when coverage is very low and dropout
+is likely.
+
+#### `-E`
+Skip contribution estimate refinement and report proportions from intial EM
+run.
+
+### Assembly options
+#### `-a ODDS, --assign-odds ODDS`
+Minimum odds ratio (probability between best and second best haplogroup)
+required to assign read to a contributor (default: 2.0)
+
+#### `-x, --extend-assemblies`
+Attempt to extend haplotype assemblies iteratively by identifying novel
+variants from contributor consensus sequences assigning reads based off of
+them.
+
+#### `-c N, --cons-cov N`
+When extending assemblies with `-x`, sets the depth of coverage required to call
+a base for a contributor (default: 2)
 
 
 ## Output
