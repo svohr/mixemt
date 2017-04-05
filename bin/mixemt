@@ -441,7 +441,7 @@ def main():
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
-                               "contributors's unique defining variants are "
+                               "contributors' unique defining variants are "
                                "present in the sample. Use when coverage is "
                                "very low and dropout is likely.")
     asm_opts.add_argument('-x', '--extend-assemblies',
@@ -458,7 +458,7 @@ def main():
     asm_opts.add_argument('-E', dest='refine_ests', default=True,
                           action="store_false",
                           help="Skip contribution estimate refinement and "
-                               "report proportions from intial EM run.")
+                               "report proportions from initial EM run.")
 
     out_opts = parser.add_argument_group("output options")
     out_opts.add_argument('-s', '--save', dest='save', type=str,
