@@ -66,7 +66,7 @@ def open_phylotree(phy_fn, refseq, args):
     Args:
         phy_fn: path to Phylotree CSV file (str) or None
         refseq: the reference sequence that is used to define the mutations
-                in the tree (usualy RSRS)
+                in the tree (usually RSRS)
         args: argparse arguments namespace for relevant options.
 
     Returns:
@@ -75,9 +75,15 @@ def open_phylotree(phy_fn, refseq, args):
     def open_phylotree_resource(phy_fn):
         """ Opens phylotree from package or from file. """
         if phy_fn is None:
+            if args.verbose:
+                sys.stderr.write("Reading haplogroups from 'mixemt' package "
+                                 "(phylotree/mtDNA_tree_Build_17.csv)\n")
             return pkg_resources.resource_stream(
                 'mixemt', 'phylotree/mtDNA_tree_Build_17.csv')
         else:
+            if args.verbose:
+                sys.stderr.write("Reading haplogroups from file (%s)\n"
+                                 % (phy_fn))
             return open(phy_fn, 'r')
     with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
@@ -251,8 +257,8 @@ def process_and_report(args):
     try:
         # Load up the data.
         refseq = open_refseq(args.ref_fn, args)
-        bamfile = open_aln_file(args.bam_fn, args)
         phylo = open_phylotree(args.phy_fn, refseq, args)
+        bamfile = open_aln_file(args.bam_fn, args)
 
         if args.load is not None:
             # Just load the saved results instead of running everything again.
