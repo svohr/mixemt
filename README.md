@@ -42,7 +42,7 @@ cd mixemt
 pip install .
 ```
 
-Missing requirements will be automatically downloaded and installed as well.
+Missing requirements will be automatically downloaded and installed.
 
 
 ## Usage
@@ -172,7 +172,7 @@ that are most likely driven by one or two private mutations.
 
 #### `-C HAP1,HAP2,...,HAPN, --contributors HAP1,HAP2,...,HAPN`
 Skip contributor detection step and use the specified comma-separated list of
-haplogroups instead (be careful)
+haplogroups instead (be careful).
 
 #### `-r N, --min-reads N`
 Haplogroup must have N reads to be considered a contributor (default: 10). This
@@ -190,9 +190,9 @@ present (default: 0.5). This value should be adjusted based on the likelihood
 of allelic dropout and the number of variant differences between contributors.
 
 #### `-n N, --var-count N`
-Call haplogroup a contributor if it has at least N unique variants observed in
+Call haplogroup a contributor if it has at least `N` unique variants observed in
 the sample, regardless of total number of defining variants. Use when allelic
-dropout is likely. (default: None).
+dropout is likely (default: None).
 
 #### `-V, --no-var-check`
 Disable requirement that the majority of contributors's unique defining
@@ -217,5 +217,80 @@ them.
 When extending assemblies with `-x`, sets the depth of coverage required to call
 a base for a contributor (default: 2)
 
+### Output options
 
-## Output
+#### `-s PREFIX, --save PREFIX`
+Save the EM results using this file prefix. These files allow contributor
+detection and assembly steps to be run mulitple times without running EM
+again. The information contained in these file may also be useful for other
+analyses.
+
+| Filename            | Description |
+| ------------------- | ----------- |
+| `[PREFIX].em.npy`   | Input matrix for EM (NumPy matrix). |
+| `[PREFIX].reads`    | Read IDs (row labels) for the matrices. |
+| `[PREFIX].haps`     | Haplogroup IDs (column labels) for the matrices. |
+| `[PREFIX].prop.npy` | Final estimated mixture proportions (NumPy vector). |
+| `[PREFIX].mat.npy`  | Final conditional read/haplogroup probabilities (NumPy matrix). |
+
+Since distinct fragments can carry the same sub-haplotype, each
+line in the `[PREFIX].reads` file consists of a row index and the query IDs
+of all fragments that carry this sub-haplotype (delimited by tab characters).
+
+#### `-l PREFIX, --load PREFIX`
+Skip EM step and load from a previous result (overrides `-s`). The path and
+file prefix 'PREFIX' will be used to read the results files described above.
+
+#### `-o PREFIX, --out PREFIX`
+If set, write assigned reads to contributor-specific BAM files using this
+filename prefix. `mixemt` will write a file for each contributor that passes
+all filtering steps (`[PREFIX].hapN.bam`, where `N` is the a number assigned to
+the contributor) and a file containing fragments that could not assigned to a
+single contributor (`[PREFIX].unassigned.bam`). If only one contributor is
+detected, all fragments will be written to a single file and an `unassigned`
+file will not be produced. The prefix value for this option is distinct from
+the other output options (`-s`, `-t`, and `-b`).
+
+#### `-t PREFIX, --stats PREFIX`
+If set, write stats tables to be used for plotting results later. The prefix
+value for this option is distinct from the other output options (`-s`, `-o`,
+and `-b`).
+
+Two tab-delimited files are written when the `-t` option is set. The first,
+`[PREFIX].pos.tab`, is a table containing the base observations for each
+reference position. The fields are:
+1. Reference position (1-based)
+2. Count of total observed `A`'s in sample.
+3. Count of total observed `C`'s in sample.
+4. Count of total observed `G`'s in sample.
+5. Count of total observed `T`'s in sample.
+6. From Phylotree, `fixed` if we expect all contributors to carry the same
+   base, `polymorphic` otherwise.
+7. `sample_fixed` if there is only one base
+   present in the mixture (according to `-R` criteria), `variant` otherwise.
+8. Variant descriptions from Phylotree, if applicable, in the form of
+   `[hap]:[var]` separated by commas.
+
+The second file, `[PREFIX].obs.tab`, contains similar information by
+partitioned by contributor. The fields are:
+1. Contributor ID, e.g., `hap1`
+2. Haplogroup ID
+3. Reference position (0-based)
+4. Count of total observed `A`'s in fragments assigned to this contributor.
+5. Count of total observed `C`'s in fragments assigned to this contributor.
+6. Count of total observed `G`'s in fragments assigned to this contributor.
+7. Count of total observed `T`'s in fragments assigned to this contributor.
+8. Count of total coverage for this contributor.
+
+   The coverage value can be slightly higher than the sum of fields 4-7 in
+   cases where a fragment overlaps a position, but a base could not be
+   observed due to a low base quality score.
+
+
+#### `-b PREFIX, --cons-bases PREFIX`
+Generate a rudimentary consensus sequence for each contributor and write
+out sequences in a FASTA-formatted file (`[PREFIX].fa`). Bases are called for
+each reference position using a simple majority. The prefix value for
+this option is distinct from the other output options (`-s`, `-o`, and `-t`).
+
+
