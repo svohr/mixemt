@@ -89,7 +89,7 @@ Print detailed status with useful information while running.
 Specify a FASTA file containing the reference sequence. The first sequence in
 the file will be used. The reference sequence must match the variants
 contained in the Phylotree input to avoid unexpected behavior. The
-Recontructed Sapiens Reference Sequence (RSRS) contained in
+Reconstructed Sapiens Reference Sequence (RSRS) contained in
 `mixemt/ref/RSRS.mtDNA.fa` is used by default.
 
 #### `--phy phylotree.csv`
@@ -99,7 +99,7 @@ Build 17 (`mixemt/phylotree/mtDNA_tree_Build_17.csv`) is used.
 ### Customization options
 
 #### `-H custom.tab, --haps custom.tab`
-Use the haplotypes described in the specified file alonge with the
+Use the haplotypes described in the specified file along with the
 haplogroups from Phylotree. A haplotype file consists of lines representing
 haplotypes. Each line contains a distinct haplotype identifier, a tab
 character, and a comma-separated list of variants in the form
@@ -142,7 +142,7 @@ Ignore bases with base quality scores less than `INT` (default: 30).
 Options for setting the parameters used during the expectation-maximization
 step where the mixture proportions are inferred. The default values should
 work well most of the time, but adjusting these values may be useful in
-some situtations.
+some situations.
 
 #### `-i ALPHA, --init ALPHA`
 Use parameter `ALPHA` to initialize haplogroup contributions from Dirichlet
@@ -162,8 +162,8 @@ over all runs (default: 1)
 ### Contributor detection options
 Once the mixture proportions have been inferred, two filtering steps are
 applied to narrow the field of contributing to haplotypes to only the
-strongest candidates. First, we examine the read/haplogroup probablities
-to find the haplogroup associated with the highest probablilty for each
+strongest candidates. First, we examine the read/haplogroup probabilities
+to find the haplogroup associated with the highest probability for each
 read. Haplogroups that have no or little read support are removed from
 consideration (see `-r` option). Second, using the haplogroups that pass
 the previous filter, we verify that the variants that define each contributor
@@ -195,12 +195,12 @@ the sample, regardless of total number of defining variants. Use when allelic
 dropout is likely (default: None).
 
 #### `-V, --no-var-check`
-Disable requirement that the majority of contributors's unique defining
+Disable requirement that the majority of contributors' unique defining
 variants are present in the sample. Use when coverage is very low and dropout
 is likely.
 
 #### `-E`
-Skip contribution estimate refinement and report proportions from intial EM
+Skip contribution estimate refinement and report proportions from initial EM
 run.
 
 ### Assembly options
@@ -221,7 +221,7 @@ a base for a contributor (default: 2)
 
 #### `-s PREFIX, --save PREFIX`
 Save the EM results using this file prefix. These files allow contributor
-detection and assembly steps to be run mulitple times without running EM
+detection and assembly steps to be run multiple times without running EM
 again. The information contained in these file may also be useful for other
 analyses.
 
