@@ -25,6 +25,7 @@ haplotypes from phylotree.
 
 import sys
 import argparse
+import pkg_resources
 import pysam
 import numpy
 
@@ -57,20 +58,34 @@ def open_aln_file(bam_fn, args):
 
 def open_phylotree(phy_fn, refseq, args):
     """
-    Opens the phylotree CSV file and uses the module "phylotree" to read in
+    Opens the phylotree CSV file or the default phylotree file from the mixemt
+    package if phy_fn is None and uses the module "phylotree" to read in
     a list of variant positions and a table of haplogroups and associated
     variants.
 
     Args:
-        phy_fn: path to Phylotree CSV file (str)
+        phy_fn: path to Phylotree CSV file (str) or None
         refseq: the reference sequence that is used to define the mutations
-                in the tree (usualy RSRS)
+                in the tree (usually RSRS)
         args: argparse arguments namespace for relevant options.
 
     Returns:
         Phylotree object
     """
-    with open(phy_fn, 'r') as phy_in:
+    def open_phylotree_resource(phy_fn):
+        """ Opens phylotree from package or from file. """
+        if phy_fn is None:
+            if args.verbose:
+                sys.stderr.write("Reading haplogroups from 'mixemt' package "
+                                 "(phylotree/mtDNA_tree_Build_17.csv)\n")
+            return pkg_resources.resource_stream(
+                'mixemt', 'phylotree/mtDNA_tree_Build_17.csv')
+        else:
+            if args.verbose:
+                sys.stderr.write("Reading haplogroups from file (%s)\n"
+                                 % (phy_fn))
+            return open(phy_fn, 'r')
+    with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
                                   anon_haps=args.anon_haps,
                                   rm_unstable=args.rm_unstable)
@@ -122,18 +137,22 @@ def open_custom_haplotypes(hap_fn, phylo, args):
 
 def open_refseq(fa_fn, args):
     """
-    Opens the FASTA formatted file specified by the fa_fn parameter and returns
+    Opens the FASTA formatted file specified by the fa_fn parameter or the
+    default reference file from the mixemt package if fa_fn is None and returns
     the sequence of the first entry as a string. If the FASTA file is empty an
     error message is printed and the program exits.
 
     Args:
-        fa_fn: path to reference fasta file (str)
+        fa_fn: path to reference fasta file (str) or None
         args: argparse arguments namespace for relevant options.
 
     Returns:
         string representing reference sequence.
     """
     try:
+        if fa_fn is None:
+            fa_fn = pkg_resources.resource_filename('mixemt',
+                                                    'ref/RSRS.mtDNA.fa')
         fafile = pysam.FastaFile(fa_fn)
         if args.verbose:
             sys.stderr.write('Read reference sequence "%s" from "%s".\n'
@@ -238,8 +257,8 @@ def process_and_report(args):
     try:
         # Load up the data.
         refseq = open_refseq(args.ref_fn, args)
-        bamfile = open_aln_file(args.bam_fn, args)
         phylo = open_phylotree(args.phy_fn, refseq, args)
+        bamfile = open_aln_file(args.bam_fn, args)
 
         if args.load is not None:
             # Just load the saved results instead of running everything again.
@@ -330,15 +349,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="Estimates the number and proportions "
                     "of contributing haplotypes.")
-    parser.add_argument("ref_fn", metavar="ref.fasta", type=str,
-                        help="FASTA file contain the reference sequence.")
-    parser.add_argument("phy_fn", metavar="phylotree.csv", type=str,
-                        help="Phylotree CSV file")
     parser.add_argument("bam_fn", metavar="reads.bam", type=str,
                         help="Aligned reads in indexed BAM file.")
 
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Print detailed status while running.")
+    parser.add_argument("--ref", dest="ref_fn",
+                        metavar="ref.fasta", type=str, default=None,
+                        help="FASTA file containing reference sequence "
+                             "(must match Phylotree input).")
+    parser.add_argument("--phy", dest="phy_fn",
+                        metavar="phylotree.csv", type=str, default=None,
+                        help="Phylotree CSV file (Default: Build 17).")
 
     cust_opts = parser.add_argument_group("customization options")
     cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,
@@ -425,7 +447,7 @@ def main():
     asm_opts.add_argument('-V', '--no-var-check',
                           dest='var_check', action="store_false",
                           help="Disable requirement that the majority of "
-                               "contributors's unique defining variants are "
+                               "contributors' unique defining variants are "
                                "present in the sample. Use when coverage is "
                                "very low and dropout is likely.")
     asm_opts.add_argument('-x', '--extend-assemblies',
@@ -442,7 +464,7 @@ def main():
     asm_opts.add_argument('-E', dest='refine_ests', default=True,
                           action="store_false",
                           help="Skip contribution estimate refinement and "
-                               "report proportions from intial EM run.")
+                               "report proportions from initial EM run.")
 
     out_opts = parser.add_argument_group("output options")
     out_opts.add_argument('-s', '--save', dest='save', type=str,
