@@ -11,6 +11,7 @@ setup(
     license='MIT',
     packages=['mixemt'],
     package_data={'mixemt': ['ref/rCRS.mtDNA.fa', 'ref/RSRS.mtDNA.fa',
+                             'ref/rCRS.mtDNA.fa.fai', 'ref/RSRS.mtDNA.fa.fai',
                              'phylotree/mtDNA_tree_Build_16.csv',
                              'phylotree/mtDNA_tree_Build_17.csv',
                              'ref/README.txt', 'phylotree/README.md']},
