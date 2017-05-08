@@ -2,5 +2,5 @@
 *.pyc
 
 # Any indexes generated from reference sequences
-mixemt/ref/RSRS.mtDNA.fa.*
-mixemt/ref/rCRS.mtDNA.fa.*
+# mixemt/ref/RSRS.mtDNA.fa.*
+# mixemt/ref/rCRS.mtDNA.fa.*
