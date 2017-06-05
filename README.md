@@ -19,6 +19,18 @@ likely contributor of origin, tab-delimited files containing statistics for
 each reference position, and verbose output detailing the results from each
 step.
 
+A detailed description and evaluation of the approach implemented in
+`mixemt` can be found in the article:
+
+> Samuel H. Vohr, Rachel Gordon, Jordan M. Eizenga, Henry A. Erlich,
+> Cassandra D. Calloway, Richard E. Green. **A phylogenetic approach for
+> haplotype analysis of sequence data from complex mitochondrial mixtures.**
+> *Forensic Science International: Genetics.* (in press)
+> \[[link](http://www.sciencedirect.com/science/article/pii/S187249731730114X)\]
+
+If you would like to cite `mixemt` in a publication, please refer to this
+article.
+
 
 ## Requirements
 
