@@ -33,14 +33,21 @@ set_zero_to_empty <- function(x) {
 # Check the command-line argument
 args <- commandArgs(trailingOnly=TRUE)
 
-if (length(args) < 1) {
-  stop("usage: plot_mix_coverage stat_file_prefix")
+
+if (length(args) == 1) {
+  # old style invocation.
+  stats.prefix <- args[1]
+  obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
+  pos.tab.fn <- NULL
+  plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
+} else if (length(args) == 3) {
+  obs.tab.fn <- args[1]
+  pos.tab.fn <- args[2]
+  plot.fn <- args[3]
+} else {
+  stop("usage: plot_hap_coverage obs_file pos_file out_plot_file\n              plot_hap_coverage stat_file_prefix (deprecated)")
 }
 
-stats.prefix <- args[1]
-
-
-obs.tab.fn <- paste(stats.prefix, "obs.tab", sep='.')
 orig.tab <- read.table(obs.tab.fn)
 obs.tab <- orig.tab[orig.tab$V1 != 'all' & orig.tab$V1 != 'unassigned', ]
 
@@ -78,7 +85,25 @@ cov.plot <- cov.plot +
                      minor_breaks=seq(500, 16000, 500)) +
   labs(y="Coverage", x="RSRS Reference Position")
 
-plot.fn <- paste(stats.prefix, "hap_coverage.png", sep='.')
+# Add variants if position file is supplied.
+if (!is.null(pos.tab.fn)) {
+  pos.tab <- read.table(pos.tab.fn, sep='\t')
+  var.tab <- pos.tab[pos.tab$V6 == "polymorphic" | pos.tab$V7 == "variant", ]
+
+  y.max = max(obs$coverage, na.rm=TRUE)
+  if (nrow(unasn) > 0) {
+    y.max = max(c(y.max, unasn$coverage), na.rm=TRUE)
+  }
+  vars <- data.frame(position=var.tab[, 1],
+                     Variant=factor(ifelse(var.tab$V6 == "polymorphic",
+                                           "Phylotree", "Private")),
+                     level=ifelse(var.tab$V6 == "polymorphic",
+                                  -0.05 * y.max,
+                                  -0.1 * y.max))
+  cov.plot <- cov.plot +
+    geom_point(data=vars, aes(x=position, y=level, shape=Variant)) +
+    expand_limits(y = -0.12 * max(obs$coverage, na.rm=TRUE))
+}
 
 ggsave(filename=plot.fn, plot=cov.plot, width=15, height=4, dpi=100)
 
