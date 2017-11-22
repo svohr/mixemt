@@ -21,6 +21,8 @@ import itertools
 import numpy
 import pysam
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 from mixemt import phylotree
 from mixemt import observe
@@ -410,13 +412,13 @@ def write_consensus_seqs(refseq, contrib_props, contrib_reads, args):
         for con, hap, _ in contrib_props:
             seq = call_consensus(refseq, contrib_reads[con],
                                  1, args, strict=False)
-            rec = SeqIO.SeqRecord(SeqIO.Seq(seq), id=con, description=hap)
+            rec = SeqRecord(Seq(seq), id=con, description=hap)
             seqs_to_write.append(rec)
         if 'unassigned' in contrib_reads:
             seq = call_consensus(refseq, contrib_reads['unassigned'],
                                  1, args, strict=False)
-            rec = SeqIO.SeqRecord(SeqIO.Seq(seq),
-                                  id='unassigned', description='')
+            rec = SeqRecord(Seq(seq),
+                            id='unassigned', description='')
             seqs_to_write.append(rec)
         SeqIO.write(seqs_to_write, fa_out, 'fasta')
     return
