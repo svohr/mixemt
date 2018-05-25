@@ -119,7 +119,11 @@ def write_variants(out, phylo, contribs, obs_tab, args):
         obs = obs_tab.obs_at(ref_pos)
 
         samp_status = "sample_fixed"
-        if sum([obs[base] >= args.min_var_reads for base in 'ACGT']) > 1:
+        threshold = (obs_tab.total_obs(pos) * args.perc_var_reads / 100)
+        if threshold < args.min_var_reads:
+            threshold = args.min_var_reads
+
+        if sum([obs[base] >= threshold for base in 'ACGT']) > 1:
             samp_status = "variant"
 
         phy_status = "fixed"
