@@ -394,7 +394,8 @@ def main():
     em_opts.add_argument('-i', '--init', dest='init_alpha', type=float,
                          default=1.0, metavar="ALPHA",
                          help="Use parameter ALPHA to initialize haplogroup "
-                              "contributions from Dirichlet distribution "
+                              "contributions from Dirichlet distribution. "
+                              "Set to 'inf' to give haplogroups equal priors. "
                               "(default: %(default)s)")
     em_opts.add_argument('-T', '--converge', dest='tolerance', type=float,
                          default=0.0001, metavar="TOLERANCE",
