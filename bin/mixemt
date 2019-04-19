@@ -430,17 +430,16 @@ def main():
     asm_opts.add_argument('-R', '--var-min-reads', dest='min_var_reads',
                           type=int, default=3, metavar='N',
                           help="Variant base must be found in N reads to be "
-                               "considered as present in sample. Can also be a "
-                               " default for the moments the amount from the percentage is to low "
+                               "considered as present in sample "
                                "(default: %(default)s)")
-
-    asm_opts.add_argument('-p', '--var-percentage-min-reads', dest='perc_var_reads',
+    asm_opts.add_argument('-p', '--var-percentage-min-reads',
+                          dest='perc_var_reads',
                           type=float, default=2., metavar='F',
-                          help="Variant base must be found in N percentage reads to be "
-                               "considered as present in sample. A minimum of reads can "
-                               "be set with the -R option for when this is low or can be low"
+                          help="Variant base must be found in F percent of "
+                               "reads to be considered as present in sample. "
+                               "A minimum of reads can be set with the -R "
+                               "option for when this is low or can be low "
                                "(default: %(default)s)")
-
     asm_opts.add_argument('-f', '--var-fraction', dest='var_fraction',
                           type=float, default=0.5, metavar='F',
                           help="Fraction of unique defining variants that "
