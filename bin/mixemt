@@ -410,6 +410,9 @@ def main():
                          help="Runs EM until convergence multiple times and "
                               "reports the results averaged over all runs "
                               "(default: %(default)s)")
+    em_opts.add_argument('-S', '--seed', dest='seed', type=int, metavar='N',
+                         help="Sets the seed for random number generation "
+                              "for reproducible results.")
 
     asm_opts = parser.add_argument_group("contributor detection and "
                                          "assembly options")
@@ -491,6 +494,8 @@ def main():
 
     if args.verbose:
         sys.stderr.write('%s\n\n' % (' '.join(sys.argv)))
+    if args.seed:
+        numpy.random.seed(args.seed)
 
     return process_and_report(args)
 
