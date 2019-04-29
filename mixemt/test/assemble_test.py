@@ -25,7 +25,7 @@ class TestContributors(unittest.TestCase):
         self.args.verbose = False
         self.args.min_reads = 1
         self.args.min_var_reads = 1
-        self.args.perc_var_reads = 2.
+        self.args.frac_var_reads = 0.02
         self.args.var_fraction = 0.5
         self.args.var_count = None
         self.args.var_check = False
