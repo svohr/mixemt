@@ -158,7 +158,7 @@ some situations.
 
 #### `-i ALPHA, --init ALPHA`
 Use parameter `ALPHA` to initialize haplogroup contributions from Dirichlet
-distribution (default: 1.0)
+distribution. Set to 'inf' to give haplogroups equal priors. (default: 1.0)
 
 #### `-T TOLERANCE, --converge TOLERANCE`
 Stop EM iteration when absolute difference between current and previous
