@@ -196,6 +196,11 @@ Variant base must be found in `N` reads to be considered as present in sample
 (default: 3). This value should be above the expected number of base errors
 given the sequence coverage.
 
+#### `-F F, --var-fraction-min-reads F`
+Variant base must be found in fraction F of reads to be considered as present in
+sample. A minimum of reads can be set with the -R option for when this is low or
+can be low (default: 0.02)
+
 #### `-f F, --var-fraction F`
 Fraction of unique defining variants that must be observed to call a haplogroup
 present (default: 0.5). This value should be adjusted based on the likelihood

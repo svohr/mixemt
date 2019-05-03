@@ -433,6 +433,14 @@ def main():
                           help="Variant base must be found in N reads to be "
                                "considered as present in sample "
                                "(default: %(default)s)")
+    asm_opts.add_argument('-F', '--var-fraction-min-reads',
+                          dest='frac_var_reads',
+                          type=float, default=0.02, metavar='F',
+                          help="Variant base must be found in fraction F of "
+                               "reads to be considered as present in sample. "
+                               "A minimum of reads can be set with the -R "
+                               "option for when this is low or can be low "
+                               "(default: %(default)s)")
     asm_opts.add_argument('-f', '--var-fraction', dest='var_fraction',
                           type=float, default=0.5, metavar='F',
                           help="Fraction of unique defining variants that "

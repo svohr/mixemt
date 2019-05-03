@@ -142,6 +142,9 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
         args: argparse Namespace with user specified values for:
             min_var_reads: The minimum number of observations required to call
                            a base as present in the mixture sample (int)
+            frac_var_reads: The minimum fraction of observations required to
+                            call a base as present in the mixture sample
+                            (float)
             var_fraction: The minimum fraction of defining variants required
                           to be observed to call a haplogroup a contributor
                           (float)
@@ -174,7 +177,8 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
                 sys.stderr.write("  %s: %d/%d\n" % (var.rjust(6),
                                                     obs_tab.obs_at(pos, der),
                                                     obs_tab.total_obs(pos)))
-            if obs_tab.obs_at(pos, der) >= args.min_var_reads:
+            threshold = max(args.min_var_reads, obs_tab.total_obs(pos) * args.frac_var_reads)
+            if obs_tab.obs_at(pos, der) >= threshold:
                 found_vars.add((pos, der))
         if ((len(uniq_vars) == 0)
                 or (args.var_count is not None
@@ -186,7 +190,7 @@ def _check_contrib_phy_vars(phylo, obs_tab, contrib_prop, args):
                                  "%d/%d unique variant bases observed at "
                                  "least %d times.\n"
                                  % (hap, len(found_vars), len(uniq_vars),
-                                    args.min_var_reads))
+                                    threshold))
             # Looks good, these variants can't be used again.
             used_vars.update(found_vars)
             # Also add the ancestral bases for this haplogroup so we do not
