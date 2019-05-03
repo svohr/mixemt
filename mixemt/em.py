@@ -31,6 +31,8 @@ def init_props(nhaps, alpha=1.0):
     Returns:
         a numpy array of random values that sum to 1.0
     """
+    if alpha == float("inf"):
+        return numpy.array([1.0 / nhaps] * nhaps)
     return numpy.random.dirichlet([alpha] * nhaps)
 
 
