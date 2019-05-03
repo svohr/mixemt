@@ -156,6 +156,12 @@ step where the mixture proportions are inferred. The default values should
 work well most of the time, but adjusting these values may be useful in
 some situations.
 
+#### `-S N --seed N`
+Use value `N` to seed the random number generator that generates starting
+mixture proportions. Allows `mixemt` to be run multiple times using the same
+input and produce the same results each time. If unset, the starting mixture
+proportions will differ with each run.
+
 #### `-i ALPHA, --init ALPHA`
 Use parameter `ALPHA` to initialize haplogroup contributions from Dirichlet
 distribution (default: 1.0)
