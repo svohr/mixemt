@@ -14,7 +14,7 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
-import scipy.misc
+from scipy.special import logsumexp
 
 from mixemt import preprocess
 from mixemt import phylotree
@@ -79,14 +79,14 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     # given this proportion in the mixture.
     numpy.add(ln_props, read_hap_mat, read_mix_mat)
     numpy.subtract(read_mix_mat,
-                   scipy.misc.logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
                    read_mix_mat)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    new_props = scipy.misc.logsumexp(read_mix_mat, axis=0,
+    new_props = logsumexp(read_mix_mat, axis=0,
                                      b=weights.reshape((-1, 1)))
-    new_props -= scipy.misc.logsumexp(new_props)
+    new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
 

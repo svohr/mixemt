@@ -84,7 +84,7 @@ def open_phylotree(phy_fn, refseq, args):
             if args.verbose:
                 sys.stderr.write("Reading haplogroups from file (%s)\n"
                                  % (phy_fn))
-            return open(phy_fn, 'r')
+            return open(phy_fn, 'rb')
     with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
                                   anon_haps=args.anon_haps,
