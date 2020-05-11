@@ -394,7 +394,8 @@ def main():
     em_opts.add_argument('-i', '--init', dest='init_alpha', type=float,
                          default=1.0, metavar="ALPHA",
                          help="Use parameter ALPHA to initialize haplogroup "
-                              "contributions from Dirichlet distribution "
+                              "contributions from Dirichlet distribution. "
+                              "Set to 'inf' to give haplogroups equal priors. "
                               "(default: %(default)s)")
     em_opts.add_argument('-T', '--converge', dest='tolerance', type=float,
                          default=0.0001, metavar="TOLERANCE",
@@ -410,6 +411,9 @@ def main():
                          help="Runs EM until convergence multiple times and "
                               "reports the results averaged over all runs "
                               "(default: %(default)s)")
+    em_opts.add_argument('-S', '--seed', dest='seed', type=int, metavar='N',
+                         help="Sets the seed for random number generation "
+                              "for reproducible results.")
 
     asm_opts = parser.add_argument_group("contributor detection and "
                                          "assembly options")
@@ -431,6 +435,14 @@ def main():
                           type=int, default=3, metavar='N',
                           help="Variant base must be found in N reads to be "
                                "considered as present in sample "
+                               "(default: %(default)s)")
+    asm_opts.add_argument('-F', '--var-fraction-min-reads',
+                          dest='frac_var_reads',
+                          type=float, default=0.02, metavar='F',
+                          help="Variant base must be found in fraction F of "
+                               "reads to be considered as present in sample. "
+                               "A minimum of reads can be set with the -R "
+                               "option for when this is low or can be low "
                                "(default: %(default)s)")
     asm_opts.add_argument('-f', '--var-fraction', dest='var_fraction',
                           type=float, default=0.5, metavar='F',
@@ -491,6 +503,8 @@ def main():
 
     if args.verbose:
         sys.stderr.write('%s\n\n' % (' '.join(sys.argv)))
+    if args.seed:
+        numpy.random.seed(args.seed)
 
     return process_and_report(args)
 

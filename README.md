@@ -156,9 +156,15 @@ step where the mixture proportions are inferred. The default values should
 work well most of the time, but adjusting these values may be useful in
 some situations.
 
+#### `-S N --seed N`
+Use value `N` to seed the random number generator that generates starting
+mixture proportions. Allows `mixemt` to be run multiple times using the same
+input and produce the same results each time. If unset, the starting mixture
+proportions will differ with each run.
+
 #### `-i ALPHA, --init ALPHA`
 Use parameter `ALPHA` to initialize haplogroup contributions from Dirichlet
-distribution (default: 1.0)
+distribution. Set to 'inf' to give haplogroups equal priors. (default: 1.0)
 
 #### `-T TOLERANCE, --converge TOLERANCE`
 Stop EM iteration when absolute difference between current and previous
@@ -195,6 +201,11 @@ sequencing errors and when coverage is low and allelic dropout may be likely.
 Variant base must be found in `N` reads to be considered as present in sample
 (default: 3). This value should be above the expected number of base errors
 given the sequence coverage.
+
+#### `-F F, --var-fraction-min-reads F`
+Variant base must be found in fraction F of reads to be considered as present in
+sample. A minimum of reads can be set with the -R option for when this is low or
+can be low (default: 0.02)
 
 #### `-f F, --var-fraction F`
 Fraction of unique defining variants that must be observed to call a haplogroup
