@@ -266,7 +266,7 @@ class Phylotree(object):
         for site in sites:
             if '-' in site:
                 start, end = site.split('-')
-                self.ignore.update(range(int(start) - 1, int(end)))
+                self.ignore.update(list(range(int(start) - 1, int(end))))
             else:
                 self.ignore.add(int(site) - 1)
         self.process_variants()
@@ -332,7 +332,7 @@ class Phylotree(object):
             pos = pos_from_var(var)
             if pos in ancestral_bases:
                 del ancestral_bases[pos]
-        return ancestral_bases.items()
+        return list(ancestral_bases.items())
 
 
 def pos_from_var(var):
@@ -492,7 +492,7 @@ def main():
         with open(phy_fn, 'r') as phy_in:
             phy = Phylotree(phy_in, anon_haps=True)
             for hap in phy.hap_var:
-                print hap, ','.join(phy.hap_var[hap])
+                print(hap, ','.join(phy.hap_var[hap]))
     else:
         phy = example()
         hap_var = dict({'A':['A1G', 'A2T', 'A4T'],
@@ -505,8 +505,8 @@ def main():
                         'H':['A1G', 'A3T', 'A5T'],
                         'I':['A1G']})
         for hap in sorted(phy.hap_var):
-            print hap, phy.hap_var[hap], hap_var[hap]
-        print phy.variants
+            print(hap, phy.hap_var[hap], hap_var[hap])
+        print(phy.variants)
         phy.root.dump()
     return 0
 

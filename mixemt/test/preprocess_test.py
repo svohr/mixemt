@@ -76,7 +76,7 @@ class TestHapVarBaseMatrix(unittest.TestCase):
     def test_probs_for_vars(self):
         mut_wt, mut_max = 0.10, 0.10
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
-        obs_I = zip(range(9), "GAAAAAAAA")
+        obs_I = list(zip(list(range(9)), "GAAAAAAAA"))
         self.assertEqual(str(hvb.prob_for_vars('I', obs_I)),
                          str(math.log(0.9 ** 9)))
         self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),
@@ -87,7 +87,7 @@ class TestHapVarBaseMatrix(unittest.TestCase):
     def test_probs_for_vars_mut_wts(self):
         mut_wt, mut_max = 0.10, 0.50
         hvb = preprocess.HapVarBaseMatrix(self.ref, self.phy, mut_wt, mut_max)
-        obs_I = zip(range(9), "GAAAAAAAA")
+        obs_I = list(zip(list(range(9)), "GAAAAAAAA"))
         self.assertEqual(str(hvb.prob_for_vars('I', obs_I)),
                          str(math.log((0.9 ** 7) * (0.8 ** 2))))
         self.assertEqual(str(hvb.prob_for_vars('C', obs_I)),

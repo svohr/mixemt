@@ -114,7 +114,7 @@ def run_em(read_hap_mat, weights, args):
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
 
-    for i in xrange(args.n_multi):
+    for i in range(args.n_multi):
 
         if args.verbose:
             sys.stderr.write("Starting EM run %d...\n" % (i + 1))
@@ -123,7 +123,7 @@ def run_em(read_hap_mat, weights, args):
         props = numpy.log(init_props(read_hap_mat.shape[1],
                                      alpha=args.init_alpha))
 
-        for iter_round in xrange(args.max_iter):
+        for iter_round in range(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
                 sys.stderr.write('.')
             # Run a single step of EM
@@ -187,8 +187,8 @@ def main():
         input_mat = preprocess.build_em_matrix(ref, phy, reads, haps, args)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
-        print props
-        print read_mix
+        print(props)
+        print(read_mix)
     return 0
 
 

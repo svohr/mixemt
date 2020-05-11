@@ -97,7 +97,7 @@ class TestPhylotreeSimple(unittest.TestCase):
 
     def test_phylonode_get_anon_name(self):
         node = phylotree.Phylotree.PhyloNode('A')
-        for i in xrange(1, 5):
+        for i in range(1, 5):
             self.assertEqual('A[%d]' % i, node.get_anon_name())
 
     def test_get_variant_pos(self):
@@ -114,7 +114,7 @@ class TestPhylotreeSimple(unittest.TestCase):
             self.phy.add_custom_hap('A', ['A1G', 'A5C', 'A9T'])
 
     def test_phylotree_nodes(self):
-        self.assertEquals('I', self.phy.root.hap_id)
+        self.assertEqual('I', self.phy.root.hap_id)
 
     def test_hapvar(self):
         self.assertIn('A', self.phy.hap_var)
@@ -165,7 +165,7 @@ class TestPhylotreeSimple(unittest.TestCase):
 
     def test_ignore_sites_range(self):
         self.phy.ignore_sites("1-3")
-        for i in xrange(3):
+        for i in range(3):
             self.assertNotIn(i, self.phy.variants)
             self.assertIn(i, self.phy.ignore)
         self.assertEqual(self.phy.hap_var['A'], ['A4T'])
@@ -180,7 +180,7 @@ class TestPhylotreeSimple(unittest.TestCase):
 
     def test_ignore_sites_mix(self):
         self.phy.ignore_sites("1,2-3")
-        for i in xrange(3):
+        for i in range(3):
             self.assertNotIn(i, self.phy.variants)
             self.assertIn(i, self.phy.ignore)
         self.assertEqual(self.phy.hap_var['A'], ['A4T'])
@@ -244,7 +244,7 @@ class TestPhylotreeSimple(unittest.TestCase):
 
     def test_get_ancestral_basic(self):
         res = set(self.phy.get_ancestral('I'))
-        exp = set([(pos, 'A') for pos in xrange(1,9)])
+        exp = set([(pos, 'A') for pos in range(1,9)])
         self.assertEqual(res, exp)
 
     def test_get_ancestral_basic(self):
