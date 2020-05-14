@@ -14,10 +14,36 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
+import numba as nb
 from scipy.special import logsumexp
 
 from mixemt import preprocess
 from mixemt import phylotree
+
+
+nb.set_num_threads(8)
+
+@nb.jit(nopython=True, parallel=True)
+def nb_logsumexp_axis1(X):
+    """Parallel implementation of logsumexp in Numba for axis1."""
+    res = numpy.empty(X.shape[0], dtype=X.dtype)
+    for i in nb.prange(X.shape[0]):
+        c = 0.0
+        for x in X[:, i]:
+            c += numpy.exp(x)
+        res[i] = numpy.log(c)
+    return res
+
+@nb.jit(nopython=True, parallel=True)
+def nb_logsumexp_axis0_weights(X, b):
+    """Parallel implementation of logsumexp in Numba for axis0 with weights."""
+    res = numpy.empty(X.shape[1], dtype=X.dtype)
+    for i in nb.prange(X.shape[1]):
+        r = 0.0
+        for x in X[i, :]:
+            r += numpy.exp(x)
+        res[i] = numpy.log(b[i] * r)
+    return res
 
 
 def init_props(nhaps, alpha=1.0):
@@ -79,13 +105,13 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     # given this proportion in the mixture.
     numpy.add(ln_props, read_hap_mat, read_mix_mat)
     numpy.subtract(read_mix_mat,
-                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   nb_logsumexp_axis1(read_mix_mat).reshape((-1, 1)),
                    read_mix_mat)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    new_props = logsumexp(read_mix_mat, axis=0,
-                                     b=weights.reshape((-1, 1)))
+    new_props = nb_logsumexp_axis0_weights(read_mix_mat,
+                                           weights)
     new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props

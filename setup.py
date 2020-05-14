@@ -16,5 +16,5 @@ setup(
                              'phylotree/mtDNA_tree_Build_17.csv',
                              'ref/README.txt', 'phylotree/README.md']},
     scripts=['bin/mixemt'],
-    install_requires=['numpy', 'scipy', 'pysam', 'biopython']
+    install_requires=['numpy', 'scipy', 'pysam', 'biopython', 'numba', 'ttd']
     )
