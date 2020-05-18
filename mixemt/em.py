@@ -110,8 +110,43 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    new_props = nb_logsumexp_axis0_weights(read_mix_mat,
-                                           weights)
+    new_props -= logsumexp(new_props)
+
+    return read_mix_mat, new_props
+
+
+def em_step_original(read_hap_mat, weights, ln_props, read_mix_mat):
+    """
+    Runs a single iteration of the EM algorithm given:
+    1. The original input read-hap probability matrix (read_hap_mat)
+    2. The weights, i.e. the number times we observe each sub-haplotype.
+    3. Current haplogroup proportion estimates (props)
+    4. A matrix of the same size as 'read_hap_mat' that will be written over
+       with the conditional probabililies (read_mix_mat)
+    5. A vector of the same size as 'props' that will be filled by the new
+       haplogroup proportion estimates.
+
+    Args:
+        read_hap_mat: starting read/haplogroup conditional prob. matrix
+        weights: arrray containing the number of times each sub-haplotype
+                 was found in the reads (same length as read_map_hat height)
+        ln_props: starting mixture proportion array, log transformed
+        read_mix_mat: destination for updated conditional probability matrix
+    Returns:
+        Updated conditional probability matrix and mixture proportions array
+    """
+    # E-Step:
+    # Set z_j,g - probablilty that read j originates from haplogroup g
+    # given this proportion in the mixture.
+    numpy.add(ln_props, read_hap_mat, read_mix_mat)
+    numpy.subtract(read_mix_mat,
+                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   read_mix_mat)
+
+    # M-Step:
+    # Set theta_g - contribution of g to the mixture
+    new_props = logsumexp(read_mix_mat, axis=0,
+                                     b=weights.reshape((-1, 1)))
     new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
@@ -136,6 +171,8 @@ def run_em(read_hap_mat, weights, args):
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty(read_hap_mat.shape[1])
+    read_mix_mat_orig = numpy.empty_like(read_hap_mat)
+    new_props_orig = numpy.empty(read_hap_mat.shape[1])
 
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
@@ -148,6 +185,8 @@ def run_em(read_hap_mat, weights, args):
         # initialize haplogroup proportions
         props = numpy.log(init_props(read_hap_mat.shape[1],
                                      alpha=args.init_alpha))
+        props_orig = numpy.log(init_props(read_hap_mat.shape[1],
+                                     alpha=args.init_alpha))
 
         for iter_round in range(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
@@ -155,6 +194,8 @@ def run_em(read_hap_mat, weights, args):
             # Run a single step of EM
             read_mix_mat, new_props = em_step(read_hap_mat, weights,
                                               props, read_mix_mat)
+            read_mix_mat_orig, new_props_orig = em_step(read_hap_mat, weights,
+                                              props_orig, read_mix_mat_orig)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
