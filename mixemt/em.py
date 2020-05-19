@@ -21,27 +21,35 @@ from mixemt import preprocess
 from mixemt import phylotree
 
 
-nb.set_num_threads(8)
+nb.set_num_threads(16)
 
 @nb.jit(nopython=True, parallel=True)
 def nb_logsumexp_axis1(X):
     """Parallel implementation of logsumexp in Numba for axis1."""
+    xmax = numpy.empty(X.shape[0], dtype=X.dtype)
+    for i in nb.prange(X.shape[0]):
+        xmax[i] = numpy.max(X[i, :])
+    xmax[~numpy.isfinite(xmax)] = 0
     res = numpy.empty(X.shape[0], dtype=X.dtype)
     for i in nb.prange(X.shape[0]):
         c = 0.0
         for x in X[:, i]:
-            c += numpy.exp(x)
+            c += numpy.exp(x - xmax[i])
         res[i] = numpy.log(c)
     return res
 
 @nb.jit(nopython=True, parallel=True)
 def nb_logsumexp_axis0_weights(X, b):
     """Parallel implementation of logsumexp in Numba for axis0 with weights."""
+    xmax = numpy.empty(X.shape[1], dtype=X.dtype)
+    for i in nb.prange(X.shape[1]):
+        xmax[i] = numpy.max(X[:, i])
+    xmax[~numpy.isfinite(xmax)] = 0
     res = numpy.empty(X.shape[1], dtype=X.dtype)
     for i in nb.prange(X.shape[1]):
         r = 0.0
         for x in X[i, :]:
-            r += numpy.exp(x)
+            r += numpy.exp(x - xmax[i])
         res[i] = numpy.log(b[i] * r)
     return res
 
@@ -110,6 +118,9 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
+    new_props = nb_logsumexp_axis0_weights(read_mix_mat, weights)
+    new_props = logsumexp(read_mix_mat, axis=0,
+                                     b=weights.reshape((-1, 1)))
     new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
@@ -171,8 +182,6 @@ def run_em(read_hap_mat, weights, args):
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty(read_hap_mat.shape[1])
-    read_mix_mat_orig = numpy.empty_like(read_hap_mat)
-    new_props_orig = numpy.empty(read_hap_mat.shape[1])
 
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
@@ -185,8 +194,6 @@ def run_em(read_hap_mat, weights, args):
         # initialize haplogroup proportions
         props = numpy.log(init_props(read_hap_mat.shape[1],
                                      alpha=args.init_alpha))
-        props_orig = numpy.log(init_props(read_hap_mat.shape[1],
-                                     alpha=args.init_alpha))
 
         for iter_round in range(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
@@ -194,8 +201,6 @@ def run_em(read_hap_mat, weights, args):
             # Run a single step of EM
             read_mix_mat, new_props = em_step(read_hap_mat, weights,
                                               props, read_mix_mat)
-            read_mix_mat_orig, new_props_orig = em_step(read_hap_mat, weights,
-                                              props_orig, read_mix_mat_orig)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
