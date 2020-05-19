@@ -26,17 +26,19 @@ nb.set_num_threads(16)
 @nb.jit(nopython=True, parallel=True)
 def nb_logsumexp_axis1(X):
     """Parallel implementation of logsumexp in Numba for axis1."""
+    # Calculate max. value in each column and normalise matrix
     xmax = numpy.empty(X.shape[0], dtype=X.dtype)
     for i in nb.prange(X.shape[0]):
         xmax[i] = numpy.max(X[i, :])
     xmax[~numpy.isfinite(xmax)] = 0
+    X -= xmax.reshape((-1, 1))
     res = numpy.empty(X.shape[0], dtype=X.dtype)
     for i in nb.prange(X.shape[0]):
         c = 0.0
-        for x in X[:, i]:
-            c += numpy.exp(x - xmax[i])
-        res[i] = numpy.log(c) + xmax[i]
-    return res
+        for x in X[i, :]:
+            c += numpy.exp(x)
+        res[i] = numpy.log(c) 
+    return res + xmax
 
 @nb.jit(nopython=True, parallel=True)
 def nb_logsumexp_axis0_weights(X, b):
@@ -45,13 +47,14 @@ def nb_logsumexp_axis0_weights(X, b):
     for i in nb.prange(X.shape[1]):
         xmax[i] = numpy.max(X[:, i])
     xmax[~numpy.isfinite(xmax)] = 0
+    X -= xmax
     res = numpy.empty(X.shape[1], dtype=X.dtype)
     for i in nb.prange(X.shape[1]):
         r = 0.0
-        for x in X[i, :]:
-            r += numpy.exp(x - xmax[i])
-        res[i] = numpy.log(b[i] * r) + xmax[i]
-    return res
+        for j in nb.prange(X.shape[0]):
+            r += b[j] * numpy.exp(X[j, i])
+        res[i] = numpy.log(r)
+    return res + xmax
 
 
 def init_props(nhaps, alpha=1.0):
@@ -201,6 +204,8 @@ def run_em(read_hap_mat, weights, args):
             # Run a single step of EM
             read_mix_mat, new_props = em_step(read_hap_mat, weights,
                                               props, read_mix_mat)
+            read_mix_mat_orig, new_props_orig = em_step_original(read_hap_mat, weights,
+                                              props, read_mix_mat_orig)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
