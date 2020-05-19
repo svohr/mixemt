@@ -35,7 +35,7 @@ def nb_logsumexp_axis1(X):
         c = 0.0
         for x in X[:, i]:
             c += numpy.exp(x - xmax[i])
-        res[i] = numpy.log(c)
+        res[i] = numpy.log(c) + xmax[i]
     return res
 
 @nb.jit(nopython=True, parallel=True)
@@ -50,7 +50,7 @@ def nb_logsumexp_axis0_weights(X, b):
         r = 0.0
         for x in X[i, :]:
             r += numpy.exp(x - xmax[i])
-        res[i] = numpy.log(b[i] * r)
+        res[i] = numpy.log(b[i] * r) + xmax[i]
     return res
 
 
