@@ -38,7 +38,8 @@ def nb_logsumexp_axis1(X):
         for x in X[i, :]:
             c += numpy.exp(x)
         res[i] = numpy.log(c) 
-    return res + xmax
+    res += xmax
+    return res
 
 
 @nb.jit(nopython=True, parallel=True)
@@ -55,7 +56,8 @@ def nb_logsumexp_axis0_weights(X, b):
         for j in nb.prange(X.shape[0]):
             r += b[j] * numpy.exp(X[j, i])
         res[i] = numpy.log(r)
-    return res + xmax
+    res += xmax
+    return res
 
 
 def init_props(nhaps, alpha=1.0):
@@ -123,14 +125,12 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     # M-Step:
     # Set theta_g - contribution of g to the mixture
     new_props = nb_logsumexp_axis0_weights(read_mix_mat, weights)
-    new_props = logsumexp(read_mix_mat, axis=0,
-                                     b=weights.reshape((-1, 1)))
     new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
 
 
-def em_step_original(read_hap_mat, weights, ln_props, read_mix_mat):
+def em_step_original(read_hap_mat, weights, ln_props, read_mix_mat_org):
     """
     Runs a single iteration of the EM algorithm given:
     1. The original input read-hap probability matrix (read_hap_mat)
@@ -203,10 +203,9 @@ def run_em(read_hap_mat, weights, args):
             if args.verbose and (iter_round + 1) % 10 == 0:
                 sys.stderr.write('.')
             # Run a single step of EM
-            read_mix_mat, new_props = em_step(read_hap_mat, weights,
-                                              props, read_mix_mat)
-            read_mix_mat_orig, new_props_orig = em_step_original(read_hap_mat, weights,
-                                              props, read_mix_mat_orig)
+            read_mix_mat, new_props = em_step(read_hap_mat, weights, props, read_mix_mat)
+            read_mix_mat, new_props = em_step_original(read_hap_mat, weights,
+                                                       props, read_mix_mat)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
