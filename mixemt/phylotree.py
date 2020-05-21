@@ -446,15 +446,15 @@ def example():
     #       /   F     G
     #      /   / \   / \
     #     A   B   C D   E
-    phy_in = ['I, A1G ,,',
-              ',H, A3T A5T ,,',
-              ',,F, A6T ,,',
-              ',,,B, A8T ,,',
-              ',,,C, T5A ,,',
-              ',,G, A7T ,,',
-              ',,,D, A9T ,,',
-              ',,,E, A4T ,,',
-              ',A, A2T A4T ,,']
+    phy_in = [b'I, A1G ,,',
+              b',H, A3T A5T ,,',
+              b',,F, A6T ,,',
+              b',,,B, A8T ,,',
+              b',,,C, T5A ,,',
+              b',,G, A7T ,,',
+              b',,,D, A9T ,,',
+              b',,,E, A4T ,,',
+              b',A, A2T A4T ,,']
     return Phylotree(phy_in)
 
 
