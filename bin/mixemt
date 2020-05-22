@@ -361,6 +361,8 @@ def main():
     parser.add_argument("--phy", dest="phy_fn",
                         metavar="phylotree.csv", type=str, default=None,
                         help="Phylotree CSV file (Default: Build 17).")
+    parser.add_argument("--threads", dest="threads", type=int, default=None,
+                        help="specify the number of threads to use [all]")
 
     cust_opts = parser.add_argument_group("customization options")
     cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,

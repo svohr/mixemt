@@ -21,8 +21,6 @@ from mixemt import preprocess
 from mixemt import phylotree
 
 
-nb.set_num_threads(16)
-
 @nb.jit(nopython=True, parallel=True)
 def nb_logsumexp_axis1(X):
     """Parallel implementation of logsumexp in Numba for axis1."""
@@ -31,11 +29,11 @@ def nb_logsumexp_axis1(X):
     for i in nb.prange(X.shape[0]):
         xmax[i] = numpy.max(X[i, :])
     xmax[~numpy.isfinite(xmax)] = 0
-    X -= xmax.reshape(-1, 1)
+    X_xmax = X - xmax.reshape(-1, 1)
     res = numpy.empty(X.shape[0], dtype=X.dtype)
     for i in nb.prange(X.shape[0]):
         c = 0.0
-        for x in X[i, :]:
+        for x in X_xmax[i, :]:
             c += numpy.exp(x)
         res[i] = numpy.log(c) 
     res += xmax
@@ -130,43 +128,6 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     return read_mix_mat, new_props
 
 
-def em_step_original(read_hap_mat, weights, ln_props, read_mix_mat_org):
-    """
-    Runs a single iteration of the EM algorithm given:
-    1. The original input read-hap probability matrix (read_hap_mat)
-    2. The weights, i.e. the number times we observe each sub-haplotype.
-    3. Current haplogroup proportion estimates (props)
-    4. A matrix of the same size as 'read_hap_mat' that will be written over
-       with the conditional probabililies (read_mix_mat)
-    5. A vector of the same size as 'props' that will be filled by the new
-       haplogroup proportion estimates.
-
-    Args:
-        read_hap_mat: starting read/haplogroup conditional prob. matrix
-        weights: arrray containing the number of times each sub-haplotype
-                 was found in the reads (same length as read_map_hat height)
-        ln_props: starting mixture proportion array, log transformed
-        read_mix_mat: destination for updated conditional probability matrix
-    Returns:
-        Updated conditional probability matrix and mixture proportions array
-    """
-    # E-Step:
-    # Set z_j,g - probablilty that read j originates from haplogroup g
-    # given this proportion in the mixture.
-    numpy.add(ln_props, read_hap_mat, read_mix_mat)
-    numpy.subtract(read_mix_mat,
-                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
-                   read_mix_mat)
-
-    # M-Step:
-    # Set theta_g - contribution of g to the mixture
-    new_props = logsumexp(read_mix_mat, axis=0,
-                                     b=weights.reshape((-1, 1)))
-    new_props -= logsumexp(new_props)
-
-    return read_mix_mat, new_props
-
-
 def run_em(read_hap_mat, weights, args):
     """
     Runs the EM algorithm on the input read-haplogroup probability matrix and
@@ -183,6 +144,10 @@ def run_em(read_hap_mat, weights, args):
         res_read_mix: final estimated read/haplogroup conditional probability
                       matrix (log)
     """
+    # Specify the number of parallel threads
+    if args.threads is not None:
+        nb.set_num_threads(args.threads)
+
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty(read_hap_mat.shape[1])
@@ -204,8 +169,6 @@ def run_em(read_hap_mat, weights, args):
                 sys.stderr.write('.')
             # Run a single step of EM
             read_mix_mat, new_props = em_step(read_hap_mat, weights, props, read_mix_mat)
-            read_mix_mat, new_props = em_step_original(read_hap_mat, weights,
-                                                       props, read_mix_mat)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
