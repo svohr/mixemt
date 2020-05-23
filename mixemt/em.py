@@ -35,7 +35,7 @@ def nb_logsumexp_axis1(X):
         c = 0.0
         for x in X_xmax[i, :]:
             c += numpy.exp(x)
-        res[i] = numpy.log(c) 
+        res[i] = numpy.log(c)
     res += xmax
     return res
 

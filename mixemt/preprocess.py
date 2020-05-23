@@ -15,15 +15,15 @@ Wed Apr  6 10:48:21 PDT 2016
 import sys
 import math
 import collections
-import numpy
 import itertools
-import numba
 from multiprocessing import Pool, sharedctypes
+import numpy
+import numba as nb
 
 from mixemt import phylotree
 
 
-class HapVarBaseMatrix(object):
+class HapVarBaseMatrix():
     """
     This class is designed to simplify a pretty large 3 dimensional matrix of
     indicator variables. Since our matrix is sparse and only need to look up
@@ -54,7 +54,6 @@ class HapVarBaseMatrix(object):
                                      * sum(self.phylo.variants[pos].values()))
 
         self.add_hap_markers(phylo.hap_var)
-        return
 
     def add_hap_markers(self, hap_var):
         """
@@ -67,7 +66,6 @@ class HapVarBaseMatrix(object):
                 der = phylotree.der_allele(var)
                 if der != self.refseq[pos]:
                     self.markers[hap][pos] = der
-        return
 
     def _prob(self, hap_pos, pos, base):
         """
@@ -209,12 +207,13 @@ def build_em_matrix(refseq, phylo, reads, haplogroups, args):
 
         mat_idxs = [(i, j) for i, j in
                     itertools.product(range(0, len(reads)),
-                                    range(0, len(haplogroups)))]
+                                      range(0, len(haplogroups)))]
 
         if args.threads is None:
             args.threads = nb.config.NUMBA_DEFAULT_NUM_THREADS
 
-        with Pool(initializer=init_subprocess, initargs=(hvb_mat, haplogroups, reads, shared_array,),
+        with Pool(initializer=init_subprocess,
+                  initargs=(hvb_mat, haplogroups, reads, shared_array,),
                   processes=args.threads) as p:
             res = p.map(fill_mat, mat_idxs, 5408)
         read_hap_mat = numpy.ctypeslib.as_array(shared_array)
