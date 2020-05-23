@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 """
 
 mixemt (Mix + EM + mitochondrial sequence)
@@ -233,7 +233,7 @@ def dump_all(prefix, haps, reads, em_mat, em_results):
             for hap in haps:
                 hap_out.write('%s\n' % (hap))
         with open("%s.reads" % (prefix), 'w') as read_out:
-            for i in xrange(len(reads)):
+            for i in range(len(reads)):
                 read_out.write('%d\t%s\n' % (i, '\t'.join(reads[i])))
         props, read_hap_mat = em_results
         numpy.save("%s.em" % (prefix), em_mat)
@@ -361,6 +361,11 @@ def main():
     parser.add_argument("--phy", dest="phy_fn",
                         metavar="phylotree.csv", type=str, default=None,
                         help="Phylotree CSV file (Default: Build 17).")
+    parser.add_argument("--no-parallel", dest="parallel",
+                        action="store_false", default=True,
+                        help="disable parallel execution")
+    parser.add_argument("--threads", dest="threads", type=int, default=None,
+                        help="specify the number of threads to use in parallel mode [all]")
 
     cust_opts = parser.add_argument_group("customization options")
     cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,

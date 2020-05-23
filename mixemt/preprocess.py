@@ -15,12 +15,15 @@ Wed Apr  6 10:48:21 PDT 2016
 import sys
 import math
 import collections
+import itertools
+from multiprocessing import Pool, sharedctypes
 import numpy
+import numba as nb
 
 from mixemt import phylotree
 
 
-class HapVarBaseMatrix(object):
+class HapVarBaseMatrix():
     """
     This class is designed to simplify a pretty large 3 dimensional matrix of
     indicator variables. Since our matrix is sparse and only need to look up
@@ -51,7 +54,6 @@ class HapVarBaseMatrix(object):
                                      * sum(self.phylo.variants[pos].values()))
 
         self.add_hap_markers(phylo.hap_var)
-        return
 
     def add_hap_markers(self, hap_var):
         """
@@ -64,7 +66,6 @@ class HapVarBaseMatrix(object):
                 der = phylotree.der_allele(var)
                 if der != self.refseq[pos]:
                     self.markers[hap][pos] = der
-        return
 
     def _prob(self, hap_pos, pos, base):
         """
@@ -72,16 +73,17 @@ class HapVarBaseMatrix(object):
         this haplogroup, given the dictionary that describes the derived
         alleles of this haplogroup.
         """
+        p = self.mut_prob[pos]
         if pos in hap_pos:
             # Does this haplogroup carry a derived base?
             if hap_pos[pos] == base:
                 # Is it the one we observed?
-                return 1.0 - self.mut_prob[pos]
+                return 1.0 - p
         else:
             # No derived base at this position, does our observed match ref.
             if self.refseq[pos] == base:
-                return 1.0 - self.mut_prob[pos]
-        return self.mut_prob[pos] / 3.0
+                return 1.0 - p
+        return p / 3.0
 
     def prob_for_vars(self, hap, pos_obs):
         """
@@ -174,23 +176,55 @@ def reduce_reads(read_obs):
     return read_sigs
 
 
+def init_subprocess(hvb_mat_, haplogroups_, reads_, shared_array_):
+    """Enable access for subworkers."""
+    global hvb_mat, haplogroups, reads, shared_array
+    hvb_mat = hvb_mat_
+    haplogroups = haplogroups_
+    reads = reads_
+    shared_array = shared_array_
+
+
+def fill_mat(args):
+    i, j = args
+    tmp = numpy.ctypeslib.as_array(shared_array)
+    tmp[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs_from_sig(reads[i]))
+
+
 def build_em_matrix(refseq, phylo, reads, haplogroups, args):
     """
     Returns the matrix that describes the probabiliy of each read
     originating in each haplotype.
     """
     hvb_mat = HapVarBaseMatrix(refseq, phylo)
-    read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
 
     if args.verbose:
         sys.stderr.write('Building EM input matrix...\n')
 
-    for i in range(len(reads)):
-        pos_obs = pos_obs_from_sig(reads[i])
-        for j in range(len(haplogroups)):
-            read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs)
-        if args.verbose and (i + 1) % 500 == 0:
-            sys.stderr.write('  processed %d fragments...\n' % (i + 1))
+    if args.parallel:  # Use multiprocessing to fill matrix
+        read_hap_mat = numpy.ctypeslib.as_ctypes(numpy.empty((len(reads), len(haplogroups))))
+        shared_array = sharedctypes.RawArray(read_hap_mat._type_, read_hap_mat)
+
+        mat_idxs = [(i, j) for i, j in
+                    itertools.product(range(0, len(reads)),
+                                      range(0, len(haplogroups)))]
+
+        if args.threads is None:
+            args.threads = nb.config.NUMBA_DEFAULT_NUM_THREADS
+
+        with Pool(initializer=init_subprocess,
+                  initargs=(hvb_mat, haplogroups, reads, shared_array,),
+                  processes=args.threads) as p:
+            res = p.map(fill_mat, mat_idxs, len(haplogroups))
+        read_hap_mat = numpy.ctypeslib.as_array(shared_array)
+    else:  # Use only a single core
+        read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
+        for i in range(len(reads)):
+            pos_obs = pos_obs_from_sig(reads[i])
+            for j in range(len(haplogroups)):
+                read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs)
+            if args.verbose and (i + 1) % 500 == 0:
+                sys.stderr.write('  processed %d fragments...\n' % (i + 1))
 
     if args.verbose:
         sys.stderr.write('Done.\n\n')
