@@ -145,7 +145,9 @@ def run_em(read_hap_mat, weights, args):
                       matrix (log)
     """
     # Specify the number of parallel threads
-    if args.threads is not None:
+    if not args.parallel:
+        nb.set_num_threads(1)
+    elif args.threads is not None:
         nb.set_num_threads(args.threads)
 
     # arrays for new calculations
