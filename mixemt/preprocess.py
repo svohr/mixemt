@@ -215,7 +215,7 @@ def build_em_matrix(refseq, phylo, reads, haplogroups, args):
         with Pool(initializer=init_subprocess,
                   initargs=(hvb_mat, haplogroups, reads, shared_array,),
                   processes=args.threads) as p:
-            res = p.map(fill_mat, mat_idxs, 5408)
+            res = p.map(fill_mat, mat_idxs, len(haplogroups))
         read_hap_mat = numpy.ctypeslib.as_array(shared_array)
     else:  # Use only a single core
         read_hap_mat = numpy.empty((len(reads), len(haplogroups)))
