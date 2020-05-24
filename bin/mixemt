@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 """
 
 mixemt (Mix + EM + mitochondrial sequence)
@@ -78,13 +78,13 @@ def open_phylotree(phy_fn, refseq, args):
             if args.verbose:
                 sys.stderr.write("Reading haplogroups from 'mixemt' package "
                                  "(phylotree/mtDNA_tree_Build_17.csv)\n")
-            return pkg_resources.resource_stream(
+            return pkg_resources.resource_string(
                 'mixemt', 'phylotree/mtDNA_tree_Build_17.csv')
         else:
             if args.verbose:
                 sys.stderr.write("Reading haplogroups from file (%s)\n"
                                  % (phy_fn))
-            return open(phy_fn, 'rb')
+            return open(phy_fn, 'r')
     with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
                                   anon_haps=args.anon_haps,
