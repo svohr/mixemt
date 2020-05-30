@@ -14,7 +14,7 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
-import scipy.misc
+from scipy.special import logsumexp
 
 from mixemt import preprocess
 from mixemt import phylotree
@@ -79,14 +79,14 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     # given this proportion in the mixture.
     numpy.add(ln_props, read_hap_mat, read_mix_mat)
     numpy.subtract(read_mix_mat,
-                   scipy.misc.logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
                    read_mix_mat)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    new_props = scipy.misc.logsumexp(read_mix_mat, axis=0,
+    new_props = logsumexp(read_mix_mat, axis=0,
                                      b=weights.reshape((-1, 1)))
-    new_props -= scipy.misc.logsumexp(new_props)
+    new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
 
@@ -114,7 +114,7 @@ def run_em(read_hap_mat, weights, args):
     # results for multiple runs if necessary.
     res_props, res_read_mix = None, None
 
-    for i in xrange(args.n_multi):
+    for i in range(args.n_multi):
 
         if args.verbose:
             sys.stderr.write("Starting EM run %d...\n" % (i + 1))
@@ -123,7 +123,7 @@ def run_em(read_hap_mat, weights, args):
         props = numpy.log(init_props(read_hap_mat.shape[1],
                                      alpha=args.init_alpha))
 
-        for iter_round in xrange(args.max_iter):
+        for iter_round in range(args.max_iter):
             if args.verbose and (iter_round + 1) % 10 == 0:
                 sys.stderr.write('.')
             # Run a single step of EM
@@ -187,8 +187,8 @@ def main():
         input_mat = preprocess.build_em_matrix(ref, phy, reads, haps, args)
         weights = numpy.ones(len(reads))
         props, read_mix = run_em(input_mat, weights, args)
-        print props
-        print read_mix
+        print(props)
+        print(read_mix)
     return 0
 
 

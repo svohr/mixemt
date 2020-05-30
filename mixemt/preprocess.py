@@ -135,7 +135,7 @@ def process_reads(alns, var_pos, min_mq, min_bq):
     # Finished, do one pass to remove Ns
     for aln_id in read_obs:
         read_obs[aln_id] = {pos:base for pos, base in
-                            read_obs[aln_id].items() if base != 'N'}
+                            list(read_obs[aln_id].items()) if base != 'N'}
     return read_obs
 
 
@@ -185,9 +185,9 @@ def build_em_matrix(refseq, phylo, reads, haplogroups, args):
     if args.verbose:
         sys.stderr.write('Building EM input matrix...\n')
 
-    for i in xrange(len(reads)):
+    for i in range(len(reads)):
         pos_obs = pos_obs_from_sig(reads[i])
-        for j in xrange(len(haplogroups)):
+        for j in range(len(haplogroups)):
             read_hap_mat[i, j] = hvb_mat.prob_for_vars(haplogroups[j], pos_obs)
         if args.verbose and (i + 1) % 500 == 0:
             sys.stderr.write('  processed %d fragments...\n' % (i + 1))
@@ -222,7 +222,7 @@ def build_em_input(bamfile, refseq, phylo, args):
     em_matrix = build_em_matrix(refseq, phylo, reads, haplogroups, args)
 
     # make a list mapping matrix indexes to read IDs from bam.
-    read_ids = [read_sigs[reads[i]] for i in xrange(len(reads))]
+    read_ids = [read_sigs[reads[i]] for i in range(len(reads))]
 
     return em_matrix, weights, haplogroups, read_ids
 
@@ -245,7 +245,7 @@ def reduce_em_matrix(em_mat, haplogroups, contrib_props):
         a new list of labels for the simplified matrix.
     """
     haps_to_keep = {con[1] for con in contrib_props}
-    indexes = [i for i in xrange(len(haplogroups))
+    indexes = [i for i in range(len(haplogroups))
                if haplogroups[i] in haps_to_keep]
     new_haps = [haplogroups[i] for i in indexes]
     return em_mat[:, indexes], new_haps

@@ -24,7 +24,7 @@ def report_top_props(haplogroups, props, top_n=10):
     """
     order = numpy.argsort(props)[::-1]
     sys.stderr.write('\nTop %d haplogroups by proportion...\n' % (top_n))
-    for i in xrange(top_n):
+    for i in range(top_n):
         sys.stderr.write("%d\t%0.6f\t%s\n" % (i + 1, props[order[i]],
                                               haplogroups[order[i]]))
     sys.stderr.write('\n')
@@ -84,7 +84,7 @@ def write_base_obs(out, obs_tab, ref, prefix=''):
     """
     if prefix:
         prefix += '\t'
-    for ref_pos in xrange(len(ref)):
+    for ref_pos in range(len(ref)):
         out.write(
             "%s%d\t%s\t%d\n" % (prefix, ref_pos,
                                 '\t'.join([str(obs_tab.obs_at(ref_pos, base))
@@ -115,7 +115,7 @@ def write_variants(out, phylo, contribs, obs_tab, args):
             variants[pos].append("%s:%s" % (hap, var))
 
     polymorphic = set(phylo.polymorphic_sites(haplogroups))
-    for ref_pos in xrange(len(phylo.refseq)):
+    for ref_pos in range(len(phylo.refseq)):
         obs = obs_tab.obs_at(ref_pos)
 
         samp_status = "sample_fixed"

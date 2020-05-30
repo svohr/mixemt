@@ -115,7 +115,7 @@ def _find_contribs_from_reads(read_hap_mat, wts, args):
     best_haps = numpy.argmax(read_hap_mat, 1)
     vote_count = collections.defaultdict(int)
 
-    for hap, read_count in itertools.izip(best_haps, wts):
+    for hap, read_count in zip(best_haps, wts):
         vote_count[hap] += read_count
 
     contributors = [con for con in vote_count
@@ -223,7 +223,7 @@ def update_contribs(contribs, em_results, haps):
         The update contributor table
     """
     props, _ = em_results
-    props_by_hap = {haps[i]:props[i] for i in xrange(len(haps))}
+    props_by_hap = {haps[i]:props[i] for i in range(len(haps))}
     for con in contribs:
         haplogroup = con[1]
         con[2] = props_by_hap[haplogroup]
@@ -316,7 +316,7 @@ def assign_read_indexes(contribs, em_results, haps, reads, min_fold):
 
     index_to_hap = {haps.index(group):hap_n for hap_n, group, _ in contribs}
     con_indexes = set(index_to_hap.keys())
-    for read_i in xrange(len(reads)):
+    for read_i in range(len(reads)):
         if len(contribs) > 1:
             read_probs = read_hap_mat[read_i, ] - log_props
             best_hap, next_hap = _find_best_n_for_read(read_probs,
@@ -421,7 +421,8 @@ def write_consensus_seqs(refseq, contrib_props, contrib_reads, args):
         if 'unassigned' in contrib_reads:
             seq = call_consensus(refseq, contrib_reads['unassigned'],
                                  1, args, strict=False)
-            rec = SeqRecord(Seq(seq), id='unassigned', description='')
+            rec = SeqRecord(Seq(seq),
+                            id='unassigned', description='')
             seqs_to_write.append(rec)
         SeqIO.write(seqs_to_write, fa_out, 'fasta')
     return
@@ -461,7 +462,7 @@ def call_consensus(refseq, alns, min_cov, args, strict=True):
         return ""
     obs_tab = observe.ObservedBases(alns, args.min_mq, args.min_bq)
     cons_bases = [consensus_base(obs_tab.obs_at(pos))
-                  for pos in xrange(len(refseq))]
+                  for pos in range(len(refseq))]
     return str(''.join(cons_bases))
 
 
@@ -486,8 +487,8 @@ def find_new_variants(refseq, contrib_reads, args):
         return {} # no contributors, no new variants.
 
     min_cons_len = min([len(contrib_cons[cons]) for cons in contrib_cons])
-    for pos in xrange(min_cons_len):
-        if any([cons[pos] in 'N-' for cons in contrib_cons.values()]):
+    for pos in range(min_cons_len):
+        if any([cons[pos] in 'N-' for cons in list(contrib_cons.values())]):
             # skip Ns or reference position skips
             continue
         # base observed in all consensus sequences
@@ -531,7 +532,7 @@ def assign_reads_from_new_vars(contrib_reads, new_variants, args):
 
     # Find reads that have been assigned to exactly 1 contributor
     uniq_assigns = {qname:list(contrib)[0]
-                    for qname, contrib in temp_assigns.iteritems()
+                    for qname, contrib in temp_assigns.items()
                     if len(contrib) == 1}
 
     # Move reads that can be assigned to new contributor assignment

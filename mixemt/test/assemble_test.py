@@ -279,7 +279,7 @@ class TestAssignReads(unittest.TestCase):
         self.assertEqual(set('ABD'), res)
 
     def test_get_contrib_read_ids_all(self):
-        idxs = range(len(self.reads))
+        idxs = list(range(len(self.reads)))
         res = assemble.get_contrib_read_ids(idxs, self.reads)
         self.assertEqual(set('ABCDEFG'), res)
 
