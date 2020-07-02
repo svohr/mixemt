@@ -15,6 +15,7 @@ import sys
 import argparse
 import numpy
 import numba as nb
+
 from scipy.special import logsumexp
 
 from mixemt import preprocess
