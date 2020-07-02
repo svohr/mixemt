@@ -473,7 +473,7 @@ def _read_phy_line(line):
         hap_id: The haplogroup ID for this entry (can be '')
         variants: List of variant strings for this node.
     """
-    items = line.decode('utf-8').rstrip().split(',')
+    items = line.rstrip().split(',')
     level = 0
     while items[level] == '':
         level += 1
