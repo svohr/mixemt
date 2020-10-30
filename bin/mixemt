@@ -234,7 +234,7 @@ def dump_all(prefix, haps, reads, em_mat, em_results):
             for hap in haps:
                 hap_out.write('%s\n' % (hap))
         with open("%s.reads" % (prefix), 'w') as read_out:
-            for i in xrange(len(reads)):
+            for i in range(len(reads)):
                 read_out.write('%d\t%s\n' % (i, '\t'.join(reads[i])))
         props, read_hap_mat = em_results
         numpy.save("%s.em" % (prefix), em_mat)
