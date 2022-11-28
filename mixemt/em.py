@@ -48,7 +48,7 @@ def nb_logsumexp_axis0_weights(X, b):
     for i in nb.prange(X.shape[1]):
         xmax[i] = numpy.max(X[:, i])
     xmax[~numpy.isfinite(xmax)] = 0
-    X -= xmax
+    X = numpy.subtract(X, xmax)
     res = numpy.empty(X.shape[1], dtype=X.dtype)
     for i in nb.prange(X.shape[1]):
         r = 0.0
@@ -218,6 +218,8 @@ def main():
         args.max_iter = 1000
         args.n_multi = 1
         args.verbose = True
+        args.parallel = False
+        args.threads = 1
 
         phy = phylotree.example()
 
