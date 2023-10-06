@@ -24,7 +24,7 @@ def report_top_props(haplogroups, props, top_n=10):
     """
     order = numpy.argsort(props)[::-1]
     sys.stderr.write('\nTop %d haplogroups by proportion...\n' % (top_n))
-    for i in range(top_n):
+    for i in range(min(top_n, len(props))):
         sys.stderr.write("%d\t%0.6f\t%s\n" % (i + 1, props[order[i]],
                                               haplogroups[order[i]]))
     sys.stderr.write('\n')
