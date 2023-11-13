@@ -85,7 +85,7 @@ def open_phylotree(phy_fn, refseq, args):
             if args.verbose:
                 sys.stderr.write("Reading haplogroups from file (%s)\n"
                                  % (phy_fn))
-            return open(phy_fn, 'r')
+            return open(phy_fn, 'rb')
     with open_phylotree_resource(phy_fn) as phy_in:
         phy = phylotree.Phylotree(phy_in, refseq=refseq,
                                   anon_haps=args.anon_haps,
@@ -362,6 +362,11 @@ def main():
     parser.add_argument("--phy", dest="phy_fn",
                         metavar="phylotree.csv", type=str, default=None,
                         help="Phylotree CSV file (Default: Build 17).")
+    parser.add_argument("--no-parallel", dest="parallel",
+                        action="store_false", default=True,
+                        help="disable parallel execution")
+    parser.add_argument("--threads", dest="threads", type=int, default=None,
+                        help="specify the number of threads to use in parallel mode [all]")
 
     cust_opts = parser.add_argument_group("customization options")
     cust_opts.add_argument('-H', '--haps', dest='cust_hap_fn', type=str,

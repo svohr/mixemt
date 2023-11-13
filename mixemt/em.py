@@ -14,10 +14,49 @@ Mon Apr  4 09:38:08 PDT 2016
 import sys
 import argparse
 import numpy
+import numba as nb
+
 from scipy.special import logsumexp
 
 from mixemt import preprocess
 from mixemt import phylotree
+
+
+@nb.jit(nopython=True, parallel=True)
+def nb_logsumexp_axis1(X):
+    """Parallel implementation of logsumexp in Numba for axis1."""
+    # Calculate max. value in each column and normalise matrix
+    xmax = numpy.empty(X.shape[0], dtype=X.dtype)
+    for i in nb.prange(X.shape[0]):
+        xmax[i] = numpy.max(X[i, :])
+    xmax[~numpy.isfinite(xmax)] = 0
+    X_xmax = X - xmax.reshape(-1, 1)
+    res = numpy.empty(X.shape[0], dtype=X.dtype)
+    for i in nb.prange(X.shape[0]):
+        c = 0.0
+        for x in X_xmax[i, :]:
+            c += numpy.exp(x)
+        res[i] = numpy.log(c)
+    res += xmax
+    return res
+
+
+@nb.jit(nopython=True, parallel=True)
+def nb_logsumexp_axis0_weights(X, b):
+    """Parallel implementation of logsumexp in Numba for axis0 with weights."""
+    xmax = numpy.empty(X.shape[1], dtype=X.dtype)
+    for i in nb.prange(X.shape[1]):
+        xmax[i] = numpy.max(X[:, i])
+    xmax[~numpy.isfinite(xmax)] = 0
+    X = numpy.subtract(X, xmax)
+    res = numpy.empty(X.shape[1], dtype=X.dtype)
+    for i in nb.prange(X.shape[1]):
+        r = 0.0
+        for j in nb.prange(X.shape[0]):
+            r += b[j] * numpy.exp(X[j, i])
+        res[i] = numpy.log(r)
+    res += xmax
+    return res
 
 
 def init_props(nhaps, alpha=1.0):
@@ -79,13 +118,12 @@ def em_step(read_hap_mat, weights, ln_props, read_mix_mat):
     # given this proportion in the mixture.
     numpy.add(ln_props, read_hap_mat, read_mix_mat)
     numpy.subtract(read_mix_mat,
-                   logsumexp(read_mix_mat, axis=1).reshape((-1, 1)),
+                   nb_logsumexp_axis1(read_mix_mat).reshape((-1, 1)),
                    read_mix_mat)
 
     # M-Step:
     # Set theta_g - contribution of g to the mixture
-    new_props = logsumexp(read_mix_mat, axis=0,
-                                     b=weights.reshape((-1, 1)))
+    new_props = nb_logsumexp_axis0_weights(read_mix_mat, weights)
     new_props -= logsumexp(new_props)
 
     return read_mix_mat, new_props
@@ -107,6 +145,12 @@ def run_em(read_hap_mat, weights, args):
         res_read_mix: final estimated read/haplogroup conditional probability
                       matrix (log)
     """
+    # Specify the number of parallel threads
+    if not args.parallel:
+        nb.set_num_threads(1)
+    elif args.threads is not None:
+        nb.set_num_threads(args.threads)
+
     # arrays for new calculations
     read_mix_mat = numpy.empty_like(read_hap_mat)
     new_props = numpy.empty(read_hap_mat.shape[1])
@@ -127,8 +171,7 @@ def run_em(read_hap_mat, weights, args):
             if args.verbose and (iter_round + 1) % 10 == 0:
                 sys.stderr.write('.')
             # Run a single step of EM
-            read_mix_mat, new_props = em_step(read_hap_mat, weights,
-                                              props, read_mix_mat)
+            read_mix_mat, new_props = em_step(read_hap_mat, weights, props, read_mix_mat)
             # Check for convergence.
             if converged(props, new_props, args.tolerance):
                 if args.verbose:
@@ -175,6 +218,8 @@ def main():
         args.max_iter = 1000
         args.n_multi = 1
         args.verbose = True
+        args.parallel = False
+        args.threads = 1
 
         phy = phylotree.example()
 

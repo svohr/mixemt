@@ -37,6 +37,7 @@ article.
 `mixemt` is written in Python and requires a few additional packages:
 
 * [NumPy/SciPy](http://scipy.org/)
+* [Numba](http://numba.pydata.org/)
 * [Biopython](http://biopython.org/)
 * [pysam](https://github.com/pysam-developers/pysam)
 
@@ -107,6 +108,14 @@ Reconstructed Sapiens Reference Sequence (RSRS) contained in
 #### `--phy phylotree.csv`
 Specify a Phylotree CSV file to use. By default, the file for Phylotree
 Build 17 (`mixemt/phylotree/mtDNA_tree_Build_17.csv`) is used.
+
+#### `--no-parallel`
+Disable the parallel execution of code. Parallelization is used to build the
+EM matrix and performing the expectation-maximization steps. 
+
+#### `--threads`
+Specify the number of threads that should be used for steps that can be
+parallelized. By default, all threads available on the machine are used.
 
 ### Customization options
 
